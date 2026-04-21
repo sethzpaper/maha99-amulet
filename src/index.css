@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,650&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,700;1,600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", "Newsreader", serif;
+  --font-sans: "Noto Sans Thai", sans-serif;
+  --color-gold: #d4af37;
+  --color-primary: #1d7a62;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0c0900;
+  color: #e8dfc8;
+  font-family: var(--font-sans);
+}
+
+body::selection {
+  background: rgba(212, 175, 55, 0.25);
+}
+
+/* ── Glass card surface ── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Gold glow border ── */
+.gold-border-glow {
+  box-shadow:
+    0 0 40px rgba(212, 175, 55, 0.06),
+    inset 0 0 40px rgba(212, 175, 55, 0.02);
+}
+
+/* ── Gold text gradient ── */
+.gold-text-gradient {
+  background: linear-gradient(135deg, #d4af37 0%, #f5e17a 48%, #b8952a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Custom scrollbar ── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.6);
+}
