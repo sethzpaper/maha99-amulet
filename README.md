@@ -25,7 +25,6 @@
 ## 🎯 ฟีเจอร์หลัก
 
 ### ✅ ระบบการตรวจสอบสิทธิ์ (Authentication)
-- ระบบ Super Admin: ชื่อผู้ใช้ `admin` รหัสผ่าน `11221122`
 - **GitHub OAuth**: เข้าสู่ระบบด้วยบัญชี GitHub และได้รับสิทธิ์ admin โดยตรง
 - **Admin GitHub IDs**: กำหนด GitHub usernames ที่ได้รับสิทธิ์ admin ผ่าน environment variable
 - บันทึกการเข้าสู่ระบบไว้ในที่จัดเก็บ localStorage
@@ -43,36 +42,6 @@
 - ตารางสรุปสถิติทั้งหมด
 - สถานะการปฏิบัติงานแบบเรียลไทม์
 
-### ✅ จัดการวิดีโอและโพสต์
-- ดึงข้อมูลจาก Google Drive
-- แสดง Facebook Posts และ TikTok Posts
-- เก็บประวัติการโพสต์
-
-### ✅ บันทึก LINE Check-in/Check-out
-- ติดตามการเข้า-ออกของพนักงาน
-- แสดงประวัติการเข้าปฏิบัติงาน
-
-## 🚀 อัปเดตล่าสุด
-
-### รวม ✨
-1. **Google Drive Integration** - เชื่อมต่อ API เพื่อดึงข้อมูลจากสเปรดชีตและไฟล์
-2. **Backend API Server** - Express.js ที่มี 7 Endpoint สำหรับจัดเก็บและดึงข้อมูล
-3. **Frontend Data Service** - บริการดึงข้อมูลกลางพร้อมระบบแคช (5 นาที)
-4. **Zustand Auth Store** - ระบบการตรวจสอบสิทธิ์พร้อมการจำข้อมูลการเข้าสู่ระบบ
-5. **Login Component** - UI สำหรับเข้าสู่ระบบที่ออกแบบอย่างสวยงาม
-6. **Component Integration** - อัปเดตทั้ง AmuletList, AdminStats, VideoManagement, LineLogs
-7. **App-level Auth** - ตรวจสอบสิทธิ์ก่อนแสดงแดชบอร์ด
-
-### Endpoint ของ API ✅
-```
-GET /api/health              - ตรวจสอบสถานะเซิร์ฟเวอร์
-GET /api/amulets            - ดึงข้อมูลเครื่องราง
-GET /api/admins             - ดึงสถิติแอดมิน
-GET /api/videos             - ดึงรายชื่อวิดีโอ
-GET /api/line-logs          - ดึงบันทึก LINE
-GET /api/facebook-posts     - ดึงโพสต์ Facebook
-GET /api/tiktok-posts       - ดึงโพสต์ TikTok
-```
 
 ## 💻 ติดตั้งและรันโปรแกรม
 
@@ -188,11 +157,6 @@ Project-amulet_base/
    - Folder ID จากโฟลเดอร์วิดีโอ
 
 ## 👤 ข้อมูลเข้าสู่ระบบ Demo
-
-```
-ชื่อผู้ใช้: admin
-รหัสผ่าน: 11221122
-บทบาท: Super Admin
 ```
 
 ## 🐛 การแก้ไขข้อบกพร่อง
