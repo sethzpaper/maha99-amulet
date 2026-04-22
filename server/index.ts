@@ -3,16 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import {
   getSpreadsheetData,
-  listDriveFiles,
-  getFileDownloadUrl,
 } from './googleDriveService';
 import {
   Amulet,
   LineLog,
   SocialPost,
-  AdminStats,
-  VideoRecord,
-  DailyStat,
 } from '../src/types';
 import { initScheduler, getScheduler } from './services/schedulerService';
 import { initOpenAI, getOpenAI } from './services/openaiService';
@@ -20,6 +15,9 @@ import { initEmailTransporter } from './services/emailService';
 import attendanceRoutes from './routes/attendanceRoutes';
 import employeeRoutes from './routes/employeeRoutes';
 import socialAccountsRoutes from './routes/socialAccountsRoutes';
+import videoRoutes from './routes/videoRoutes';
+import socialPostsRoutes from './routes/socialPostsRoutes';
+import leaderboardRoutes from './routes/leaderboardRoutes';
 import type { CompetitorAccount } from './scrapers/competitorScraper';
 
 dotenv.config();
@@ -41,6 +39,9 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api', attendanceRoutes); // เพื่อให้ /api/leave/* ใช้ได้ด้วย
 app.use('/api/employees', employeeRoutes);
 app.use('/api/tracked-accounts', socialAccountsRoutes);
+app.use('/api/videos', videoRoutes);
+app.use('/api/social-posts', socialPostsRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // Get Amulets from Google Sheets
 app.get('/api/amulets', async (req: Request, res: Response) => {
@@ -71,63 +72,6 @@ app.get('/api/amulets', async (req: Request, res: Response) => {
   }
 });
 
-// Get Admin Stats from Google Sheets
-app.get('/api/admins', async (req: Request, res: Response) => {
-  try {
-    const spreadsheetId = process.env.AMULETS_SHEET_ID;
-    if (!spreadsheetId) {
-      return res.status(400).json({ error: 'AMULETS_SHEET_ID not configured' });
-    }
-
-    const data = await getSpreadsheetData(spreadsheetId, 'Admins!A2:G100');
-    
-    const admins: AdminStats[] = data.map((row: string[]) => ({
-      id: row[0] || '',
-      name: row[1] || '',
-      avatar: row[2] || 'https://picsum.photos/seed/admin/100/100',
-      daily: parseInt(row[3]) || 0,
-      weekly: parseInt(row[4]) || 0,
-      monthly: parseInt(row[5]) || 0,
-      performance: parseInt(row[6]) || 0,
-    })).filter(a => a.id);
-
-    res.json(admins);
-  } catch (error) {
-    console.error('Error fetching admins:', error);
-    res.status(500).json({ error: 'Failed to fetch admin stats' });
-  }
-});
-
-// Get Videos from Google Drive
-app.get('/api/videos', async (req: Request, res: Response) => {
-  try {
-    const folderId = process.env.VIDEOS_FOLDER_ID;
-    if (!folderId) {
-      return res.status(400).json({ error: 'VIDEOS_FOLDER_ID not configured' });
-    }
-
-    const files = await listDriveFiles(folderId);
-    
-    const videos: VideoRecord[] = files.map((file: any, index: number) => ({
-      id: file.id,
-      entryDate: new Date(file.createdTime).toLocaleDateString('th-TH'),
-      fileName: file.name,
-      productName: file.name.replace(/\.[^.]+$/, ''),
-      driveLink: file.webViewLink,
-      creator: 'Admin',
-      isPostedFB: false,
-      isPostedTT: false,
-      fbPostDate: '',
-      ttPostDate: '',
-    }));
-
-    res.json(videos);
-  } catch (error) {
-    console.error('Error fetching videos:', error);
-    res.status(500).json({ error: 'Failed to fetch videos' });
-  }
-});
-
 // Get LINE Logs from Google Sheets
 app.get('/api/line-logs', async (req: Request, res: Response) => {
   try {
@@ -150,58 +94,6 @@ app.get('/api/line-logs', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching line logs:', error);
     res.status(500).json({ error: 'Failed to fetch line logs' });
-  }
-});
-
-// Get Facebook Posts from Google Sheets
-app.get('/api/facebook-posts', async (req: Request, res: Response) => {
-  try {
-    const spreadsheetId = process.env.AMULETS_SHEET_ID;
-    if (!spreadsheetId) {
-      return res.status(400).json({ error: 'AMULETS_SHEET_ID not configured' });
-    }
-
-    const data = await getSpreadsheetData(spreadsheetId, 'FacebookPosts!A2:E100');
-    
-    const posts: SocialPost[] = data.map((row: string[]) => ({
-      id: row[0] || '',
-      platform: 'facebook' as const,
-      content: row[1] || '',
-      link: row[2] || '',
-      engagement: parseInt(row[3]) || 0,
-      timestamp: row[4] || '',
-    })).filter(p => p.id);
-
-    res.json(posts);
-  } catch (error) {
-    console.error('Error fetching facebook posts:', error);
-    res.status(500).json({ error: 'Failed to fetch facebook posts' });
-  }
-});
-
-// Get TikTok Posts from Google Sheets
-app.get('/api/tiktok-posts', async (req: Request, res: Response) => {
-  try {
-    const spreadsheetId = process.env.AMULETS_SHEET_ID;
-    if (!spreadsheetId) {
-      return res.status(400).json({ error: 'AMULETS_SHEET_ID not configured' });
-    }
-
-    const data = await getSpreadsheetData(spreadsheetId, 'TikTokPosts!A2:E100');
-    
-    const posts: SocialPost[] = data.map((row: string[]) => ({
-      id: row[0] || '',
-      platform: 'tiktok' as const,
-      content: row[1] || '',
-      link: row[2] || '',
-      engagement: parseInt(row[3]) || 0,
-      timestamp: row[4] || '',
-    })).filter(p => p.id);
-
-    res.json(posts);
-  } catch (error) {
-    console.error('Error fetching tiktok posts:', error);
-    res.status(500).json({ error: 'Failed to fetch tiktok posts' });
   }
 });
 
@@ -344,11 +236,13 @@ app.listen(PORT, async () => {
   console.log('📊 API endpoints:');
   console.log(`  GET  /api/health`);
   console.log(`  GET  /api/amulets`);
-  console.log(`  GET  /api/admins`);
   console.log(`  GET  /api/videos`);
+  console.log(`  GET  /api/social-posts`);
+  console.log(`  GET  /api/leaderboard/views`);
+  console.log(`  GET  /api/leaderboard/likes-fb`);
+  console.log(`  GET  /api/leaderboard/likes-tt`);
+  console.log(`  GET  /api/leaderboard/hours`);
   console.log(`  GET  /api/line-logs`);
-  console.log(`  GET  /api/facebook-posts`);
-  console.log(`  GET  /api/tiktok-posts`);
   console.log(`  GET  /api/competitor-facebook`);
   console.log(`  GET  /api/competitor-tiktok`);
   console.log(`  POST /api/scrape-now (manual trigger)`);

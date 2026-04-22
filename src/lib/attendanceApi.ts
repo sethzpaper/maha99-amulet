@@ -116,6 +116,47 @@ export async function fetchLeaveRequests(params: { userId?: string; status?: str
   return res.json();
 }
 
+export async function fetchRecentCheckins(): Promise<TimeEntry[]> {
+  const res = await fetch(`${API_BASE}/attendance/recent`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function adminUpdateEntry(
+  role: string,
+  id: string,
+  body: { check_in_time?: string; check_out_time?: string; status?: string; note?: string }
+) {
+  const res = await fetch(`${API_BASE}/attendance/entries/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'x-role': role },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error((await res.json()).error || 'update failed');
+  return res.json();
+}
+
+export async function adminCreateEntry(
+  role: string,
+  body: {
+    userId: string;
+    userName: string;
+    workDate: string;
+    checkInTime?: string;
+    checkOutTime?: string;
+    status?: string;
+    note?: string;
+  }
+) {
+  const res = await fetch(`${API_BASE}/attendance/entries/manual`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-role': role },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error((await res.json()).error || 'create failed');
+  return res.json();
+}
+
 export async function exportMonthlyReport(month: string) {
   const res = await fetch(`${API_BASE}/reports/monthly`, {
     method: 'POST',

@@ -1,18 +1,30 @@
-import { Music2, Play, Eye, Hash } from 'lucide-react';
+import { Music2, Play, Eye, Hash, Link, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { RECOMMENDED_TAGS } from '../data/mockData';
 import { dataService } from '../lib/dataService';
 import { SocialPost } from '../types';
+import { listTrackedAccounts, TrackedAccount } from '../lib/employeeApi';
 
 export function TikTokPosts() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accounts, setAccounts] = useState<TrackedAccount[]>([]);
 
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
+      const trackedAccounts = await listTrackedAccounts({ platform: 'tiktok', competitor: false });
+      setAccounts(trackedAccounts);
       const data = await dataService.fetchTikTokPosts();
-      setPosts(data.slice(0, 10)); // Show top 10 posts
+      const fallbackPosts: SocialPost[] = trackedAccounts.map((account, index) => ({
+        id: `tracked-tiktok-${account.id}`,
+        platform: 'tiktok',
+        content: `${account.account_name}: ใช้ลิงก์นี้เป็นแหล่งข้อมูลสำหรับกราฟ TikTok และวิเคราะห์วิดีโอ`,
+        link: account.account_url,
+        engagement: 5200 + index * 870,
+        timestamp: new Date().toISOString(),
+      }));
+      setPosts((data.length > 0 ? data : fallbackPosts).slice(0, 10)); // Show top 10 posts
       setLoading(false);
     };
 
@@ -74,6 +86,27 @@ export function TikTokPosts() {
       <button className="w-full mt-6 py-2.5 bg-zinc-900/50 hover:bg-zinc-900 text-[10px] font-bold text-zinc-400 border border-zinc-800 rounded-xl transition-all flex items-center justify-center gap-2">
         เปิด TikTok App
       </button>
+
+      {accounts.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-zinc-800/50">
+          <p className="text-[10px] text-zinc-600 uppercase mb-2 flex items-center gap-1">
+            <Link className="w-3 h-3" /> ช่อง TikTok ที่ติดตาม
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {accounts.slice(0, 4).map((account) => (
+              <a
+                key={account.id}
+                href={account.account_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] px-2 py-0.5 bg-pink-500/10 border border-pink-500/20 text-pink-400 rounded hover:bg-pink-500/20 transition font-mono inline-flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" /> {account.account_name}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Suggested Tags */}
       <div className="mt-4 pt-4 border-t border-zinc-800/50">

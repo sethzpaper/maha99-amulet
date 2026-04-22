@@ -55,6 +55,17 @@ export interface VideoRecord {
   isPostedTT: boolean;
   fbPostDate?: string;
   ttPostDate?: string;
+  fbViews?: number;
+  fbLikes?: number;
+  ttViews?: number;
+  ttLikes?: number;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  creator: string;
+  name: string;
+  value: number;
 }
 
 export interface AttendanceRecord {

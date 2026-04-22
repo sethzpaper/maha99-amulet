@@ -360,4 +360,95 @@ router.post('/reports/monthly', async (req: Request, res: Response) => {
   }
 });
 
+// =============================================
+// GET /attendance/recent  — last 10 check-ins today (public board)
+// =============================================
+router.get('/recent', async (req: Request, res: Response) => {
+  try {
+    const supabase = getSupabaseAdmin();
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, error } = await supabase
+      .from('time_entries')
+      .select('*')
+      .eq('work_date', today)
+      .order('check_in_time', { ascending: false })
+      .limit(10);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================
+// PUT /attendance/entries/:id  — super admin edit entry
+// =============================================
+router.put('/entries/:id', async (req: Request, res: Response) => {
+  try {
+    if (req.headers['x-role'] !== 'super_admin') {
+      return res.status(403).json({ error: 'เฉพาะ super admin เท่านั้น' });
+    }
+    const { id } = req.params;
+    const { check_in_time, check_out_time, status, note } = req.body;
+    const supabase = getSupabaseAdmin();
+    const upd: Record<string, any> = {};
+    if (check_in_time !== undefined) upd.check_in_time = check_in_time || null;
+    if (check_out_time !== undefined) upd.check_out_time = check_out_time || null;
+    if (status !== undefined) upd.status = status;
+    if (note !== undefined) upd.note = note;
+    if (upd.check_in_time && upd.check_out_time) {
+      const ms = new Date(upd.check_out_time).getTime() - new Date(upd.check_in_time).getTime();
+      upd.total_hours = Math.round((ms / 3600000) * 100) / 100;
+      upd.overtime_hours = upd.total_hours > 9 ? Math.round((upd.total_hours - 9) * 100) / 100 : 0;
+    }
+    const { data, error } = await supabase.from('time_entries').update(upd).eq('id', id).select().single();
+    if (error) throw error;
+    res.json({ success: true, entry: data });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =============================================
+// POST /attendance/entries/manual  — super admin retroactive entry
+// =============================================
+router.post('/entries/manual', async (req: Request, res: Response) => {
+  try {
+    if (req.headers['x-role'] !== 'super_admin') {
+      return res.status(403).json({ error: 'เฉพาะ super admin เท่านั้น' });
+    }
+    const { userId, userName, workDate, checkInTime, checkOutTime, status, note } = req.body;
+    if (!userId || !userName || !workDate) {
+      return res.status(400).json({ error: 'userId, userName, workDate required' });
+    }
+    const supabase = getSupabaseAdmin();
+    let totalHours = 0, overtime = 0;
+    if (checkInTime && checkOutTime) {
+      const ms = new Date(checkOutTime).getTime() - new Date(checkInTime).getTime();
+      totalHours = Math.round((ms / 3600000) * 100) / 100;
+      overtime = totalHours > 9 ? Math.round((totalHours - 9) * 100) / 100 : 0;
+    }
+    const resolvedStatus = status || (checkInTime && new Date(checkInTime).getHours() >= 12 ? 'late' : 'working');
+    const { data, error } = await supabase
+      .from('time_entries')
+      .upsert({
+        user_id: userId,
+        user_name: userName,
+        work_date: workDate,
+        check_in_time: checkInTime || null,
+        check_out_time: checkOutTime || null,
+        total_hours: totalHours,
+        overtime_hours: overtime,
+        status: resolvedStatus,
+        note,
+      }, { onConflict: 'user_id,work_date' })
+      .select()
+      .single();
+    if (error) throw error;
+    res.json({ success: true, entry: data });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

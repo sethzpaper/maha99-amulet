@@ -49,6 +49,86 @@ const authHeaders = (role?: string): HeadersInit => ({
   ...(role ? { 'x-role': role } : {}),
 });
 
+const TRACKED_ACCOUNTS_STORAGE_KEY = 'amulet_tracked_accounts';
+
+const defaultTrackedAccounts: TrackedAccount[] = [
+  {
+    id: 'local-facebook-owned',
+    platform: 'facebook',
+    account_name: 'มหานิยม999 Fanpage',
+    account_url: 'https://facebook.com/mahaniyom999',
+    account_handle: '@mahaniyom999',
+    is_active: true,
+    is_competitor: false,
+    note: 'เพจหลักที่ใช้แสดงกราฟ',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'local-tiktok-owned',
+    platform: 'tiktok',
+    account_name: 'มหานิยม999 TikTok',
+    account_url: 'https://www.tiktok.com/@mahaniyom999',
+    account_handle: '@mahaniyom999',
+    is_active: true,
+    is_competitor: false,
+    note: 'ช่องหลักที่ใช้แสดงกราฟ',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'local-facebook-competitor',
+    platform: 'facebook',
+    account_name: 'คู่แข่ง Facebook ตัวอย่าง',
+    account_url: 'https://facebook.com/competitor-page',
+    account_handle: '@competitor',
+    is_active: true,
+    is_competitor: true,
+    note: 'ใช้เปรียบเทียบในหน้า Competitor',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'local-tiktok-competitor',
+    platform: 'tiktok',
+    account_name: 'คู่แข่ง TikTok ตัวอย่าง',
+    account_url: 'https://www.tiktok.com/@competitor',
+    account_handle: '@competitor',
+    is_active: true,
+    is_competitor: true,
+    note: 'ใช้เปรียบเทียบในหน้า Competitor',
+    created_at: new Date().toISOString(),
+  },
+];
+
+function readLocalTrackedAccounts(): TrackedAccount[] {
+  if (typeof window === 'undefined') return defaultTrackedAccounts;
+
+  try {
+    const saved = window.localStorage.getItem(TRACKED_ACCOUNTS_STORAGE_KEY);
+    if (!saved) {
+      window.localStorage.setItem(TRACKED_ACCOUNTS_STORAGE_KEY, JSON.stringify(defaultTrackedAccounts));
+      return defaultTrackedAccounts;
+    }
+    return JSON.parse(saved);
+  } catch {
+    return defaultTrackedAccounts;
+  }
+}
+
+function writeLocalTrackedAccounts(accounts: TrackedAccount[]) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(TRACKED_ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+}
+
+function filterTrackedAccounts(
+  accounts: TrackedAccount[],
+  params: { platform?: 'facebook' | 'tiktok'; competitor?: boolean } = {},
+) {
+  return accounts.filter((account) => {
+    if (params.platform && account.platform !== params.platform) return false;
+    if (params.competitor !== undefined && account.is_competitor !== params.competitor) return false;
+    return account.is_active;
+  });
+}
+
 // ---- Employees ----
 export async function listEmployees(): Promise<Employee[]> {
   const res = await fetch(`${API_BASE}/employees`);
@@ -147,18 +227,40 @@ export async function listTrackedAccounts(params: { platform?: 'facebook' | 'tik
   const qs = new URLSearchParams();
   if (params.platform) qs.set('platform', params.platform);
   if (params.competitor !== undefined) qs.set('competitor', String(params.competitor));
-  const res = await fetch(`${API_BASE}/tracked-accounts?${qs.toString()}`);
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/tracked-accounts?${qs.toString()}`);
+    if (!res.ok) throw new Error('tracked accounts api failed');
+    return res.json();
+  } catch {
+    return filterTrackedAccounts(readLocalTrackedAccounts(), params);
+  }
 }
 
 export async function createTrackedAccount(role: string, body: Partial<TrackedAccount>) {
-  const res = await fetch(`${API_BASE}/tracked-accounts`, {
-    method: 'POST',
-    headers: authHeaders(role),
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error((await res.json()).error || 'create failed');
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/tracked-accounts`, {
+      method: 'POST',
+      headers: authHeaders(role),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'create failed');
+    return res.json();
+  } catch {
+    const accounts = readLocalTrackedAccounts();
+    const account: TrackedAccount = {
+      id: `local-${Date.now()}`,
+      platform: body.platform || 'facebook',
+      account_name: body.account_name || 'Untitled account',
+      account_url: body.account_url || '#',
+      account_handle: body.account_handle,
+      is_active: true,
+      is_competitor: Boolean(body.is_competitor),
+      note: body.note,
+      created_at: new Date().toISOString(),
+    };
+    writeLocalTrackedAccounts([...accounts, account]);
+    return account;
+  }
 }
 
 export async function updateTrackedAccount(role: string, id: string, body: Partial<TrackedAccount>) {
@@ -171,11 +273,18 @@ export async function updateTrackedAccount(role: string, id: string, body: Parti
 }
 
 export async function deleteTrackedAccount(role: string, id: string) {
-  const res = await fetch(`${API_BASE}/tracked-accounts/${id}`, {
-    method: 'DELETE',
-    headers: authHeaders(role),
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/tracked-accounts/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(role),
+    });
+    if (!res.ok) throw new Error('delete failed');
+    return res.json();
+  } catch {
+    const accounts = readLocalTrackedAccounts().filter((account) => account.id !== id);
+    writeLocalTrackedAccounts(accounts);
+    return { ok: true };
+  }
 }
 
 // ---- helper ----

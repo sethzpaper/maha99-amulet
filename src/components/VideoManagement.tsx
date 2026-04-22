@@ -2,14 +2,23 @@ import { useEffect, useState } from 'react';
 import { VIDEO_RECORDS, FACEBOOK_POSTS, TIKTOK_POSTS, ADMIN_STATS } from '../data/mockData';
 import { dataService } from '../lib/dataService';
 import { VideoRecord, SocialPost } from '../types';
-import { ExternalLink, Check, Video, Share2, Facebook, Music2 } from 'lucide-react';
+import { Check, Video, Share2, Facebook, Music2, Pencil, Trash2, Save, X, ExternalLink, Play } from 'lucide-react';
 import { motion } from 'motion/react';
+
+function getDrivePreviewUrl(link: string): string {
+  const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+  return link;
+}
 
 export function VideoManagement() {
   const [records, setRecords] = useState<VideoRecord[]>(VIDEO_RECORDS);
   const [fbPosts, setFbPosts] = useState<SocialPost[]>(FACEBOOK_POSTS);
   const [ttPosts, setTtPosts] = useState<SocialPost[]>(TIKTOK_POSTS);
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Partial<VideoRecord>>({});
+  const [previewRecord, setPreviewRecord] = useState<VideoRecord | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -37,18 +46,86 @@ export function VideoManagement() {
   const topFB = fbPosts[0];
   const topTT = ttPosts[0];
 
-  const toggleStatus = (id: string, platform: 'fb' | 'tt') => {
+  const startCreate = () => {
+    setEditingId('new');
+    setDraft({
+      entryDate: new Date().toISOString().slice(0, 10),
+      fileName: '',
+      productName: '',
+      driveLink: '',
+      creator: ADMIN_STATS[0]?.name || '',
+      isPostedFB: false,
+      isPostedTT: false,
+      fbViews: 0,
+      fbLikes: 0,
+      ttViews: 0,
+      ttLikes: 0,
+    });
+  };
+
+  const startEdit = (record: VideoRecord) => {
+    setEditingId(record.id);
+    setDraft(record);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setDraft({});
+  };
+
+  const saveDraft = async () => {
+    if (!draft.fileName || !draft.productName) return;
+    setLoading(true);
+    try {
+      const saved = editingId === 'new'
+        ? await dataService.createVideo(draft)
+        : editingId
+        ? await dataService.updateVideo(editingId, draft)
+        : null;
+
+      if (saved) {
+        setRecords(prev => editingId === 'new'
+          ? [saved, ...prev]
+          : prev.map(record => record.id === saved.id ? saved : record)
+        );
+        cancelEdit();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateRecord = (id: string, patch: Partial<VideoRecord>) => {
+    setRecords(prev => prev.map(record => record.id === id ? { ...record, ...patch } : record));
+  };
+
+  const persistRecord = async (record: VideoRecord) => {
+    const saved = await dataService.updateVideo(record.id, record);
+    if (saved) setRecords(prev => prev.map(item => item.id === saved.id ? saved : item));
+  };
+
+  const deleteRecord = async (id: string) => {
+    if (!window.confirm('ลบวิดีโอนี้ใช่ไหม?')) return;
+    const ok = await dataService.deleteVideo(id);
+    if (ok) setRecords(prev => prev.filter(record => record.id !== id));
+  };
+
+  const toggleStatus = async (id: string, platform: 'fb' | 'tt') => {
     const now = new Date().toLocaleString('th-TH');
+    let nextRecord: VideoRecord | null = null;
     setRecords(prev => prev.map(rec => {
       if (rec.id === id) {
         if (platform === 'fb') {
-          return { ...rec, isPostedFB: !rec.isPostedFB, fbPostDate: !rec.isPostedFB ? now : undefined };
+          nextRecord = { ...rec, isPostedFB: !rec.isPostedFB, fbPostDate: !rec.isPostedFB ? now : undefined };
+          return nextRecord;
         } else {
-          return { ...rec, isPostedTT: !rec.isPostedTT, ttPostDate: !rec.isPostedTT ? now : undefined };
+          nextRecord = { ...rec, isPostedTT: !rec.isPostedTT, ttPostDate: !rec.isPostedTT ? now : undefined };
+          return nextRecord;
         }
       }
       return rec;
     }));
+    if (nextRecord) await persistRecord(nextRecord);
   };
 
   return (
@@ -100,13 +177,47 @@ export function VideoManagement() {
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Video Asset Management System (Mahaniyom 99)</p>
              </div>
           </div>
-          <button className="bg-gold/10 hover:bg-gold/20 text-gold text-[10px] font-bold py-2 px-4 rounded-full border border-gold/20 transition-all uppercase tracking-widest">
+          <button
+            onClick={startCreate}
+            className="bg-gold/10 hover:bg-gold/20 text-gold text-[10px] font-bold py-2 px-4 rounded-full border border-gold/20 transition-all uppercase tracking-widest"
+          >
              เพิ่มข้อมูลใหม่ +
           </button>
         </div>
 
+        {editingId && (
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 rounded-2xl border border-gold/20 bg-zinc-950/40 p-4">
+            <input className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" placeholder="วันที่" value={draft.entryDate || ''} onChange={(e) => setDraft({ ...draft, entryDate: e.target.value })} />
+            <input className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" placeholder="ชื่อไฟล์" value={draft.fileName || ''} onChange={(e) => setDraft({ ...draft, fileName: e.target.value })} />
+            <input className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" placeholder="ชื่อสินค้า" value={draft.productName || ''} onChange={(e) => setDraft({ ...draft, productName: e.target.value })} />
+            <input className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" placeholder="Drive link" value={draft.driveLink || ''} onChange={(e) => setDraft({ ...draft, driveLink: e.target.value })} />
+            <select className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" value={draft.creator || ''} onChange={(e) => setDraft({ ...draft, creator: e.target.value })}>
+              {ADMIN_STATS.map(admin => <option key={admin.id} value={admin.name}>{admin.name}</option>)}
+            </select>
+            {(['fbViews', 'fbLikes', 'ttViews', 'ttLikes'] as const).map(field => (
+              <input
+                key={field}
+                type="number"
+                min="0"
+                className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300"
+                placeholder={field}
+                value={draft[field] || 0}
+                onChange={(e) => setDraft({ ...draft, [field]: Number(e.target.value) })}
+              />
+            ))}
+            <div className="flex gap-2">
+              <button onClick={saveDraft} disabled={loading} className="inline-flex items-center justify-center gap-2 bg-gold/20 hover:bg-gold/30 text-gold text-xs font-bold py-2 px-3 rounded-lg border border-gold/30 disabled:opacity-50">
+                <Save className="h-4 w-4" /> Save
+              </button>
+              <button onClick={cancelEdit} className="inline-flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-bold py-2 px-3 rounded-lg border border-zinc-800">
+                <X className="h-4 w-4" /> Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
+          <table className="w-full text-left border-collapse min-w-[1320px]">
             <thead>
               <tr className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] border-b border-zinc-800/50">
                 <th className="pb-4 font-semibold px-2">ลำดับ</th>
@@ -117,7 +228,12 @@ export function VideoManagement() {
                 <th className="pb-4 font-semibold px-2">ผู้สร้าง</th>
                 <th className="pb-4 font-semibold px-2 text-center">FB</th>
                 <th className="pb-4 font-semibold px-3 text-center">TT</th>
+                <th className="pb-4 font-semibold px-2 text-right">FB Views</th>
+                <th className="pb-4 font-semibold px-2 text-right">FB Likes</th>
+                <th className="pb-4 font-semibold px-2 text-right">TT Views</th>
+                <th className="pb-4 font-semibold px-2 text-right">TT Likes</th>
                 <th className="pb-4 font-semibold px-2 text-right">วันที่โพสล่าสุด</th>
+                <th className="pb-4 font-semibold px-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/30">
@@ -126,9 +242,13 @@ export function VideoManagement() {
                   <td className="py-5 px-2 text-xs font-mono text-zinc-600">{(i + 1).toString().padStart(2, '0')}</td>
                   <td className="py-5 px-2 text-xs text-zinc-400">{rec.entryDate}</td>
                   <td className="py-5 px-2">
-                    <div className="flex flex-col">
-                       <span className="text-sm font-medium text-zinc-300 group-hover:text-gold transition-colors">{rec.fileName}</span>
-                    </div>
+                    <button
+                      onClick={() => setPreviewRecord(rec)}
+                      className="flex items-center gap-2 text-left group/fn hover:text-gold transition-colors"
+                    >
+                      <Play className="w-3.5 h-3.5 text-gold/50 shrink-0 group-hover/fn:text-gold" />
+                      <span className="text-sm font-medium text-zinc-300 group-hover/fn:text-gold underline-offset-2 hover:underline">{rec.fileName}</span>
+                    </button>
                   </td>
                   <td className="py-5 px-2 text-sm text-zinc-500">{rec.productName}</td>
                   <td className="py-5 px-2">
@@ -141,8 +261,7 @@ export function VideoManagement() {
                       className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-1.5 px-3 focus:outline-none focus:border-gold/50 text-zinc-400"
                       value={rec.creator}
                       onChange={(e) => {
-                         const updated = records.map(r => r.id === rec.id ? {...r, creator: e.target.value} : r);
-                         setRecords(updated);
+                         updateRecord(rec.id, { creator: e.target.value });
                       }}
                     >
                       {ADMIN_STATS.map(admin => (
@@ -166,10 +285,34 @@ export function VideoManagement() {
                       <Check className="w-4 h-4" />
                     </button>
                   </td>
+                  {(['fbViews', 'fbLikes', 'ttViews', 'ttLikes'] as const).map(field => (
+                    <td key={field} className="py-5 px-2 text-right">
+                      <input
+                        type="number"
+                        min="0"
+                        value={rec[field] || 0}
+                        onChange={(e) => updateRecord(rec.id, { [field]: Number(e.target.value) })}
+                        className="w-24 bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-1.5 px-2 text-right text-zinc-300 focus:outline-none focus:border-gold/50"
+                      />
+                    </td>
+                  ))}
                   <td className="py-5 px-2 text-right">
                     <div className="flex flex-col items-end gap-1">
                        <span className="text-[10px] text-zinc-500 font-mono italic">{rec.fbPostDate || '-'} (FB)</span>
                        <span className="text-[10px] text-zinc-500 font-mono italic">{rec.ttPostDate || '-'} (TT)</span>
+                    </div>
+                  </td>
+                  <td className="py-5 px-2">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => persistRecord(rec)} className="p-2 bg-zinc-900 rounded-lg hover:bg-gold/10 text-gold transition-all" title="Save">
+                        <Save className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => startEdit(rec)} className="p-2 bg-zinc-900 rounded-lg hover:bg-blue-500/10 text-blue-400 transition-all" title="Edit">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => deleteRecord(rec.id)} className="p-2 bg-zinc-900 rounded-lg hover:bg-red-500/10 text-red-400 transition-all" title="Delete">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -178,6 +321,35 @@ export function VideoManagement() {
           </table>
         </div>
       </div>
+
+      {previewRecord && (
+        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4" onClick={() => setPreviewRecord(null)}>
+          <div className="w-full max-w-3xl bg-zinc-950 rounded-3xl border border-zinc-800 overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-900">
+              <div>
+                <p className="text-sm font-bold text-zinc-200">{previewRecord.fileName}</p>
+                <p className="text-[10px] text-zinc-500">{previewRecord.productName}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <a href={previewRecord.driveLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
+                  <ExternalLink className="w-3.5 h-3.5" /> เปิด Drive
+                </a>
+                <button onClick={() => setPreviewRecord(null)} className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="aspect-video bg-black">
+              <iframe
+                src={getDrivePreviewUrl(previewRecord.driveLink)}
+                className="w-full h-full"
+                allow="autoplay"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

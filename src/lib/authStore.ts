@@ -18,7 +18,6 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   loginEmployee: (employeeId: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  signInWithGitHub: () => Promise<string | null>;
   logout: () => Promise<void>;
   loadSession: () => Promise<void>;
   getUser: () => User | null;
@@ -31,27 +30,25 @@ const SUPER_ADMIN = {
   role: 'super_admin' as const,
 };
 
-// GitHub User IDs ที่ได้รับสิทธิ์ admin โดยตรง
-const ADMIN_GITHUB_IDS = import.meta.env.VITE_ADMIN_GITHUB_IDS
-  ? import.meta.env.VITE_ADMIN_GITHUB_IDS.split(',').map((id: string) => id.trim())
-  : ['sethzpaper']; // fallback default
+const normalizeRole = (role: unknown): User['role'] => {
+  return role === 'super_admin' || role === 'admin' || role === 'user' ? role : 'user';
+};
 
 const mapSupabaseUser = (supabaseUser: any): User => {
-  const provider = supabaseUser.app_metadata?.provider || 'github';
-  const username = supabaseUser.user_metadata?.user_name || supabaseUser.email || 'GitHub User';
-
-  // ตรวจสอบสิทธิ์ admin สำหรับ GitHub users
-  let role: 'super_admin' | 'admin' | 'user' = 'user';
-  if (provider === 'github' && ADMIN_GITHUB_IDS.includes(username)) {
-    role = 'super_admin'; // GitHub admins = super_admin
-  }
+  const username =
+    supabaseUser.user_metadata?.name ||
+    supabaseUser.user_metadata?.user_name ||
+    supabaseUser.email ||
+    'User';
 
   return {
     id: supabaseUser.id,
     username,
-    role,
-    provider,
+    role: normalizeRole(supabaseUser.user_metadata?.role || supabaseUser.app_metadata?.role),
+    provider: supabaseUser.app_metadata?.provider || 'email',
     isAuthenticated: true,
+    email: supabaseUser.email,
+    avatarUrl: supabaseUser.user_metadata?.avatar_url,
   };
 };
 
@@ -62,10 +59,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       login: async (username: string, password: string) => {
-        if (
-          username === SUPER_ADMIN.username &&
-          password === SUPER_ADMIN.password
-        ) {
+        if (username === SUPER_ADMIN.username && password === SUPER_ADMIN.password) {
           const user: User = {
             id: SUPER_ADMIN.id,
             username: SUPER_ADMIN.username,
@@ -117,7 +111,7 @@ export const useAuthStore = create<AuthState>()(
             nickname: emp.nickname,
             avatarUrl: emp.avatar_url,
             email: emp.email,
-            role: (emp.role as 'super_admin' | 'admin' | 'user') || 'user',
+            role: normalizeRole(emp.role),
             provider: 'employee',
             isAuthenticated: true,
           };
@@ -126,26 +120,6 @@ export const useAuthStore = create<AuthState>()(
         } catch (err: any) {
           return { ok: false, error: err.message };
         }
-      },
-
-      signInWithGitHub: async () => {
-        if (!isSupabaseConfigured) {
-          return 'Supabase ยังไม่ถูกตั้งค่า';
-        }
-
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'github',
-          options: {
-            scopes: 'read:user',
-          },
-        });
-
-        if (error) {
-          console.warn('Supabase GitHub auth error:', error.message);
-          return error.message;
-        }
-
-        return null;
       },
 
       logout: async () => {

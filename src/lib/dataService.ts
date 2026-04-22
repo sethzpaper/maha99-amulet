@@ -3,9 +3,9 @@ import {
   LineLog,
   DailyStat,
   SocialPost,
-  AdminStats,
   VideoRecord,
   CompetitorAnalysisResponse,
+  LeaderboardEntry,
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -68,23 +68,6 @@ class DataService {
     }
   }
 
-  async fetchAdminStats(): Promise<AdminStats[]> {
-    const cacheKey = this.getCacheKey('admins');
-    const cached = this.getFromCache<AdminStats[]>(cacheKey);
-    if (cached) return cached;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/admins`);
-      if (!response.ok) throw new Error('Failed to fetch admins');
-      const data = await response.json();
-      this.setCache(cacheKey, data);
-      return data;
-    } catch (error) {
-      console.warn('Error fetching admin stats from API:', error);
-      return [];
-    }
-  }
-
   async fetchVideos(): Promise<VideoRecord[]> {
     const cacheKey = this.getCacheKey('videos');
     const cached = this.getFromCache<VideoRecord[]>(cacheKey);
@@ -99,6 +82,52 @@ class DataService {
     } catch (error) {
       console.warn('Error fetching videos from API:', error);
       return [];
+    }
+  }
+
+  async createVideo(video: Partial<VideoRecord>): Promise<VideoRecord | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/videos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(video),
+      });
+      if (!response.ok) throw new Error('Failed to create video');
+      const data = await response.json();
+      this.cache.delete(this.getCacheKey('videos'));
+      return data.video;
+    } catch (error) {
+      console.warn('Error creating video:', error);
+      return null;
+    }
+  }
+
+  async updateVideo(id: string, video: Partial<VideoRecord>): Promise<VideoRecord | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/videos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(video),
+      });
+      if (!response.ok) throw new Error('Failed to update video');
+      const data = await response.json();
+      this.cache.delete(this.getCacheKey('videos'));
+      return data.video;
+    } catch (error) {
+      console.warn('Error updating video:', error);
+      return null;
+    }
+  }
+
+  async deleteVideo(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/videos/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete video');
+      this.cache.delete(this.getCacheKey('videos'));
+      return true;
+    } catch (error) {
+      console.warn('Error deleting video:', error);
+      return false;
     }
   }
 
@@ -125,7 +154,7 @@ class DataService {
     if (cached) return cached;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/facebook-posts`);
+      const response = await fetch(`${API_BASE_URL}/social-posts?platform=facebook`);
       if (!response.ok) throw new Error('Failed to fetch facebook posts');
       const data = await response.json();
       this.setCache(cacheKey, data);
@@ -142,7 +171,7 @@ class DataService {
     if (cached) return cached;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/tiktok-posts`);
+      const response = await fetch(`${API_BASE_URL}/social-posts?platform=tiktok`);
       if (!response.ok) throw new Error('Failed to fetch tiktok posts');
       const data = await response.json();
       this.setCache(cacheKey, data);
@@ -201,6 +230,23 @@ class DataService {
     } catch (error) {
       console.warn('Error fetching competitor analysis from API:', error);
       return null;
+    }
+  }
+
+  async fetchLeaderboard(metric: 'views' | 'likes-fb' | 'likes-tt' | 'hours'): Promise<LeaderboardEntry[]> {
+    const cacheKey = this.getCacheKey(`leaderboard-${metric}`);
+    const cached = this.getFromCache<LeaderboardEntry[]>(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/leaderboard/${metric}`);
+      if (!response.ok) throw new Error(`Failed to fetch leaderboard ${metric}`);
+      const data = await response.json();
+      this.setCache(cacheKey, data);
+      return data;
+    } catch (error) {
+      console.warn(`Error fetching leaderboard ${metric}:`, error);
+      return [];
     }
   }
 

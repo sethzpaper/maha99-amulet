@@ -8,10 +8,31 @@
   --color-primary: #1d7a62;
 }
 
+:root {
+  --app-bg: #0c0900;
+  --app-bg-deep: #0a0700;
+  --app-accent: #d4af37;
+  --app-accent-soft: rgba(212, 175, 55, 0.12);
+}
+
+:root[data-theme="jade"] {
+  --app-bg: #05130f;
+  --app-bg-deep: #03100c;
+  --app-accent: #34d399;
+  --app-accent-soft: rgba(52, 211, 153, 0.16);
+}
+
+:root[data-theme="ruby"] {
+  --app-bg: #160607;
+  --app-bg-deep: #110405;
+  --app-accent: #f43f5e;
+  --app-accent-soft: rgba(244, 63, 94, 0.16);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  background: #0c0900;
+  background: var(--app-bg);
   color: #e8dfc8;
   font-family: var(--font-sans);
 }
@@ -23,7 +44,7 @@ body::selection {
 /* ── Glass card surface ── */
 .glass-card {
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(212, 175, 55, 0.12);
+  border: 1px solid var(--app-accent-soft);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
@@ -31,16 +52,33 @@ body::selection {
 /* ── Gold glow border ── */
 .gold-border-glow {
   box-shadow:
-    0 0 40px rgba(212, 175, 55, 0.06),
-    inset 0 0 40px rgba(212, 175, 55, 0.02);
+    0 0 40px color-mix(in srgb, var(--app-accent) 8%, transparent),
+    inset 0 0 40px color-mix(in srgb, var(--app-accent) 4%, transparent);
 }
 
 /* ── Gold text gradient ── */
 .gold-text-gradient {
-  background: linear-gradient(135deg, #d4af37 0%, #f5e17a 48%, #b8952a 100%);
+  background: linear-gradient(135deg, var(--app-accent) 0%, #f5e17a 48%, var(--app-accent) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+:root[data-theme="jade"] .bg-\[\#0c0900\],
+:root[data-theme="ruby"] .bg-\[\#0c0900\] {
+  background-color: var(--app-bg) !important;
+}
+
+:root[data-theme="jade"] .bg-\[\#0a0700\],
+:root[data-theme="ruby"] .bg-\[\#0a0700\] {
+  background-color: var(--app-bg-deep) !important;
+}
+
+:root[data-theme="jade"] .text-\[\#d4af37\],
+:root[data-theme="ruby"] .text-\[\#d4af37\],
+:root[data-theme="jade"] .text-gold,
+:root[data-theme="ruby"] .text-gold {
+  color: var(--app-accent) !important;
 }
 
 /* ── Custom scrollbar ── */
