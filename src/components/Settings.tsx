@@ -27,9 +27,10 @@ import {
 
 interface SettingsProps {
   isSuperAdmin?: boolean;
+  isAuthenticated?: boolean;
 }
 
-export function Settings({ isSuperAdmin = false }: SettingsProps) {
+export function Settings({ isSuperAdmin = false, isAuthenticated = false }: SettingsProps) {
   const [exportType, setExportType] = useState('daily');
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'classic';
@@ -51,8 +52,10 @@ export function Settings({ isSuperAdmin = false }: SettingsProps) {
   };
 
   useEffect(() => {
-    loadAccounts();
-  }, []);
+    if (isAuthenticated) {
+      loadAccounts();
+    }
+  }, [isAuthenticated]);
 
   const showAccountMessage = (message: string) => {
     setAccountMessage(message);
@@ -114,12 +117,12 @@ export function Settings({ isSuperAdmin = false }: SettingsProps) {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-serif text-zinc-100 italic">Settings & Export</h2>
+          <h2 className="text-2xl font-serif text-zinc-100 italic">{isAuthenticated ? 'Settings & Export' : 'Settings'}</h2>
           <p className="text-zinc-500 text-sm">จัดการระบบและส่งออกรายงานสถิติ</p>
         </div>
       </div>
 
-      {!isSuperAdmin && (
+      {isAuthenticated && !isSuperAdmin && (
         <div className="flex items-center gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
           <Lock className="w-5 h-5 text-amber-500 shrink-0" />
           <p className="text-xs text-amber-400">การเปลี่ยนแปลงการตั้งค่าสงวนไว้สำหรับ Super Admin เท่านั้น</p>
@@ -163,6 +166,8 @@ export function Settings({ isSuperAdmin = false }: SettingsProps) {
         </div>
       </div>
 
+      {isAuthenticated && (
+        <>
       {/* Super Admin Social Source Settings */}
       <div className="glass-card p-8 rounded-3xl gold-border-glow">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-8">
@@ -384,6 +389,8 @@ export function Settings({ isSuperAdmin = false }: SettingsProps) {
             ดูบันทึกทั้งหมด (Full Audit Log)
          </button>
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -95,7 +95,7 @@ export const useAuthStore = create<AuthState>()(
 
       loginEmployee: async (employeeId: string, password: string) => {
         try {
-          const apiBase = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000/api';
+          const apiBase = (import.meta.env.VITE_API_URL as string) || '/api';
           const res = await fetch(`${apiBase}/employees/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
