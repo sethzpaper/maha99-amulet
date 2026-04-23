@@ -14,17 +14,16 @@ npm run lint
 
 ## Environment
 
-Copy `.env.example` to your local env file and set the Cloudflare backend URL:
+Copy `.env.example` to your local env file and configure Supabase:
 
 ```bash
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-public-anon-key
-VITE_API_URL=https://maha999-stat.lynxzmile.workers.dev
 VITE_ADMIN_GITHUB_IDS=github_username1,github_username2
 VITE_MANAGER_EMAIL=manager@example.com
 ```
 
-If the frontend and API are deployed under the same Cloudflare domain, the app can also work with the default `/api` fallback.
+All data access now goes through the Supabase client directly from the browser. See `MIGRATION_NOTES.md` for the required tables, RPC functions, storage buckets, and RLS policies.
 
 ## Project Shape
 

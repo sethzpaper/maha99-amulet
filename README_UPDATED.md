@@ -2,11 +2,14 @@
 
 This repository is now frontend-only.
 
-Backend API calls are expected to be served by Cloudflare and configured with:
+All data access goes through the Supabase JS client directly from the browser — configure with:
 
 ```bash
-VITE_API_URL=https://maha999-stat.lynxzmile.workers.dev
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-public-anon-key
 ```
+
+See `MIGRATION_NOTES.md` for the required tables, RPC functions, and policies.
 
 Use these commands for the frontend:
 
