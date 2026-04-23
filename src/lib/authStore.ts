@@ -95,16 +95,17 @@ export const useAuthStore = create<AuthState>()(
 
       loginEmployee: async (employeeId: string, password: string) => {
         try {
-          const apiBase = (import.meta.env.VITE_API_URL as string) || '/api';
-          const res = await fetch(`${apiBase}/employees/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ employeeId, password }),
+          if (!isSupabaseConfigured) {
+            return { ok: false, error: 'Supabase is not configured' };
+          }
+          const { data, error } = await supabase.rpc('employee_login', {
+            p_code: employeeId,
+            p_password: password,
           });
-          const data = await res.json();
-          if (!res.ok) return { ok: false, error: data.error || 'login failed' };
+          if (error) return { ok: false, error: error.message || 'login failed' };
+          const emp = Array.isArray(data) ? data[0] : data;
+          if (!emp) return { ok: false, error: 'invalid credentials' };
 
-          const emp = data.employee;
           const user: User = {
             id: emp.id,
             username: emp.nickname,

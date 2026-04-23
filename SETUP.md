@@ -12,11 +12,10 @@ npm run dev
 ```bash
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-public-anon-key
-VITE_API_URL=https://maha999-stat.lynxzmile.workers.dev
 VITE_ADMIN_GITHUB_IDS=github_username1,github_username2
 VITE_MANAGER_EMAIL=manager@example.com
 ```
 
-## Cloudflare
+## Deployment
 
-Set the same `VITE_*` variables in Cloudflare Pages or your deployment environment. If the API is mounted on the same domain, `/api` is the frontend fallback.
+Set the same `VITE_*` variables in Cloudflare Pages (or your static host). All data access now goes through the Supabase client — no separate API worker is required. See `MIGRATION_NOTES.md` for required Supabase schema/RPC/storage setup.

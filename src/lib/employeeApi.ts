@@ -1,4 +1,4 @@
-const API_BASE = (import.meta.env.VITE_API_URL as string) || '/api';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 export interface Employee {
   id: string;
@@ -43,11 +43,6 @@ export interface TrackedAccount {
   note?: string;
   created_at: string;
 }
-
-const authHeaders = (role?: string): HeadersInit => ({
-  'Content-Type': 'application/json',
-  ...(role ? { 'x-role': role } : {}),
-});
 
 const TRACKED_ACCOUNTS_STORAGE_KEY = 'amulet_tracked_accounts';
 
@@ -129,123 +124,186 @@ function filterTrackedAccounts(
   });
 }
 
+function ensureConfigured() {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured');
+  }
+}
+
 // ---- Employees ----
 export async function listEmployees(): Promise<Employee[]> {
-  const res = await fetch(`${API_BASE}/employees`);
-  return res.json();
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.warn('listEmployees error:', error.message);
+    return [];
+  }
+  return (data || []) as Employee[];
 }
 
 export async function getEmployee(id: string): Promise<Employee & { badges: EmployeeBadge[] }> {
-  const res = await fetch(`${API_BASE}/employees/${id}`);
-  return res.json();
+  ensureConfigured();
+  const { data: employee, error } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) throw new Error(error.message);
+
+  const { data: badgeRows } = await supabase
+    .from('employee_badges')
+    .select('id, awarded_at, note, badge:badges(*)')
+    .eq('employee_id', id)
+    .order('awarded_at', { ascending: false });
+
+  const badges: EmployeeBadge[] = (badgeRows || []).map((row: any) => ({
+    id: row.id,
+    awarded_at: row.awarded_at,
+    note: row.note,
+    badge: row.badge,
+  }));
+
+  return { ...(employee as Employee), badges };
 }
 
 export async function loginEmployee(employeeId: string, password: string) {
-  const res = await fetch(`${API_BASE}/employees/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ employeeId, password }),
+  ensureConfigured();
+  const { data, error } = await supabase.rpc('employee_login', {
+    p_code: employeeId,
+    p_password: password,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'login failed');
+  if (error) throw new Error(error.message || 'login failed');
+  // RPC returns a single row or an array with one row depending on definition
+  const emp = Array.isArray(data) ? data[0] : data;
+  if (!emp) throw new Error('invalid credentials');
+  return { employee: emp };
+}
+
+export async function createEmployee(_role: string, body: Partial<Employee> & { password?: string }) {
+  ensureConfigured();
+  const { password, ...rest } = body;
+  const insert: any = { ...rest };
+  if (password) {
+    // plaintext -> RPC can hash, but here we push raw; server-side trigger or manual seed recommended
+    insert.password_hash = password;
+  }
+  const { data, error } = await supabase
+    .from('employees')
+    .insert(insert)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
   return data;
 }
 
-export async function createEmployee(role: string, body: Partial<Employee> & { password?: string }) {
-  const res = await fetch(`${API_BASE}/employees`, {
-    method: 'POST',
-    headers: authHeaders(role),
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error((await res.json()).error || 'create failed');
-  return res.json();
+export async function updateEmployee(_role: string, id: string, body: Partial<Employee> & { password?: string }) {
+  ensureConfigured();
+  const { password, ...rest } = body;
+  const update: any = { ...rest };
+  if (password) {
+    update.password_hash = password;
+  }
+  const { data, error } = await supabase
+    .from('employees')
+    .update(update)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
-export async function updateEmployee(role: string, id: string, body: Partial<Employee> & { password?: string }) {
-  const res = await fetch(`${API_BASE}/employees/${id}`, {
-    method: 'PUT',
-    headers: authHeaders(role),
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error((await res.json()).error || 'update failed');
-  return res.json();
-}
-
-export async function deleteEmployee(role: string, id: string) {
-  const res = await fetch(`${API_BASE}/employees/${id}`, {
-    method: 'DELETE',
-    headers: authHeaders(role),
-  });
-  if (!res.ok) throw new Error((await res.json()).error || 'delete failed');
-  return res.json();
+export async function deleteEmployee(_role: string, id: string) {
+  ensureConfigured();
+  const { error } = await supabase.from('employees').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
 }
 
 // ---- Badges ----
 export async function listBadges(): Promise<Badge[]> {
-  const res = await fetch(`${API_BASE}/employees/badges/list`);
-  return res.json();
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase.from('badges').select('*').order('name');
+  if (error) {
+    console.warn('listBadges error:', error.message);
+    return [];
+  }
+  return (data || []) as Badge[];
 }
 
-export async function createBadge(role: string, body: Partial<Badge>) {
-  const res = await fetch(`${API_BASE}/employees/badges`, {
-    method: 'POST',
-    headers: authHeaders(role),
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error((await res.json()).error || 'create badge failed');
-  return res.json();
+export async function createBadge(_role: string, body: Partial<Badge>) {
+  ensureConfigured();
+  const { data, error } = await supabase.from('badges').insert(body).select().single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
-export async function deleteBadge(role: string, id: string) {
-  const res = await fetch(`${API_BASE}/employees/badges/${id}`, {
-    method: 'DELETE',
-    headers: authHeaders(role),
-  });
-  return res.json();
+export async function deleteBadge(_role: string, id: string) {
+  ensureConfigured();
+  const { error } = await supabase.from('badges').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
 }
 
-export async function awardBadge(role: string, employeeId: string, badgeId: string, note?: string) {
-  const res = await fetch(`${API_BASE}/employees/${employeeId}/badges`, {
-    method: 'POST',
-    headers: authHeaders(role),
-    body: JSON.stringify({ badgeId, note }),
-  });
-  if (!res.ok) throw new Error((await res.json()).error || 'award failed');
-  return res.json();
+export async function awardBadge(_role: string, employeeId: string, badgeId: string, note?: string) {
+  ensureConfigured();
+  const { data, error } = await supabase
+    .from('employee_badges')
+    .insert({ employee_id: employeeId, badge_id: badgeId, note, awarded_at: new Date().toISOString() })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
-export async function removeBadgeAward(role: string, employeeId: string, awardId: string) {
-  const res = await fetch(`${API_BASE}/employees/${employeeId}/badges/${awardId}`, {
-    method: 'DELETE',
-    headers: authHeaders(role),
-  });
-  return res.json();
+export async function removeBadgeAward(_role: string, _employeeId: string, awardId: string) {
+  ensureConfigured();
+  const { error } = await supabase.from('employee_badges').delete().eq('id', awardId);
+  if (error) throw new Error(error.message);
+  return { ok: true };
 }
 
 // ---- Tracked Accounts ----
 export async function listTrackedAccounts(params: { platform?: 'facebook' | 'tiktok'; competitor?: boolean } = {}): Promise<TrackedAccount[]> {
-  const qs = new URLSearchParams();
-  if (params.platform) qs.set('platform', params.platform);
-  if (params.competitor !== undefined) qs.set('competitor', String(params.competitor));
+  if (!isSupabaseConfigured) {
+    return filterTrackedAccounts(readLocalTrackedAccounts(), params);
+  }
   try {
-    const res = await fetch(`${API_BASE}/tracked-accounts?${qs.toString()}`);
-    if (!res.ok) throw new Error('tracked accounts api failed');
-    return res.json();
-  } catch {
+    let q = supabase.from('tracked_accounts').select('*').eq('is_active', true);
+    if (params.platform) q = q.eq('platform', params.platform);
+    if (params.competitor !== undefined) q = q.eq('is_competitor', params.competitor);
+    const { data, error } = await q;
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) {
+      return filterTrackedAccounts(readLocalTrackedAccounts(), params);
+    }
+    return data as TrackedAccount[];
+  } catch (err) {
+    console.warn('listTrackedAccounts fallback:', err);
     return filterTrackedAccounts(readLocalTrackedAccounts(), params);
   }
 }
 
-export async function createTrackedAccount(role: string, body: Partial<TrackedAccount>) {
+export async function createTrackedAccount(_role: string, body: Partial<TrackedAccount>) {
   try {
-    const res = await fetch(`${API_BASE}/tracked-accounts`, {
-      method: 'POST',
-      headers: authHeaders(role),
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error((await res.json()).error || 'create failed');
-    return res.json();
-  } catch {
+    ensureConfigured();
+    const insert = {
+      platform: body.platform || 'facebook',
+      account_name: body.account_name || 'Untitled account',
+      account_url: body.account_url || '#',
+      account_handle: body.account_handle,
+      is_active: body.is_active ?? true,
+      is_competitor: Boolean(body.is_competitor),
+      note: body.note,
+    };
+    const { data, error } = await supabase.from('tracked_accounts').insert(insert).select().single();
+    if (error) throw new Error(error.message);
+    return data;
+  } catch (err) {
+    console.warn('createTrackedAccount fallback:', err);
     const accounts = readLocalTrackedAccounts();
     const account: TrackedAccount = {
       id: `local-${Date.now()}`,
@@ -263,24 +321,26 @@ export async function createTrackedAccount(role: string, body: Partial<TrackedAc
   }
 }
 
-export async function updateTrackedAccount(role: string, id: string, body: Partial<TrackedAccount>) {
-  const res = await fetch(`${API_BASE}/tracked-accounts/${id}`, {
-    method: 'PUT',
-    headers: authHeaders(role),
-    body: JSON.stringify(body),
-  });
-  return res.json();
+export async function updateTrackedAccount(_role: string, id: string, body: Partial<TrackedAccount>) {
+  ensureConfigured();
+  const { data, error } = await supabase
+    .from('tracked_accounts')
+    .update(body)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
-export async function deleteTrackedAccount(role: string, id: string) {
+export async function deleteTrackedAccount(_role: string, id: string) {
   try {
-    const res = await fetch(`${API_BASE}/tracked-accounts/${id}`, {
-      method: 'DELETE',
-      headers: authHeaders(role),
-    });
-    if (!res.ok) throw new Error('delete failed');
-    return res.json();
-  } catch {
+    ensureConfigured();
+    const { error } = await supabase.from('tracked_accounts').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  } catch (err) {
+    console.warn('deleteTrackedAccount fallback:', err);
     const accounts = readLocalTrackedAccounts().filter((account) => account.id !== id);
     writeLocalTrackedAccounts(accounts);
     return { ok: true };
