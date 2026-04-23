@@ -1,4 +1,4 @@
-import { Amulet, LineLog, DailyStat, SocialPost, AdminStats, DailyTag, VideoRecord, AttendanceRecord, PriceTrack, GoogleTrend, ActivityLog } from '../types';
+import { Amulet, DailyStat, SocialPost, AdminStats, DailyTag, VideoRecord, AttendanceRecord, PriceTrack, GoogleTrend, ActivityLog } from '../types';
 
 export const AMULETS: Amulet[] = [
   { id: '1', name: 'พระสมเด็จวัดระฆัง พิมพ์ใหญ่', type: 'พระสมเด็จ', popularity: 98, posts: 1250, likes: 45000, shares: 8900, trend: 'up', image: 'https://picsum.photos/seed/amulet1/400/400' },
@@ -24,13 +24,6 @@ export const AMULETS: Amulet[] = [
   }))
 ];
 
-export const LINE_LOGS: LineLog[] = [
-  { id: 'l1', userName: 'Somchai A.', action: 'check-in', timestamp: '2024-04-15 08:30', groupName: 'ชมรมพระเครื่องภาคกลาง' },
-  { id: 'l2', userName: 'Wichai P.', action: 'check-in', timestamp: '2024-04-15 09:15', groupName: 'สายตรงหลวงปู่ทวด' },
-  { id: 'l3', userName: 'Anan K.', action: 'check-out', timestamp: '2024-04-15 10:00', groupName: 'ชมรมพระเครื่องภาคกลาง' },
-  { id: 'l4', userName: 'Somsak S.', action: 'check-in', timestamp: '2024-04-15 10:45', groupName: 'ตลาดพระเครื่องออนไลน์' },
-  { id: 'l5', userName: 'Malee T.', action: 'check-in', timestamp: '2024-04-15 11:30', groupName: 'ชมรมพระเครื่องภาคกลาง' },
-];
 
 export const DAILY_STATS: DailyStat[] = [
   { date: 'จันทร์', popularity: 85, mentions: 1200 },

@@ -1,6 +1,5 @@
 import {
   Amulet,
-  LineLog,
   SocialPost,
   VideoRecord,
   CompetitorAnalysisResponse,
@@ -111,15 +110,6 @@ class DataService {
       console.warn('Error deleting video:', error);
       return false;
     }
-  }
-
-  async fetchLineLogs(): Promise<LineLog[]> {
-    const cacheKey = this.getCacheKey('line-logs');
-    const cached = this.getFromCache<LineLog[]>(cacheKey);
-    if (cached) return cached;
-    const data = await this.safeSelect<LineLog>('line_logs');
-    this.setCache(cacheKey, data);
-    return data;
   }
 
   async fetchFacebookPosts(): Promise<SocialPost[]> {

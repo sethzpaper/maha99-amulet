@@ -10,14 +10,6 @@ export interface Amulet {
   image: string;
 }
 
-export interface LineLog {
-  id: string;
-  userName: string;
-  action: 'check-in' | 'check-out';
-  timestamp: string;
-  groupName: string;
-}
-
 export interface SocialPost {
   id: string;
   platform: 'facebook' | 'tiktok';
