@@ -10,6 +10,7 @@ import {
   calcTenure,
 } from '../lib/employeeApi';
 import { useAuthStore } from '../lib/authStore';
+import { AvatarPicker } from './AvatarPicker';
 
 function Toast({ msg, type, onClose }: { msg: string; type: 'success' | 'error'; onClose: () => void }) {
   useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, [onClose]);
@@ -284,8 +285,8 @@ export function EmployeeProfile() {
               <div className="grid grid-cols-2 gap-4">
                 {([
                   ['ชื่อเล่น *', 'nickname'], ['ชื่อ-สกุล', 'full_name'],
-                  ['URL รูปภาพ', 'avatar_url'], ['ตำแหน่ง', 'position'],
-                  ['อีเมล', 'email'], ['เบอร์โทร', 'phone'],
+                  ['ตำแหน่ง', 'position'], ['อีเมล', 'email'],
+                  ['เบอร์โทร', 'phone'],
                   ['วันเกิด', 'birthday', 'date'], ['วันเริ่มงาน', 'start_date', 'date'],
                 ] as [string, keyof typeof formData, string?][]).map(([label, field, type]) => (
                   <div key={field as string}>
@@ -311,10 +312,10 @@ export function EmployeeProfile() {
                   </select>
                 </div>
               </div>
-              {/* avatar preview */}
-              {formData.avatar_url && (
-                <img src={formData.avatar_url as string} alt="preview" className="w-20 h-20 rounded-full object-cover border border-slate-200" referrerPolicy="no-referrer" />
-              )}
+              <AvatarPicker
+                value={formData.avatar_url as string | undefined}
+                onChange={(url) => setFormData({ ...formData, avatar_url: url })}
+              />
               <div className="flex gap-3">
                 <button onClick={handleCreate} className="px-6 py-2 rounded-2xl bg-sky-600 text-white font-semibold text-sm hover:bg-sky-700">บันทึก</button>
                 <button onClick={() => { setShowForm(false); setFormData({}); }} className="px-6 py-2 rounded-2xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200">ยกเลิก</button>
@@ -412,10 +413,14 @@ export function EmployeeProfile() {
                   <Briefcase className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                   <FieldEdit label="ตำแหน่ง" field="position" />
                 </div>
-                <div className="flex items-start gap-3 col-span-2">
-                  <User className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                  <FieldEdit label="URL รูปภาพ" field="avatar_url" />
-                </div>
+                {editMode && (
+                  <div className="col-span-2">
+                    <AvatarPicker
+                      value={formData.avatar_url as string | undefined}
+                      onChange={(url) => setFormData({ ...formData, avatar_url: url })}
+                    />
+                  </div>
+                )}
                 {editMode && (
                   <div className="col-span-2">
                     <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest block mb-1">รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)</label>
