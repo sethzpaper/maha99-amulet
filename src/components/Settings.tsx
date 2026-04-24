@@ -32,6 +32,7 @@ interface SettingsProps {
 
 export function Settings({ isSuperAdmin = false, isAuthenticated = false }: SettingsProps) {
   const [exportType, setExportType] = useState('daily');
+  const [settingsTab, setSettingsTab] = useState('social');
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'classic';
     return window.localStorage.getItem('amulet_theme') || 'classic';
@@ -168,7 +169,21 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
 
       {isAuthenticated && (
         <>
-      {/* Super Admin Social Source Settings */}
+        <div className="flex gap-1 bg-zinc-950/60 border border-zinc-900 p-1 rounded-2xl mb-6">
+          {(['social', 'export', 'system', 'log']).map((id) => {
+            const labels = { social: 'แหล่ง Social', export: 'Export', system: 'ระบบ', log: 'บันทึก' };
+            return (
+              <button
+                key={id}
+                onClick={() => setSettingsTab(id as any)}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all ${settingsTab === id ? 'bg-gold/20 text-gold border border-gold/30' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                {labels[id as keyof typeof labels]}
+              </button>
+            );
+          })}
+        </div>
+      {settingsTab === 'social' && (
       <div className="glass-card p-8 rounded-3xl gold-border-glow">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -269,9 +284,8 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
           ลิงก์ที่ตั้งค่านี้จะถูกใช้ร่วมกันในหน้าโพส Facebook, โพส TikTok, กราฟ social summary และหน้าเปรียบเทียบคู่แข่ง หากไม่มี API backend ระบบจะเก็บค่าไว้ใน browser ด้วย localStorage ก่อน
         </p>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Export Section */}
+      )}
+      {settingsTab === 'export' && (
         <div className="glass-card p-8 rounded-3xl gold-border-glow">
           <div className="flex items-center gap-3 mb-8">
              <div className="w-10 h-10 bg-gold/10 rounded-xl flex items-center justify-center border border-gold/20">
@@ -314,9 +328,9 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
             </div>
           </div>
         </div>
-
-        {/* System Settings */}
-        <div className="glass-card p-8 rounded-3xl gold-border-glow border-zinc-800/50">
+      )}
+      {settingsTab === 'system' && (
+      <div className="glass-card p-8 rounded-3xl gold-border-glow border-zinc-800/50">
            <div className="flex items-center gap-3 mb-8">
               <div className="w-10 h-10 bg-zinc-900/50 rounded-xl flex items-center justify-center border border-zinc-800">
                  <Save className="w-6 h-6 text-zinc-500" />
@@ -348,10 +362,9 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
                  </div>
               </div>
            </div>
-        </div>
       </div>
-
-      {/* Activity Log Section */}
+      )}
+      {settingsTab === 'log' && (
       <div className="glass-card p-8 rounded-3xl gold-border-glow">
          <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
@@ -389,6 +402,7 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
             ดูบันทึกทั้งหมด (Full Audit Log)
          </button>
       </div>
+      )}
         </>
       )}
     </div>

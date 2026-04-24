@@ -8,6 +8,7 @@ import {
   Crown,
   Facebook,
   Flower2,
+  Globe,
   LogIn,
   LogOut,
   Medal,
@@ -279,6 +280,7 @@ function DashboardPage() {
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('attendance');
   const [showLogin, setShowLogin] = useState(false);
+  const [lang, setLang] = useState<'th' | 'en'>('th');
   const { user, isAuthenticated, logout } = useAuthStore();
 
   const isSuperAdmin = user?.role === 'super_admin';
@@ -335,7 +337,7 @@ export default function App() {
             >
               <Clock className="h-4 w-4 shrink-0 text-[#c4982f]" />
               <Icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{label}</span>
+              <span className="truncate">{pageMeta[tab][lang]}</span>
             </button>
           ))}
 
@@ -352,7 +354,7 @@ export default function App() {
             >
               <Flower2 className="h-3 w-3 shrink-0 text-[#c4982f]/70" />
               <Icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{label}</span>
+              <span className="truncate">{pageMeta[tab][lang]}</span>
             </button>
           ))}
 
@@ -371,7 +373,7 @@ export default function App() {
                 >
                   <Flower2 className="h-3 w-3 shrink-0 text-[#c4982f]/70" />
                   <Icon className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{label}</span>
+                  <span className="truncate">{pageMeta[tab][lang]}</span>
                 </button>
               ))}
             </>
@@ -388,7 +390,7 @@ export default function App() {
           >
             <Flower2 className="h-3 w-3 shrink-0 text-[#c4982f]/70" />
             <SettingsIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">เน€เธโ€ขเน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’</span>
+            <span className="truncate">{pageMeta['settings'][lang]}</span>
             {!isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">เน€เธโ€เน€เธเธเน€เธโฌเน€เธโ€”เน€เธยเน€เธเธ’เน€เธยเน€เธเธ‘เน€เธยเน€เธย</span>}
           </button>
         </nav>
@@ -424,9 +426,16 @@ export default function App() {
             >
               <Shield className="h-4 w-4 shrink-0" />
               <LogIn className="h-4 w-4 shrink-0" />
-              <span>เน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธโ€เน€เธเธเน€เธยเน€เธเธ…</span>
+              <span>ผู้แลล็อกอิน</span>
             </button>
           )}
+          <button
+            onClick={() => setLang(lang === 'th' ? 'en' : 'th')}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#8a6820] hover:text-[#c4982f] hover:bg-[#140e00] rounded-lg transition-all"
+          >
+            <Globe className="w-4 h-4" />
+            <span>{lang === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}</span>
+          </button>
           <p className="px-1 text-sm font-extrabold leading-6 text-[#d4af37]">
             "คนศรัทธาพระ บุญช่วยนำพา ต้องทำอย่างเต็มที่ ต้องทำให้ดีที่สุด"
           </p>
