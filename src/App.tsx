@@ -61,45 +61,45 @@ const navPriority: Record<Tab, number> = {
 };
 
 const pageMeta: Record<Tab, { th: string; en: string }> = {
-  dashboard: { th: 'เน€เธย เน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ', en: 'Organization Dashboard' },
-  facebook: { th: 'เน€เธยเน€เธยเน€เธเธ Facebook', en: 'Facebook Activity' },
-  tiktok: { th: 'เน€เธยเน€เธยเน€เธเธ TikTok', en: 'TikTok Short-form Video' },
-  comparison: { th: 'เน€เธโฌเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธยเน€เธโฌเน€เธโ€”เน€เธเธ•เน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย', en: 'Competitor Intelligence' },
-  video: { th: 'เน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธ‘เน€เธโ€เน€เธยเน€เธเธ’เน€เธเธเน€เธเธเน€เธเธ”เน€เธโ€เน€เธเธ•เน€เธยเน€เธเธ', en: 'Video Asset Management' },
-  stats: { th: 'เน€เธเธเน€เธโ€“เน€เธเธ”เน€เธโ€ขเน€เธเธ”เน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธย', en: 'Admin Performance' },
-  attendance: { th: 'เน€เธเธ…เน€เธยเน€เธโฌเน€เธเธเน€เธเธ…เน€เธเธ’เน€เธยเน€เธเธ’เน€เธย', en: 'Attendance & Leave System' },
-  employees: { th: 'เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธย', en: 'Employee Directory' },
-  settings: { th: 'เน€เธโ€ขเน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’', en: 'System Settings' },
+  dashboard: { th: 'แดชบอร์ดองค์กร', en: 'Organization Dashboard' },
+  facebook: { th: 'โพสต์ Facebook', en: 'Facebook Activity' },
+  tiktok: { th: 'โพสต์ TikTok', en: 'TikTok Short-form Video' },
+  comparison: { th: 'เปรียบเทียบคู่แข่ง', en: 'Competitor Intelligence' },
+  video: { th: 'จัดการคลังวิดีโอ', en: 'Video Asset Management' },
+  stats: { th: 'สถิติพนักงาน', en: 'Admin Performance' },
+  attendance: { th: 'ลงเวลา · ลางาน', en: 'Attendance & Leave System' },
+  employees: { th: 'ทำเนียบพนักงาน', en: 'Employee Directory' },
+  settings: { th: 'ตั้งค่า', en: 'System Settings' },
 };
 
 const navPublicGuest: NavItem[] = [
-  { tab: 'attendance', label: 'เน€เธเธ…เน€เธยเน€เธโฌเน€เธเธเน€เธเธ…เน€เธเธ’เน€เธยเน€เธเธ’เน€เธย', icon: Clock },
-  { tab: 'dashboard', label: 'เน€เธยเน€เธโ€เน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธโ€', icon: BarChart3 },
-  { tab: 'comparison', label: 'เน€เธโฌเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธยเน€เธโฌเน€เธโ€”เน€เธเธ•เน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย', icon: Activity },
-  { tab: 'stats', label: 'เน€เธเธเน€เธโ€“เน€เธเธ”เน€เธโ€ขเน€เธเธ”เน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธย', icon: Award },
-  { tab: 'employees', label: 'เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธย', icon: Users },
-  { tab: 'settings', label: 'เน€เธโ€ขเน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’', icon: SettingsIcon },
+  { tab: 'attendance', label: 'ลงเวลา · ลางาน', icon: Clock },
+  { tab: 'dashboard', label: 'แดชบอร์ด', icon: BarChart3 },
+  { tab: 'comparison', label: 'เปรียบเทียบคู่แข่ง', icon: Activity },
+  { tab: 'stats', label: 'สถิติพนักงาน', icon: Award },
+  { tab: 'employees', label: 'ทำเนียบพนักงาน', icon: Users },
+  { tab: 'settings', label: 'ตั้งค่า', icon: SettingsIcon },
 ];
 
 const navLoggedIn: NavItem[] = [
-  { tab: 'attendance', label: 'เน€เธเธ…เน€เธยเน€เธโฌเน€เธเธเน€เธเธ…เน€เธเธ’เน€เธยเน€เธเธ’เน€เธย', icon: Clock },
-  { tab: 'dashboard', label: 'เน€เธยเน€เธโ€เน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธโ€', icon: BarChart3 },
-  { tab: 'facebook', label: 'เน€เธยเน€เธยเน€เธเธ Facebook', icon: Facebook },
-  { tab: 'tiktok', label: 'เน€เธยเน€เธยเน€เธเธ TikTok', icon: Music2 },
-  { tab: 'comparison', label: 'เน€เธโฌเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธยเน€เธโฌเน€เธโ€”เน€เธเธ•เน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย', icon: Activity },
-  { tab: 'video', label: 'เน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธ‘เน€เธโ€เน€เธยเน€เธเธ’เน€เธเธเน€เธเธเน€เธเธ”เน€เธโ€เน€เธเธ•เน€เธยเน€เธเธ', icon: Video },
-  { tab: 'stats', label: 'เน€เธเธเน€เธโ€“เน€เธเธ”เน€เธโ€ขเน€เธเธ”เน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธย', icon: Award },
-  { tab: 'employees', label: 'เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธย', icon: Users },
-  { tab: 'settings', label: 'เน€เธโ€ขเน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’', icon: SettingsIcon },
+  { tab: 'attendance', label: 'ลงเวลา · ลางาน', icon: Clock },
+  { tab: 'dashboard', label: 'แดชบอร์ด', icon: BarChart3 },
+  { tab: 'facebook', label: 'โพสต์ Facebook', icon: Facebook },
+  { tab: 'tiktok', label: 'โพสต์ TikTok', icon: Music2 },
+  { tab: 'comparison', label: 'เปรียบเทียบคู่แข่ง', icon: Activity },
+  { tab: 'video', label: 'จัดการวิดีโอ', icon: Video },
+  { tab: 'stats', label: 'สถิติพนักงาน', icon: Award },
+  { tab: 'employees', label: 'ทำเนียบพนักงาน', icon: Users },
+  { tab: 'settings', label: 'ตั้งค่า', icon: SettingsIcon },
 ];
 
 const fallbackLeaderboard = [
-  { rank: 1, name: 'เน€เธยเน€เธเธ‘เน€เธยเน€เธเธเน€เธเธ’', role: 'Director / Producer', kpi: 100, icon: Crown },
-  { rank: 2, name: 'เน€เธเธเน€เธเธ”เน€เธยเน€เธโ€ขเน€เธเธเน€เธเธ’', role: 'Editor', kpi: 99, icon: Medal },
-  { rank: 3, name: 'เน€เธยเน€เธเธ•เน€เธโ€ขเน€เธเธ', role: 'Motion Artist', kpi: 98, icon: Zap },
-  { rank: 4, name: 'เน€เธยเน€เธเธ”เน€เธเธเน€เธยเน€เธย', role: 'Account Executive', kpi: 96, icon: Zap },
-  { rank: 5, name: 'เน€เธเธเน€เธยเน€เธเธ”', role: 'Camera / Lighting', kpi: 94, icon: Zap },
-  { rank: 6, name: 'เน€เธยเน€เธเธเน€เธเธ’', role: 'Content Planner', kpi: 92, icon: Zap },
+  { rank: 1, name: 'พี่ใหญ่', role: 'Director / Producer', kpi: 100, icon: Crown },
+  { rank: 2, name: 'น้องเอ', role: 'Editor', kpi: 99, icon: Medal },
+  { rank: 3, name: 'น้องบี', role: 'Motion Artist', kpi: 98, icon: Zap },
+  { rank: 4, name: 'น้องซี', role: 'Account Executive', kpi: 96, icon: Zap },
+  { rank: 5, name: 'น้องดี', role: 'Camera / Lighting', kpi: 94, icon: Zap },
+  { rank: 6, name: 'น้องอี', role: 'Content Planner', kpi: 92, icon: Zap },
 ];
 
 function DashboardPage() {
@@ -149,10 +149,10 @@ function DashboardPage() {
     value: item.kpi,
   }));
   const leaderboardSections = [
-    { key: 'views', label: 'เน€เธเธเน€เธเธเน€เธโ€เน€เธเธเน€เธเธ”เน€เธเธเน€เธเธเน€เธเธเน€เธเธ', suffix: 'views', icon: Video, rows: leaderboards.views },
-    { key: 'likesFb', label: 'เน€เธยเน€เธเธ…เน€เธยเน€เธย Facebook', suffix: 'likes', icon: Facebook, rows: leaderboards.likesFb },
-    { key: 'likesTt', label: 'เน€เธยเน€เธเธ…เน€เธยเน€เธย TikTok', suffix: 'likes', icon: Music2, rows: leaderboards.likesTt },
-    { key: 'hours', label: 'เน€เธยเน€เธเธ‘เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ’เน€เธย', suffix: 'hrs', icon: Clock, rows: leaderboards.hours },
+    { key: 'views', label: 'ยอดวิวสูงสุด', suffix: 'views', icon: Video, rows: leaderboards.views },
+    { key: 'likesFb', label: 'ยอดไลก์ Facebook', suffix: 'likes', icon: Facebook, rows: leaderboards.likesFb },
+    { key: 'likesTt', label: 'ยอดไลก์ TikTok', suffix: 'likes', icon: Music2, rows: leaderboards.likesTt },
+    { key: 'hours', label: 'ชั่วโมงทำงาน', suffix: 'hrs', icon: Clock, rows: leaderboards.hours },
   ];
 
   return (
@@ -165,7 +165,7 @@ function DashboardPage() {
             <Facebook className="w-5 h-5 text-blue-400" />
             <div>
               <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Facebook</p>
-              <h3 className="text-base font-bold gold-text-gradient">เน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธโฌเน€เธยเน€เธยเน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธยเน€เธยเน€เธเธ•เน€เธย</h3>
+              <h3 className="text-base font-bold gold-text-gradient">ผลตอบรับเดือนนี้</h3>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3 pt-2">
@@ -178,11 +178,11 @@ function DashboardPage() {
               <p className="text-xl font-bold text-blue-400 mt-1">{facebookAccounts.length}</p>
             </div>
             <div className="bg-zinc-950/50 rounded-xl p-3 text-center border border-zinc-900">
-              <p className="text-[10px] text-zinc-500">เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย</p>
+              <p className="text-[10px] text-zinc-500">คู่แข่ง</p>
               <p className="text-xl font-bold text-blue-400 mt-1">{competitorAccounts.filter((account) => account.platform === 'facebook').length}</p>
             </div>
           </div>
-          <p className="text-[10px] text-zinc-500 italic">เน€เธโ€เน€เธเธเน€เธเธเน€เธเธ’เน€เธเธเน€เธเธ…เน€เธเธเน€เธโฌเน€เธเธเน€เธเธ•เน€เธเธเน€เธโ€เน€เธโ€”เน€เธเธ•เน€เธยเน€เธโฌเน€เธเธเน€เธยเน€เธเธ เน€เธยเน€เธยเน€เธเธ Facebook</p>
+          <p className="text-[10px] text-zinc-500 italic">ข้อมูลจากบัญชีที่เชื่อมไว้ · โพสต์ Facebook</p>
         </div>
 
         <div className="glass-card p-6 rounded-3xl gold-border-glow space-y-3">
@@ -190,7 +190,7 @@ function DashboardPage() {
             <Music2 className="w-5 h-5 text-pink-400" />
             <div>
               <p className="text-[10px] text-zinc-500 uppercase tracking-widest">TikTok</p>
-              <h3 className="text-base font-bold gold-text-gradient">เน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธยเน€เธยเน€เธเธ•เน€เธย</h3>
+              <h3 className="text-base font-bold gold-text-gradient">ผลตอบรับเดือนนี้</h3>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3 pt-2">
@@ -199,15 +199,15 @@ function DashboardPage() {
               <p className="text-xl font-bold text-pink-400 mt-1">{Math.round(tiktokReach / 1000)}K</p>
             </div>
             <div className="bg-zinc-950/50 rounded-xl p-3 text-center border border-zinc-900">
-              <p className="text-[10px] text-zinc-500">เน€เธยเน€เธยเน€เธเธเน€เธย</p>
+              <p className="text-[10px] text-zinc-500">ช่อง</p>
               <p className="text-xl font-bold text-pink-400 mt-1">{tiktokAccounts.length}</p>
             </div>
             <div className="bg-zinc-950/50 rounded-xl p-3 text-center border border-zinc-900">
-              <p className="text-[10px] text-zinc-500">เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย</p>
+              <p className="text-[10px] text-zinc-500">คู่แข่ง</p>
               <p className="text-xl font-bold text-pink-400 mt-1">{competitorAccounts.filter((account) => account.platform === 'tiktok').length}</p>
             </div>
           </div>
-          <p className="text-[10px] text-zinc-500 italic">เน€เธโ€เน€เธเธเน€เธเธเน€เธเธ’เน€เธเธเน€เธเธ…เน€เธเธเน€เธโฌเน€เธเธเน€เธเธ•เน€เธเธเน€เธโ€เน€เธโ€”เน€เธเธ•เน€เธยเน€เธโฌเน€เธเธเน€เธยเน€เธเธ เน€เธยเน€เธยเน€เธเธ TikTok</p>
+          <p className="text-[10px] text-zinc-500 italic">ข้อมูลจากบัญชีที่เชื่อมไว้ · โพสต์ TikTok</p>
         </div>
       </div>
 
@@ -215,7 +215,7 @@ function DashboardPage() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Social Overview</p>
-            <h3 className="text-xl font-serif italic font-bold gold-text-gradient">เน€เธยเน€เธเธเน€เธเธ’เน€เธยเน€เธเธเน€เธโ€“เน€เธเธ”เน€เธโ€ขเน€เธเธ”เน€เธยเน€เธยเน€เธโฌเน€เธยเน€เธเธ•เน€เธยเน€เธเธเน€เธเธ…</h3>
+            <h3 className="text-xl font-serif italic font-bold gold-text-gradient">ภาพรวมโซเชียล</h3>
           </div>
           <Activity className="w-5 h-5 text-gold/40" />
         </div>
@@ -225,7 +225,7 @@ function DashboardPage() {
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold text-zinc-300">{account.account_name}</p>
                 <p className="text-[10px] text-zinc-600">
-                  {account.platform === 'facebook' ? 'Facebook' : 'TikTok'} - {account.is_competitor ? 'เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย' : 'เน€เธยเน€เธเธเน€เธยเน€เธโฌเน€เธเธเน€เธเธ’'}
+                  {account.platform === 'facebook' ? 'Facebook' : 'TikTok'} - {account.is_competitor ? 'คู่แข่ง' : 'ของเรา'}
                 </p>
               </div>
               <div className="h-3 rounded-full bg-zinc-900 overflow-hidden">
@@ -244,7 +244,7 @@ function DashboardPage() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Team Performance</p>
-            <h3 className="text-xl font-serif italic font-bold gold-text-gradient">เน€เธยเน€เธเธเน€เธเธเน€เธโ€เน€เธเธ’เน€เธยเน€เธเธเน€เธเธ‘เน€เธยเน€เธโ€เน€เธเธ‘เน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ“เน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธย</h3>
+            <h3 className="text-xl font-serif italic font-bold gold-text-gradient">ผู้นำอันดับประจำเดือน</h3>
           </div>
           <Crown className="w-5 h-5 text-gold/40" />
         </div>
@@ -319,7 +319,7 @@ export default function App() {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-bold text-[#d4af37]">เธกเธซเธฒเธเธดเธขเธก999 เน€เธเนเธเธเธทเนเธญ</p>
+            <p className="text-sm font-bold text-[#d4af37]">มหานิยม999 เช็คชื่อ</p>
             <p className="text-[10px] text-[#6a5018] uppercase tracking-widest">Amulet Stat Hub</p>
           </div>
         </div>
@@ -341,7 +341,7 @@ export default function App() {
             </button>
           ))}
 
-          <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">เน€เธโฌเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธเธ…เน€เธเธ‘เน€เธย</p>
+          <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">เครื่องมือทั่วไป</p>
           {orderedNavItems.filter(n => !['attendance', 'video', 'settings'].includes(n.tab)).map(({ tab, label, icon: Icon }) => (
             <button
               key={tab}
@@ -360,7 +360,7 @@ export default function App() {
 
           {isAdmin && (
             <>
-              <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">เน€เธยเน€เธเธ‘เน€เธโ€เน€เธยเน€เธเธ’เน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธย</p>
+              <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">จัดการคอนเทนต์</p>
               {orderedNavItems.filter(n => ['video'].includes(n.tab)).map(({ tab, label, icon: Icon }) => (
                 <button
                   key={tab}
@@ -379,7 +379,7 @@ export default function App() {
             </>
           )}
 
-          <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">เน€เธเธเน€เธเธเน€เธยเน€เธย</p>
+          <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">ระบบ</p>
           <button
             onClick={() => setActiveTab('settings')}
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg transition-all text-left ${
@@ -390,8 +390,8 @@ export default function App() {
           >
             <Flower2 className="h-3 w-3 shrink-0 text-[#c4982f]/70" />
             <SettingsIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">{pageMeta['settings'][lang]}</span>
-            {!isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">เน€เธโ€เน€เธเธเน€เธโฌเน€เธโ€”เน€เธยเน€เธเธ’เน€เธยเน€เธเธ‘เน€เธยเน€เธย</span>}
+            <span className="truncate">ตั้งค่า</span>
+            {!isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">เฉพาะแอดมิน</span>}
           </button>
         </nav>
 
@@ -416,7 +416,7 @@ export default function App() {
                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#8a6820] hover:text-red-400 hover:bg-red-500/5 rounded-lg transition-all"
               >
                 <LogOut className="w-4 h-4" />
-                <span>เน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธย</span>
+                <span>ออกจากระบบ</span>
               </button>
             </div>
           ) : (
@@ -426,7 +426,7 @@ export default function App() {
             >
               <Shield className="h-4 w-4 shrink-0" />
               <LogIn className="h-4 w-4 shrink-0" />
-              <span>ผู้แลล็อกอิน</span>
+              <span>เข้าสู่ระบบ</span>
             </button>
           )}
           <button
