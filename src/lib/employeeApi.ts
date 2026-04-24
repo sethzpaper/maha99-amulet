@@ -184,7 +184,14 @@ export async function loginEmployee(employeeId: string, password: string) {
 
 export async function createEmployee(_role: string, body: Partial<Employee> & { password?: string }) {
   ensureConfigured();
-  const { password, ...rest } = body;
+  const {
+    password,
+    badges: _b,
+    id: _id,
+    created_at: _c,
+    updated_at: _u,
+    ...rest
+  } = body as any;
   const insert: any = { ...rest };
   if (password) {
     // plaintext -> RPC can hash, but here we push raw; server-side trigger or manual seed recommended
@@ -201,7 +208,16 @@ export async function createEmployee(_role: string, body: Partial<Employee> & { 
 
 export async function updateEmployee(_role: string, id: string, body: Partial<Employee> & { password?: string }) {
   ensureConfigured();
-  const { password, ...rest } = body;
+  // Strip fields that don't belong in the UPDATE payload
+  // (badges comes from getEmployee join; id/created_at/updated_at are read-only)
+  const {
+    password,
+    badges: _b,
+    id: _id,
+    created_at: _c,
+    updated_at: _u,
+    ...rest
+  } = body as any;
   const update: any = { ...rest };
   if (password) {
     update.password_hash = password;
