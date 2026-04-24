@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,650&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,700;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pridi:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Cormorant Garamond", "Newsreader", serif;
-  --font-sans: "Noto Sans Thai", sans-serif;
+  --font-serif: "Pridi", serif;
+  --font-sans: "IBM Plex Sans Thai", sans-serif;
   --color-gold: #d4af37;
   --color-primary: #1d7a62;
 }
