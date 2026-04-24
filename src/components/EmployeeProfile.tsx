@@ -413,6 +413,10 @@ export function EmployeeProfile() {
                   <Briefcase className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                   <FieldEdit label="ตำแหน่ง" field="position" />
                 </div>
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                  <FieldEdit label="วันเริ่มงาน" field="start_date" type="date" />
+                </div>
                 {editMode && (
                   <div className="col-span-2">
                     <AvatarPicker
