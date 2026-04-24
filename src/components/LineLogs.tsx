@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
-  AlertCircle, Calendar, CheckCircle2, ChevronDown, Clock,
+  AlertCircle, Calendar, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock,
   Download, Edit2, Gift, LogIn, LogOut, Plus, Save, Shield,
   Star, Timer, Upload, Users, X,
 } from 'lucide-react';
@@ -100,6 +100,11 @@ export function LineLogs() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [leaveType, setLeaveType] = useState<'personal' | 'sick' | 'vacation' | 'other'>('personal');
   const [leaveReason, setLeaveReason] = useState('');
+  const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
+  const [calendarView, setCalendarView] = useState<'month' | 'week'>('month');
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [overviewEntries, setOverviewEntries] = useState<TimeEntry[]>([]);
+  const [overviewLeaves, setOverviewLeaves] = useState<LeaveRequest[]>([]);
 
   // ── Report ────────────────────────────────────────────────────────────────
   const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -160,6 +165,20 @@ export function LineLogs() {
     } catch { /* silent */ }
   };
 
+  const loadCalendarOverview = async (month: string) => {
+    try {
+      const [entryRows, leaveRows] = await Promise.all([
+        fetchEntries({ month }),
+        fetchLeaveRequests(),
+      ]);
+      setOverviewEntries(Array.isArray(entryRows) ? entryRows : []);
+      setOverviewLeaves(Array.isArray(leaveRows) ? leaveRows : []);
+    } catch {
+      setOverviewEntries([]);
+      setOverviewLeaves([]);
+    }
+  };
+
   useEffect(() => { loadPublic(); }, []);
   useEffect(() => {
     if (authUser) loadPersonal(authUser);
@@ -167,6 +186,11 @@ export function LineLogs() {
   useEffect(() => {
     if (isSuperAdmin && activeSubTab === 'admin') loadAdminEntries();
   }, [isSuperAdmin, activeSubTab]);
+  useEffect(() => {
+    if (activeSubTab === 'leave') {
+      loadCalendarOverview(calendarMonth);
+    }
+  }, [activeSubTab, calendarMonth]);
 
   // ── Verify employee ───────────────────────────────────────────────────────
   const handleVerify = async () => {
@@ -174,7 +198,11 @@ export function LineLogs() {
     setVerifyLoading(true);
     setVerifyError('');
     try {
-      const res = await apiLoginEmployee(verifyEmpId, verifyPassword);
+      const selectedEmployee = employees.find((employee) => employee.id === verifyEmpId);
+      if (!selectedEmployee?.employee_code) {
+        throw new Error('พนักงานคนนี้ยังไม่มีรหัสพนักงานสำหรับยืนยันตัวตน');
+      }
+      const res = await apiLoginEmployee(selectedEmployee.employee_code, verifyPassword);
       const emp = res.employee ?? res;
       setVerifiedEmp(emp);
       setVerifyPassword('');
@@ -318,6 +346,45 @@ export function LineLogs() {
     }
     return days;
   }, [now, leaves]);
+
+  const detailCalendarDays = useMemo(() => {
+    const [year, month] = calendarMonth.split('-').map(Number);
+    const totalDays = new Date(year, month, 0).getDate();
+    const dates = Array.from({ length: totalDays }, (_, index) => {
+      const day = index + 1;
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    });
+
+    if (calendarView === 'week') {
+      const anchor = selectedDate && selectedDate.startsWith(calendarMonth) ? selectedDate : `${calendarMonth}-01`;
+      const selectedIndex = Math.max(0, dates.indexOf(anchor));
+      return dates.slice(selectedIndex, selectedIndex + 7);
+    }
+
+    return dates;
+  }, [calendarMonth, calendarView, selectedDate]);
+
+  const calendarSelectedDate = selectedDate && selectedDate.startsWith(calendarMonth)
+    ? selectedDate
+    : detailCalendarDays[0];
+
+  const selectedDayEntries = useMemo(
+    () => overviewEntries.filter((entry) => entry.work_date === calendarSelectedDate),
+    [overviewEntries, calendarSelectedDate]
+  );
+  const selectedDayLeaves = useMemo(
+    () => overviewLeaves.filter((leave) => leave.leave_date === calendarSelectedDate),
+    [overviewLeaves, calendarSelectedDate]
+  );
+  const selectedHoliday = upcomingHolidays.find((holiday) => holiday.date === calendarSelectedDate)
+    || THAI_HOLIDAYS.find((holiday) => holiday.date === calendarSelectedDate);
+  const lateCountForSelectedDay = selectedDayEntries.filter((entry) => entry.status === 'late').length;
+
+  const shiftCalendarMonth = (offset: number) => {
+    const [year, month] = calendarMonth.split('-').map(Number);
+    const next = new Date(year, month - 1 + offset, 1);
+    setCalendarMonth(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`);
+  };
 
   return (
     <div className="space-y-6 relative">
@@ -630,6 +697,19 @@ export function LineLogs() {
                     </div>
                   )}
                 </div>
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCalendarExpanded((value) => !value)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-gold/20 bg-gold/10 px-3 py-2 text-[11px] font-bold text-gold"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    {isCalendarExpanded ? 'ซ่อนปฏิทินละเอียด' : 'ดูปฏิทินละเอียด'}
+                  </button>
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-[11px] text-zinc-400">
+                    มุมมองละเอียดดูจำนวนคนลา คนมาสาย และวันสำคัญรายวัน
+                  </div>
+                </div>
                 <div className="grid grid-cols-7 gap-1.5">
                   {['อา','จ','อ','พ','พฤ','ศ','ส'].map(d => <div key={d} className="text-center text-[10px] text-zinc-500 pb-1">{d}</div>)}
                   {calendarDays.map(({ date, day, hasLeave, leaveStatus }) => {
@@ -648,6 +728,120 @@ export function LineLogs() {
                     );
                   })}
                 </div>
+                {isCalendarExpanded && (
+                  <div className="mt-6 rounded-3xl border border-zinc-800 bg-zinc-950/40 p-5">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Detailed Calendar</p>
+                        <h3 className="text-lg font-bold text-zinc-100">ภาพรวมรายวันแบบละเอียด</h3>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button type="button" onClick={() => shiftCalendarMonth(-1)} className="rounded-xl border border-zinc-700 p-2 text-zinc-300 hover:border-gold/40 hover:text-gold">
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <div className="rounded-xl border border-zinc-800 bg-zinc-900/70 px-4 py-2 text-sm font-bold text-zinc-100">
+                          {new Date(`${calendarMonth}-01`).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
+                        </div>
+                        <button type="button" onClick={() => shiftCalendarMonth(1)} className="rounded-xl border border-zinc-700 p-2 text-zinc-300 hover:border-gold/40 hover:text-gold">
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                        <div className="ml-2 flex rounded-xl border border-zinc-800 bg-zinc-900/70 p-1">
+                          {(['month', 'week'] as const).map((view) => (
+                            <button
+                              key={view}
+                              type="button"
+                              onClick={() => setCalendarView(view)}
+                              className={`rounded-lg px-3 py-1 text-xs font-bold uppercase ${calendarView === view ? 'bg-gold text-black' : 'text-zinc-400'}`}
+                            >
+                              {view === 'month' ? 'เดือน' : 'สัปดาห์'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={`mt-5 grid gap-5 ${calendarView === 'month' ? 'grid-cols-1 xl:grid-cols-[1.4fr_0.9fr]' : 'grid-cols-1'}`}>
+                      <div>
+                        <div className={`grid gap-2 ${calendarView === 'month' ? 'grid-cols-7' : 'grid-cols-1 md:grid-cols-7'}`}>
+                          {['อา','จ','อ','พ','พฤ','ศ','ส'].map((day) => (
+                            <div key={day} className="text-center text-[10px] uppercase tracking-widest text-zinc-500">{day}</div>
+                          ))}
+                          {detailCalendarDays.map((date) => {
+                            const dayEntries = overviewEntries.filter((entry) => entry.work_date === date);
+                            const dayLeaves = overviewLeaves.filter((leave) => leave.leave_date === date);
+                            const holiday = THAI_HOLIDAYS.find((item) => item.date === date);
+                            const lateCount = dayEntries.filter((entry) => entry.status === 'late').length;
+                            const isSelected = calendarSelectedDate === date;
+                            return (
+                              <button
+                                key={date}
+                                type="button"
+                                onClick={() => setSelectedDate(date)}
+                                className={`min-h-[112px] rounded-2xl border p-3 text-left transition-all ${isSelected ? 'border-gold bg-gold/10' : 'border-zinc-800 bg-zinc-900/60 hover:border-gold/30'}`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-bold text-zinc-100">{Number(date.slice(-2))}</span>
+                                  {holiday && <Star className="h-4 w-4 text-gold" />}
+                                </div>
+                                <div className="mt-3 space-y-1 text-[11px]">
+                                  <p className="text-zinc-400">ลา {dayLeaves.length} คน</p>
+                                  <p className="text-zinc-400">มาสาย {lateCount} คน</p>
+                                  {holiday && <p className="line-clamp-2 text-gold">{holiday.name}</p>}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="rounded-3xl border border-zinc-800 bg-black/20 p-5">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Selected Day</p>
+                        <h4 className="mt-1 text-lg font-bold text-zinc-100">{calendarSelectedDate || '-'}</h4>
+                        <div className="mt-4 space-y-3 text-sm">
+                          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+                            <p className="text-xs font-bold text-zinc-300">สรุปวันนี้</p>
+                            <div className="mt-3 grid grid-cols-3 gap-3 text-center">
+                              <div>
+                                <p className="text-lg font-bold text-emerald-300">{selectedDayLeaves.length}</p>
+                                <p className="text-[10px] text-zinc-500">คนลา</p>
+                              </div>
+                              <div>
+                                <p className="text-lg font-bold text-red-300">{lateCountForSelectedDay}</p>
+                                <p className="text-[10px] text-zinc-500">มาสาย</p>
+                              </div>
+                              <div>
+                                <p className="text-lg font-bold text-sky-300">{selectedDayEntries.length}</p>
+                                <p className="text-[10px] text-zinc-500">ลงเวลา</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+                            <p className="text-xs font-bold text-zinc-300">วันสำคัญ</p>
+                            <p className="mt-2 text-sm text-gold">{selectedHoliday?.name || 'ไม่มีวันสำคัญที่ตั้งไว้'}</p>
+                          </div>
+                          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+                            <p className="text-xs font-bold text-zinc-300">รายชื่อคนลา</p>
+                            <div className="mt-2 space-y-2 text-xs text-zinc-400">
+                              {selectedDayLeaves.length === 0 && <p>ไม่มีรายการลา</p>}
+                              {selectedDayLeaves.map((leave) => (
+                                <p key={leave.id}>{leave.user_name} • {leave.leave_type}</p>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+                            <p className="text-xs font-bold text-zinc-300">รายการลงเวลา</p>
+                            <div className="mt-2 space-y-2 text-xs text-zinc-400">
+                              {selectedDayEntries.length === 0 && <p>ยังไม่มีการลงเวลา</p>}
+                              {selectedDayEntries.map((entry) => (
+                                <p key={entry.id}>{entry.user_name} • {STATUS_TH[entry.status] || entry.status}</p>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="glass-card p-6 rounded-3xl gold-border-glow space-y-4">

@@ -46,8 +46,12 @@ export function Login({ onLoginSuccess }: LoginProps) {
         setError('กรุณาเลือกชื่อพนักงาน');
         return;
       }
+      if (!selectedEmployee?.employee_code) {
+        setError('พนักงานคนนี้ยังไม่มีรหัสพนักงานสำหรับเข้าสู่ระบบ');
+        return;
+      }
       setIsLoading(true);
-      const result = await loginEmployee(employeeId, password);
+      const result = await loginEmployee(selectedEmployee.employee_code, password);
       setIsLoading(false);
       if (result.ok) {
         setPassword('');
@@ -64,7 +68,12 @@ export function Login({ onLoginSuccess }: LoginProps) {
       }
       setIsLoading(true);
       if (codeMatchedEmployee) {
-        const result = await loginEmployee(codeMatchedEmployee.id, password);
+        if (!codeMatchedEmployee.employee_code) {
+          setIsLoading(false);
+          setError('พนักงานคนนี้ยังไม่มีรหัสพนักงานสำหรับเข้าสู่ระบบ');
+          return;
+        }
+        const result = await loginEmployee(codeMatchedEmployee.employee_code, password);
         setIsLoading(false);
         if (result.ok) {
           setPassword('');

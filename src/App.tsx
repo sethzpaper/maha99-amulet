@@ -47,46 +47,58 @@ type Tab =
 
 type NavItem = { tab: Tab; label: string; icon: LucideIcon };
 
+const navPriority: Record<Tab, number> = {
+  attendance: 0,
+  stats: 1,
+  employees: 2,
+  dashboard: 3,
+  facebook: 4,
+  tiktok: 5,
+  comparison: 6,
+  video: 7,
+  settings: 8,
+};
+
 const pageMeta: Record<Tab, { th: string; en: string }> = {
-  dashboard: { th: 'ภาพรวมองค์กร', en: 'Organization Dashboard' },
-  facebook: { th: 'โพส Facebook', en: 'Facebook Activity' },
-  tiktok: { th: 'โพส TikTok', en: 'TikTok Short-form Video' },
-  comparison: { th: 'เปรียบเทียบคู่แข่ง', en: 'Competitor Intelligence' },
-  video: { th: 'ระบบจัดการวิดีโอ', en: 'Video Asset Management' },
-  stats: { th: 'สถิตินักปั้น', en: 'Admin Performance' },
-  attendance: { th: 'ลงเวลางาน', en: 'Attendance & Leave System' },
-  employees: { th: 'รายชื่อพนักงาน', en: 'Employee Directory' },
-  settings: { th: 'ตั้งค่า', en: 'System Settings' },
+  dashboard: { th: 'เน€เธย เน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ', en: 'Organization Dashboard' },
+  facebook: { th: 'เน€เธยเน€เธยเน€เธเธ Facebook', en: 'Facebook Activity' },
+  tiktok: { th: 'เน€เธยเน€เธยเน€เธเธ TikTok', en: 'TikTok Short-form Video' },
+  comparison: { th: 'เน€เธโฌเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธยเน€เธโฌเน€เธโ€”เน€เธเธ•เน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย', en: 'Competitor Intelligence' },
+  video: { th: 'เน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธ‘เน€เธโ€เน€เธยเน€เธเธ’เน€เธเธเน€เธเธเน€เธเธ”เน€เธโ€เน€เธเธ•เน€เธยเน€เธเธ', en: 'Video Asset Management' },
+  stats: { th: 'เน€เธเธเน€เธโ€“เน€เธเธ”เน€เธโ€ขเน€เธเธ”เน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธย', en: 'Admin Performance' },
+  attendance: { th: 'เน€เธเธ…เน€เธยเน€เธโฌเน€เธเธเน€เธเธ…เน€เธเธ’เน€เธยเน€เธเธ’เน€เธย', en: 'Attendance & Leave System' },
+  employees: { th: 'เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธย', en: 'Employee Directory' },
+  settings: { th: 'เน€เธโ€ขเน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’', en: 'System Settings' },
 };
 
 const navPublicGuest: NavItem[] = [
-  { tab: 'attendance', label: 'ลงเวลางาน', icon: Clock },
-  { tab: 'dashboard', label: 'แดชบอร์ด', icon: BarChart3 },
-  { tab: 'comparison', label: 'เปรียบเทียบคู่แข่ง', icon: Activity },
-  { tab: 'stats', label: 'สถิตินักปั้น', icon: Award },
-  { tab: 'employees', label: 'รายชื่อพนักงาน', icon: Users },
-  { tab: 'settings', label: 'ตั้งค่า', icon: SettingsIcon },
+  { tab: 'attendance', label: 'เน€เธเธ…เน€เธยเน€เธโฌเน€เธเธเน€เธเธ…เน€เธเธ’เน€เธยเน€เธเธ’เน€เธย', icon: Clock },
+  { tab: 'dashboard', label: 'เน€เธยเน€เธโ€เน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธโ€', icon: BarChart3 },
+  { tab: 'comparison', label: 'เน€เธโฌเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธยเน€เธโฌเน€เธโ€”เน€เธเธ•เน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย', icon: Activity },
+  { tab: 'stats', label: 'เน€เธเธเน€เธโ€“เน€เธเธ”เน€เธโ€ขเน€เธเธ”เน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธย', icon: Award },
+  { tab: 'employees', label: 'เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธย', icon: Users },
+  { tab: 'settings', label: 'เน€เธโ€ขเน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’', icon: SettingsIcon },
 ];
 
 const navLoggedIn: NavItem[] = [
-  { tab: 'attendance', label: 'ลงเวลางาน', icon: Clock },
-  { tab: 'dashboard', label: 'แดชบอร์ด', icon: BarChart3 },
-  { tab: 'facebook', label: 'โพส Facebook', icon: Facebook },
-  { tab: 'tiktok', label: 'โพส TikTok', icon: Music2 },
-  { tab: 'comparison', label: 'เปรียบเทียบคู่แข่ง', icon: Activity },
-  { tab: 'video', label: 'ระบบจัดการวิดีโอ', icon: Video },
-  { tab: 'stats', label: 'สถิตินักปั้น', icon: Award },
-  { tab: 'employees', label: 'รายชื่อพนักงาน', icon: Users },
-  { tab: 'settings', label: 'ตั้งค่า', icon: SettingsIcon },
+  { tab: 'attendance', label: 'เน€เธเธ…เน€เธยเน€เธโฌเน€เธเธเน€เธเธ…เน€เธเธ’เน€เธยเน€เธเธ’เน€เธย', icon: Clock },
+  { tab: 'dashboard', label: 'เน€เธยเน€เธโ€เน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธโ€', icon: BarChart3 },
+  { tab: 'facebook', label: 'เน€เธยเน€เธยเน€เธเธ Facebook', icon: Facebook },
+  { tab: 'tiktok', label: 'เน€เธยเน€เธยเน€เธเธ TikTok', icon: Music2 },
+  { tab: 'comparison', label: 'เน€เธโฌเน€เธยเน€เธเธเน€เธเธ•เน€เธเธเน€เธยเน€เธโฌเน€เธโ€”เน€เธเธ•เน€เธเธเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย', icon: Activity },
+  { tab: 'video', label: 'เน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธ‘เน€เธโ€เน€เธยเน€เธเธ’เน€เธเธเน€เธเธเน€เธเธ”เน€เธโ€เน€เธเธ•เน€เธยเน€เธเธ', icon: Video },
+  { tab: 'stats', label: 'เน€เธเธเน€เธโ€“เน€เธเธ”เน€เธโ€ขเน€เธเธ”เน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธย', icon: Award },
+  { tab: 'employees', label: 'เน€เธเธเน€เธเธ’เน€เธเธเน€เธยเน€เธเธ—เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ‘เน€เธยเน€เธยเน€เธเธ’เน€เธย', icon: Users },
+  { tab: 'settings', label: 'เน€เธโ€ขเน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’', icon: SettingsIcon },
 ];
 
 const fallbackLeaderboard = [
-  { rank: 1, name: 'ธันวา', role: 'Director / Producer', kpi: 100, icon: Crown },
-  { rank: 2, name: 'มินตรา', role: 'Editor', kpi: 99, icon: Medal },
-  { rank: 3, name: 'คีตะ', role: 'Motion Artist', kpi: 98, icon: Zap },
-  { rank: 4, name: 'พิมพ์', role: 'Account Executive', kpi: 96, icon: Zap },
-  { rank: 5, name: 'อชิ', role: 'Camera / Lighting', kpi: 94, icon: Zap },
-  { rank: 6, name: 'นรา', role: 'Content Planner', kpi: 92, icon: Zap },
+  { rank: 1, name: 'เน€เธยเน€เธเธ‘เน€เธยเน€เธเธเน€เธเธ’', role: 'Director / Producer', kpi: 100, icon: Crown },
+  { rank: 2, name: 'เน€เธเธเน€เธเธ”เน€เธยเน€เธโ€ขเน€เธเธเน€เธเธ’', role: 'Editor', kpi: 99, icon: Medal },
+  { rank: 3, name: 'เน€เธยเน€เธเธ•เน€เธโ€ขเน€เธเธ', role: 'Motion Artist', kpi: 98, icon: Zap },
+  { rank: 4, name: 'เน€เธยเน€เธเธ”เน€เธเธเน€เธยเน€เธย', role: 'Account Executive', kpi: 96, icon: Zap },
+  { rank: 5, name: 'เน€เธเธเน€เธยเน€เธเธ”', role: 'Camera / Lighting', kpi: 94, icon: Zap },
+  { rank: 6, name: 'เน€เธยเน€เธเธเน€เธเธ’', role: 'Content Planner', kpi: 92, icon: Zap },
 ];
 
 function DashboardPage() {
@@ -136,10 +148,10 @@ function DashboardPage() {
     value: item.kpi,
   }));
   const leaderboardSections = [
-    { key: 'views', label: 'ยอดวิวรวม', suffix: 'views', icon: Video, rows: leaderboards.views },
-    { key: 'likesFb', label: 'ไลค์ Facebook', suffix: 'likes', icon: Facebook, rows: leaderboards.likesFb },
-    { key: 'likesTt', label: 'ไลค์ TikTok', suffix: 'likes', icon: Music2, rows: leaderboards.likesTt },
-    { key: 'hours', label: 'ชั่วโมงงาน', suffix: 'hrs', icon: Clock, rows: leaderboards.hours },
+    { key: 'views', label: 'เน€เธเธเน€เธเธเน€เธโ€เน€เธเธเน€เธเธ”เน€เธเธเน€เธเธเน€เธเธเน€เธเธ', suffix: 'views', icon: Video, rows: leaderboards.views },
+    { key: 'likesFb', label: 'เน€เธยเน€เธเธ…เน€เธยเน€เธย Facebook', suffix: 'likes', icon: Facebook, rows: leaderboards.likesFb },
+    { key: 'likesTt', label: 'เน€เธยเน€เธเธ…เน€เธยเน€เธย TikTok', suffix: 'likes', icon: Music2, rows: leaderboards.likesTt },
+    { key: 'hours', label: 'เน€เธยเน€เธเธ‘เน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ’เน€เธย', suffix: 'hrs', icon: Clock, rows: leaderboards.hours },
   ];
 
   return (
@@ -152,7 +164,7 @@ function DashboardPage() {
             <Facebook className="w-5 h-5 text-blue-400" />
             <div>
               <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Facebook</p>
-              <h3 className="text-base font-bold gold-text-gradient">สรุปเพจเดือนนี้</h3>
+              <h3 className="text-base font-bold gold-text-gradient">เน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธโฌเน€เธยเน€เธยเน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธยเน€เธยเน€เธเธ•เน€เธย</h3>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3 pt-2">
@@ -165,11 +177,11 @@ function DashboardPage() {
               <p className="text-xl font-bold text-blue-400 mt-1">{facebookAccounts.length}</p>
             </div>
             <div className="bg-zinc-950/50 rounded-xl p-3 text-center border border-zinc-900">
-              <p className="text-[10px] text-zinc-500">คู่แข่ง</p>
+              <p className="text-[10px] text-zinc-500">เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย</p>
               <p className="text-xl font-bold text-blue-400 mt-1">{competitorAccounts.filter((account) => account.platform === 'facebook').length}</p>
             </div>
           </div>
-          <p className="text-[10px] text-zinc-500 italic">ดูรายละเอียดที่เมนู โพส Facebook</p>
+          <p className="text-[10px] text-zinc-500 italic">เน€เธโ€เน€เธเธเน€เธเธเน€เธเธ’เน€เธเธเน€เธเธ…เน€เธเธเน€เธโฌเน€เธเธเน€เธเธ•เน€เธเธเน€เธโ€เน€เธโ€”เน€เธเธ•เน€เธยเน€เธโฌเน€เธเธเน€เธยเน€เธเธ เน€เธยเน€เธยเน€เธเธ Facebook</p>
         </div>
 
         <div className="glass-card p-6 rounded-3xl gold-border-glow space-y-3">
@@ -177,7 +189,7 @@ function DashboardPage() {
             <Music2 className="w-5 h-5 text-pink-400" />
             <div>
               <p className="text-[10px] text-zinc-500 uppercase tracking-widest">TikTok</p>
-              <h3 className="text-base font-bold gold-text-gradient">สรุปช่องเดือนนี้</h3>
+              <h3 className="text-base font-bold gold-text-gradient">เน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธยเน€เธยเน€เธเธ•เน€เธย</h3>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3 pt-2">
@@ -186,23 +198,23 @@ function DashboardPage() {
               <p className="text-xl font-bold text-pink-400 mt-1">{Math.round(tiktokReach / 1000)}K</p>
             </div>
             <div className="bg-zinc-950/50 rounded-xl p-3 text-center border border-zinc-900">
-              <p className="text-[10px] text-zinc-500">ช่อง</p>
+              <p className="text-[10px] text-zinc-500">เน€เธยเน€เธยเน€เธเธเน€เธย</p>
               <p className="text-xl font-bold text-pink-400 mt-1">{tiktokAccounts.length}</p>
             </div>
             <div className="bg-zinc-950/50 rounded-xl p-3 text-center border border-zinc-900">
-              <p className="text-[10px] text-zinc-500">คู่แข่ง</p>
+              <p className="text-[10px] text-zinc-500">เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย</p>
               <p className="text-xl font-bold text-pink-400 mt-1">{competitorAccounts.filter((account) => account.platform === 'tiktok').length}</p>
             </div>
           </div>
-          <p className="text-[10px] text-zinc-500 italic">ดูรายละเอียดที่เมนู โพส TikTok</p>
+          <p className="text-[10px] text-zinc-500 italic">เน€เธโ€เน€เธเธเน€เธเธเน€เธเธ’เน€เธเธเน€เธเธ…เน€เธเธเน€เธโฌเน€เธเธเน€เธเธ•เน€เธเธเน€เธโ€เน€เธโ€”เน€เธเธ•เน€เธยเน€เธโฌเน€เธเธเน€เธยเน€เธเธ เน€เธยเน€เธยเน€เธเธ TikTok</p>
         </div>
       </div>
 
       <div className="glass-card p-6 rounded-3xl gold-border-glow">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Social Sources Graph</p>
-            <h3 className="text-xl font-serif italic font-bold gold-text-gradient">กราฟจากลิงก์ที่ Super Admin ตั้งค่า</h3>
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Social Overview</p>
+            <h3 className="text-xl font-serif italic font-bold gold-text-gradient">เน€เธยเน€เธเธเน€เธเธ’เน€เธยเน€เธเธเน€เธโ€“เน€เธเธ”เน€เธโ€ขเน€เธเธ”เน€เธยเน€เธยเน€เธโฌเน€เธยเน€เธเธ•เน€เธยเน€เธเธเน€เธเธ…</h3>
           </div>
           <Activity className="w-5 h-5 text-gold/40" />
         </div>
@@ -212,7 +224,7 @@ function DashboardPage() {
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold text-zinc-300">{account.account_name}</p>
                 <p className="text-[10px] text-zinc-600">
-                  {account.platform === 'facebook' ? 'Facebook' : 'TikTok'} - {account.is_competitor ? 'คู่แข่ง' : 'ของเรา'}
+                  {account.platform === 'facebook' ? 'Facebook' : 'TikTok'} - {account.is_competitor ? 'เน€เธยเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธย' : 'เน€เธยเน€เธเธเน€เธยเน€เธโฌเน€เธเธเน€เธเธ’'}
                 </p>
               </div>
               <div className="h-3 rounded-full bg-zinc-900 overflow-hidden">
@@ -231,7 +243,7 @@ function DashboardPage() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Team Performance</p>
-            <h3 className="text-xl font-serif italic font-bold gold-text-gradient">กระดานอันดับประจำเดือน</h3>
+            <h3 className="text-xl font-serif italic font-bold gold-text-gradient">เน€เธยเน€เธเธเน€เธเธเน€เธโ€เน€เธเธ’เน€เธยเน€เธเธเน€เธเธ‘เน€เธยเน€เธโ€เน€เธเธ‘เน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ“เน€เธโฌเน€เธโ€เน€เธเธ—เน€เธเธเน€เธย</h3>
           </div>
           <Crown className="w-5 h-5 text-gold/40" />
         </div>
@@ -272,6 +284,7 @@ export default function App() {
   const isSuperAdmin = user?.role === 'super_admin';
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   const navItems = isAdmin ? navLoggedIn : navPublicGuest;
+  const orderedNavItems = [...navItems].sort((a, b) => navPriority[a.tab] - navPriority[b.tab]);
   const meta = pageMeta[activeTab];
 
   useEffect(() => {
@@ -304,13 +317,13 @@ export default function App() {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-bold text-[#d4af37]">มหานิยม999 เช็คชื่อ</p>
+            <p className="text-sm font-bold text-[#d4af37]">เธกเธซเธฒเธเธดเธขเธก999 เน€เธเนเธเธเธทเนเธญ</p>
             <p className="text-[10px] text-[#6a5018] uppercase tracking-widest">Amulet Stat Hub</p>
           </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pt-4 space-y-0.5">
-          {navItems.filter(n => n.tab === 'attendance').map(({ tab, label, icon: Icon }) => (
+          {orderedNavItems.filter(n => n.tab === 'attendance').map(({ tab, label, icon: Icon }) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -326,8 +339,8 @@ export default function App() {
             </button>
           ))}
 
-          <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">เมนูหลัก</p>
-          {navItems.filter(n => !['attendance', 'video', 'settings'].includes(n.tab)).map(({ tab, label, icon: Icon }) => (
+          <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">เน€เธโฌเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธเธ…เน€เธเธ‘เน€เธย</p>
+          {orderedNavItems.filter(n => !['attendance', 'video', 'settings'].includes(n.tab)).map(({ tab, label, icon: Icon }) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -345,8 +358,8 @@ export default function App() {
 
           {isAdmin && (
             <>
-              <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">จัดการระบบ</p>
-              {navItems.filter(n => ['video'].includes(n.tab)).map(({ tab, label, icon: Icon }) => (
+              <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">เน€เธยเน€เธเธ‘เน€เธโ€เน€เธยเน€เธเธ’เน€เธเธเน€เธเธเน€เธเธเน€เธยเน€เธย</p>
+              {orderedNavItems.filter(n => ['video'].includes(n.tab)).map(({ tab, label, icon: Icon }) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -364,7 +377,7 @@ export default function App() {
             </>
           )}
 
-          <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">ระบบ</p>
+          <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">เน€เธเธเน€เธเธเน€เธยเน€เธย</p>
           <button
             onClick={() => setActiveTab('settings')}
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg transition-all text-left ${
@@ -375,8 +388,8 @@ export default function App() {
           >
             <Flower2 className="h-3 w-3 shrink-0 text-[#c4982f]/70" />
             <SettingsIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">ตั้งค่า</span>
-            {!isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">ดูเท่านั้น</span>}
+            <span className="truncate">เน€เธโ€ขเน€เธเธ‘เน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’</span>
+            {!isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">เน€เธโ€เน€เธเธเน€เธโฌเน€เธโ€”เน€เธยเน€เธเธ’เน€เธยเน€เธเธ‘เน€เธยเน€เธย</span>}
           </button>
         </nav>
 
@@ -401,7 +414,7 @@ export default function App() {
                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#8a6820] hover:text-red-400 hover:bg-red-500/5 rounded-lg transition-all"
               >
                 <LogOut className="w-4 h-4" />
-                <span>ออกจากระบบ</span>
+                <span>เน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธย</span>
               </button>
             </div>
           ) : (
@@ -411,11 +424,11 @@ export default function App() {
             >
               <Shield className="h-4 w-4 shrink-0" />
               <LogIn className="h-4 w-4 shrink-0" />
-              <span>ระบบผู้ดูแล</span>
+              <span>เน€เธเธเน€เธเธเน€เธยเน€เธยเน€เธยเน€เธเธเน€เธยเน€เธโ€เน€เธเธเน€เธยเน€เธเธ…</span>
             </button>
           )}
-          <p className="text-[10px] text-[#6a5018] leading-5 italic px-1">
-            "พระดีมีคุณค่า ข้อมูลดีมีพลัง"
+          <p className="px-1 text-sm font-extrabold leading-6 text-[#d4af37]">
+            "คนศรัทธาพระ บุญช่วยนำพา ต้องทำอย่างเต็มที่ ต้องทำให้ดีที่สุด"
           </p>
         </div>
       </aside>
@@ -428,9 +441,21 @@ export default function App() {
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated && (
-              <span className="text-[10px] text-[#6a5018] bg-[#c4982f]/5 border border-[#c4982f]/20 px-3 py-1 rounded-full">
-                {isSuperAdmin ? 'Super Admin' : user?.nickname || user?.username}
-              </span>
+              <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-emerald-500/20 text-sm font-bold text-emerald-200">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    user?.nickname?.[0] || user?.username?.[0] || '?'
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-emerald-100">{user?.nickname || user?.username}</p>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-emerald-300">
+                    {isSuperAdmin ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : 'Employee'}
+                  </p>
+                </div>
+              </div>
             )}
             <div className="flex items-center gap-2 text-[10px] text-[#4a3800]">
               <Flower2 className="h-3 w-3 text-[#c4982f]/50" />
@@ -444,8 +469,8 @@ export default function App() {
         </main>
 
         <footer className="border-t border-[#1e1500] px-8 py-5 flex items-center justify-between">
-          <p className="text-[10px] text-[#4a3800]">© 2026 เว็บ มหานิยม999 เช็คชื่อ เดเวลอป</p>
-          <p className="text-[10px] text-[#4a3800]">Amulet Stat Hub v2.0</p>
+          <p className="text-[10px] text-[#4a3800]">(c) 2026 เว็บ มหานิยม999 เช็คชื่อ</p>
+          <p className="text-[10px] text-[#4a3800]">developed by Sasiskis84 • Amulet Stat Hub v2.0</p>
         </footer>
       </div>
 

@@ -85,6 +85,9 @@ export function EmployeeProfile() {
 
   const handleCreate = async () => {
     try {
+      if (!formData.nickname || !formData.employee_code || !formData.password) {
+        throw new Error('กรุณากรอกชื่อเล่น รหัสพนักงาน และรหัสผ่าน');
+      }
       await createEmployee('super_admin', formData);
       showToast('success', 'เพิ่มพนักงานสำเร็จ');
       setShowForm(false);
@@ -287,6 +290,7 @@ export function EmployeeProfile() {
                   ['ชื่อเล่น *', 'nickname'], ['ชื่อ-สกุล', 'full_name'],
                   ['ตำแหน่ง', 'position'], ['อีเมล', 'email'],
                   ['เบอร์โทร', 'phone'],
+                  ['รหัสพนักงาน *', 'employee_code'],
                   ['วันเกิด', 'birthday', 'date'], ['วันเริ่มงาน', 'start_date', 'date'],
                 ] as [string, keyof typeof formData, string?][]).map(([label, field, type]) => (
                   <div key={field as string}>

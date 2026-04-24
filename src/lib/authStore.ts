@@ -17,7 +17,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<boolean>;
-  loginEmployee: (employeeId: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  loginEmployee: (employeeCode: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   loadSession: () => Promise<void>;
   getUser: () => User | null;
@@ -93,13 +93,13 @@ export const useAuthStore = create<AuthState>()(
         return false;
       },
 
-      loginEmployee: async (employeeId: string, password: string) => {
+      loginEmployee: async (employeeCode: string, password: string) => {
         try {
           if (!isSupabaseConfigured) {
             return { ok: false, error: 'Supabase is not configured' };
           }
           const { data, error } = await supabase.rpc('employee_login', {
-            p_code: employeeId,
+            p_code: employeeCode,
             p_password: password,
           });
           if (error) return { ok: false, error: error.message || 'login failed' };

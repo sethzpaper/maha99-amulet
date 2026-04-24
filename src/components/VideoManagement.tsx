@@ -11,6 +11,26 @@ function getDrivePreviewUrl(link: string): string {
   return link;
 }
 
+function parseRecordDate(value?: string): number {
+  if (!value) return 0;
+  const direct = Date.parse(value);
+  if (!Number.isNaN(direct)) return direct;
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return 0;
+  const [, dd, mm, yyyy] = match;
+  return Date.parse(`${yyyy}-${mm}-${dd}`);
+}
+
+function formatRecordDate(value?: string): string {
+  const parsed = parseRecordDate(value);
+  if (!parsed) return value || '-';
+  return new Date(parsed).toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 export function VideoManagement() {
   const [records, setRecords] = useState<VideoRecord[]>(VIDEO_RECORDS);
   const [fbPosts, setFbPosts] = useState<SocialPost[]>(FACEBOOK_POSTS);
@@ -45,6 +65,14 @@ export function VideoManagement() {
 
   const topFB = fbPosts[0];
   const topTT = ttPosts[0];
+  const latestRecords = [...records]
+    .sort((a, b) => parseRecordDate(b.entryDate) - parseRecordDate(a.entryDate))
+    .slice(0, 3);
+
+  const getFacebookReference = (record: VideoRecord) => {
+    const normalized = record.productName.trim().toLowerCase();
+    return fbPosts.find((post) => normalized && post.content?.toLowerCase().includes(normalized));
+  };
 
   const startCreate = () => {
     setEditingId('new');
@@ -52,6 +80,7 @@ export function VideoManagement() {
       entryDate: new Date().toISOString().slice(0, 10),
       fileName: '',
       productName: '',
+      productImage: '',
       driveLink: '',
       creator: ADMIN_STATS[0]?.name || '',
       isPostedFB: false,
@@ -165,6 +194,68 @@ export function VideoManagement() {
         </div>
       </div>
 
+      <div className="glass-card p-6 rounded-3xl gold-border-glow">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between mb-5">
+          <div>
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Latest Video Highlights</p>
+            <h3 className="text-xl font-serif italic font-bold gold-text-gradient">3 รายการล่าสุดพร้อมภาพพรีวิว</h3>
+          </div>
+          <p className="text-[11px] text-zinc-500">ถ้ายังไม่มีรูปจริง ระบบจะใช้พรีวิวอ้างอิงจากโพสต์ Facebook ที่ข้อความใกล้เคียง</p>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          {latestRecords.map((record, index) => {
+            const fbReference = getFacebookReference(record);
+            return (
+              <motion.button
+                key={record.id}
+                type="button"
+                onClick={() => setPreviewRecord(record)}
+                whileHover={{ y: -3 }}
+                className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950/60 text-left"
+              >
+                {record.productImage ? (
+                  <img
+                    src={record.productImage}
+                    alt={record.productName}
+                    className="h-52 w-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="h-52 w-full bg-[linear-gradient(135deg,#1d4ed8_0%,#0f172a_45%,#111827_100%)] p-5 text-white">
+                    <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-100">
+                      <span>Facebook Preview</span>
+                      <Facebook className="h-4 w-4" />
+                    </div>
+                    <div className="mt-8 rounded-3xl border border-white/10 bg-black/15 p-4 backdrop-blur-sm">
+                      <p className="text-lg font-bold leading-tight">{record.productName}</p>
+                      <p className="mt-3 line-clamp-3 text-sm text-blue-100/90">
+                        {fbReference?.content || record.fileName}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-3 p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-full border border-gold/20 bg-gold/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-gold">
+                      ล่าสุด #{index + 1}
+                    </span>
+                    <span className="text-[11px] text-zinc-500">{formatRecordDate(record.entryDate)}</span>
+                  </div>
+                  <div>
+                    <p className="text-base font-bold text-zinc-100">{record.productName}</p>
+                    <p className="mt-1 text-xs text-zinc-500">{record.fileName}</p>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-zinc-400">
+                    <span>{record.creator || 'ยังไม่ระบุผู้สร้าง'}</span>
+                    <span>{record.isPostedFB ? 'โพสต์ Facebook แล้ว' : 'ยังไม่โพสต์ Facebook'}</span>
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Video Management Table */}
       <div className="glass-card p-8 rounded-3xl gold-border-glow relative overflow-hidden">
         <div className="flex items-center justify-between mb-8">
@@ -190,6 +281,7 @@ export function VideoManagement() {
             <input className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" placeholder="วันที่" value={draft.entryDate || ''} onChange={(e) => setDraft({ ...draft, entryDate: e.target.value })} />
             <input className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" placeholder="ชื่อไฟล์" value={draft.fileName || ''} onChange={(e) => setDraft({ ...draft, fileName: e.target.value })} />
             <input className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" placeholder="ชื่อสินค้า" value={draft.productName || ''} onChange={(e) => setDraft({ ...draft, productName: e.target.value })} />
+            <input className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" placeholder="ลิงก์ภาพนิ่ง / ภาพจาก Facebook" value={draft.productImage || ''} onChange={(e) => setDraft({ ...draft, productImage: e.target.value })} />
             <input className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" placeholder="Drive link" value={draft.driveLink || ''} onChange={(e) => setDraft({ ...draft, driveLink: e.target.value })} />
             <select className="bg-zinc-900 border border-zinc-800 rounded-lg text-xs py-2 px-3 text-zinc-300" value={draft.creator || ''} onChange={(e) => setDraft({ ...draft, creator: e.target.value })}>
               {ADMIN_STATS.map(admin => <option key={admin.id} value={admin.name}>{admin.name}</option>)}

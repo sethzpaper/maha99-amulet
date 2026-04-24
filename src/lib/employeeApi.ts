@@ -130,6 +130,19 @@ function ensureConfigured() {
   }
 }
 
+async function setEmployeePassword(employeeCode: string, password: string) {
+  const { error } = await supabase.rpc('set_employee_password', {
+    p_code: employeeCode,
+    p_password: password,
+  });
+
+  if (error) {
+    throw new Error(
+      'Unable to set employee password. Create the `set_employee_password` RPC from MIGRATION_NOTES.md first.'
+    );
+  }
+}
+
 // ---- Employees ----
 export async function listEmployees(): Promise<Employee[]> {
   if (!isSupabaseConfigured) return [];
@@ -169,10 +182,10 @@ export async function getEmployee(id: string): Promise<Employee & { badges: Empl
   return { ...(employee as Employee), badges };
 }
 
-export async function loginEmployee(employeeId: string, password: string) {
+export async function loginEmployee(employeeCode: string, password: string) {
   ensureConfigured();
   const { data, error } = await supabase.rpc('employee_login', {
-    p_code: employeeId,
+    p_code: employeeCode,
     p_password: password,
   });
   if (error) throw new Error(error.message || 'login failed');
@@ -192,17 +205,19 @@ export async function createEmployee(_role: string, body: Partial<Employee> & { 
     updated_at: _u,
     ...rest
   } = body as any;
-  const insert: any = { ...rest };
-  if (password) {
-    // plaintext -> RPC can hash, but here we push raw; server-side trigger or manual seed recommended
-    insert.password_hash = password;
+  if (!rest.employee_code) {
+    throw new Error('employee_code is required');
   }
+  const insert: any = { ...rest };
   const { data, error } = await supabase
     .from('employees')
     .insert(insert)
     .select()
     .single();
   if (error) throw new Error(error.message);
+  if (password) {
+    await setEmployeePassword(rest.employee_code, password);
+  }
   return data;
 }
 
@@ -219,9 +234,6 @@ export async function updateEmployee(_role: string, id: string, body: Partial<Em
     ...rest
   } = body as any;
   const update: any = { ...rest };
-  if (password) {
-    update.password_hash = password;
-  }
   const { data, error } = await supabase
     .from('employees')
     .update(update)
@@ -229,6 +241,13 @@ export async function updateEmployee(_role: string, id: string, body: Partial<Em
     .select()
     .single();
   if (error) throw new Error(error.message);
+  if (password) {
+    const employeeCode = update.employee_code || data?.employee_code;
+    if (!employeeCode) {
+      throw new Error('employee_code is required to update password');
+    }
+    await setEmployeePassword(employeeCode, password);
+  }
   return data;
 }
 

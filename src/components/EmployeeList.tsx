@@ -21,7 +21,7 @@ export function EmployeeList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editData, setEditData] = useState<Partial<Employee> & { password?: string }>({});
   const [newData, setNewData] = useState<Partial<Employee> & { password?: string }>({
-    nickname: '', full_name: '', email: '', phone: '', position: '',
+    nickname: '', full_name: '', email: '', phone: '', position: '', employee_code: '',
     role: 'user', is_active: true, password: '',
   });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -67,15 +67,15 @@ export function EmployeeList() {
   };
 
   const handleCreate = async () => {
-    if (!user || !newData.nickname || !newData.password) {
-      showToast('error', 'กรุณากรอกชื่อเล่นและรหัสผ่าน');
+    if (!user || !newData.nickname || !newData.employee_code || !newData.password) {
+      showToast('error', 'กรุณากรอกชื่อเล่น รหัสพนักงาน และรหัสผ่าน');
       return;
     }
     try {
       await createEmployee(user.role, newData);
       showToast('success', 'สร้างพนักงานใหม่สำเร็จ');
       setShowCreate(false);
-      setNewData({ nickname: '', full_name: '', email: '', phone: '', position: '', role: 'user', is_active: true, password: '' });
+      setNewData({ nickname: '', full_name: '', email: '', phone: '', position: '', employee_code: '', role: 'user', is_active: true, password: '' });
       loadEmployees();
     } catch (err: any) { showToast('error', err.message || 'สร้างไม่สำเร็จ'); }
   };
@@ -141,7 +141,7 @@ export function EmployeeList() {
                     selectedEmployee?.id === emp.id ? 'bg-gold/10 border-gold/30' : 'bg-zinc-950/50 border-zinc-900 hover:border-zinc-700'
                   }`} onClick={() => handleSelectEmployee(emp)}>
                     {emp.avatar_url
-                      ? <img src={emp.avatar_url} alt="" className="w-10 h-10 rounded-full" />
+                      ? <img src={emp.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
                       : <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
                           <span className="text-sm font-bold text-[#c4982f]">{emp.nickname[0]}</span>
                         </div>
@@ -181,6 +181,8 @@ export function EmployeeList() {
                   { key: 'position', label: 'ตำแหน่ง', type: 'text' },
                   { key: 'employee_code', label: 'รหัสพนักงาน', type: 'text' },
                   { key: 'password', label: 'รหัสผ่าน *', type: 'password' },
+                  { key: 'avatar_url', label: 'ลิงก์รูปพนักงาน', type: 'url' },
+                  { key: 'start_date', label: 'วันเริ่มงาน', type: 'date' },
                 ].map(({ key, label, type }) => (
                   <div key={key}>
                     <label className="text-[10px] text-zinc-500 uppercase mb-1 block">{label}</label>
@@ -211,7 +213,7 @@ export function EmployeeList() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   {selectedEmployee.avatar_url
-                    ? <img src={selectedEmployee.avatar_url} alt="" className="w-16 h-16 rounded-2xl" />
+                    ? <img src={selectedEmployee.avatar_url} alt="" className="w-16 h-16 rounded-2xl object-cover" referrerPolicy="no-referrer" />
                     : <div className="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center">
                         <span className="text-2xl font-black text-[#c4982f]">{selectedEmployee.nickname[0]}</span>
                       </div>
@@ -242,6 +244,8 @@ export function EmployeeList() {
                   { icon: Phone, key: 'phone', label: 'เบอร์โทร', type: 'tel', highlight: true },
                   { icon: User, key: 'position', label: 'ตำแหน่ง', type: 'text' },
                   { icon: Calendar, key: 'birthday', label: 'วันเกิด', type: 'date' },
+                  { icon: Calendar, key: 'start_date', label: 'วันเริ่มงาน', type: 'date' },
+                  { icon: User, key: 'avatar_url', label: 'ลิงก์รูปพนักงาน', type: 'url' },
                 ].map(({ icon: Icon, key, label, type, highlight }) => (
                   <div key={key} className={`flex items-start gap-3 p-4 rounded-2xl border ${highlight ? 'border-gold/20 bg-gold/5' : 'border-zinc-900 bg-zinc-950/30'}`}>
                     <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${highlight ? 'text-gold/70' : 'text-zinc-500'}`} />
@@ -253,7 +257,7 @@ export function EmployeeList() {
                           className={FIELD_CLS} />
                       ) : (
                         <p className="text-sm font-semibold text-zinc-200">
-                          {key === 'birthday' && (editData as any)[key]
+                          {(key === 'birthday' || key === 'start_date') && (editData as any)[key]
                             ? new Date((editData as any)[key]).toLocaleDateString('th-TH')
                             : (editData as any)[key] || '-'}
                         </p>

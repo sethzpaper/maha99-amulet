@@ -158,6 +158,30 @@ $$;
 grant execute on function public.employee_login(text, text) to anon, authenticated;
 ```
 
+Add a companion RPC so the web app can hash passwords correctly when creating or editing employees:
+
+```sql
+create or replace function public.set_employee_password(p_code text, p_password text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.employees
+  set password_hash = crypt(p_password, gen_salt('bf', 10)),
+      updated_at = now()
+  where employee_code = p_code;
+
+  if not found then
+    raise exception 'employee not found for code %', p_code;
+  end if;
+end;
+$$;
+
+grant execute on function public.set_employee_password(text, text) to anon, authenticated;
+```
+
 Seed employee passwords with bcrypt:
 
 ```sql
