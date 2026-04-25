@@ -12,7 +12,7 @@ const GAS_URL = import.meta.env.VITE_GAS_DRIVE_URL as string | undefined;
 export type DriveFileType = 'photo' | 'report' | 'attachment';
 
 export type AttendanceStatus =
-  | 'working' | 'out' | 'late' | 'leave' | 'auto-leave'
+  | 'working' | 'out' | 'late' | 'leave' | 'auto-leave' | 'auto-out'
   | 'pending' | 'approved' | 'rejected' | 'cancelled';
 
 export interface DriveUploadParams {

@@ -11,7 +11,7 @@ export interface TimeEntry {
   check_out_photo_url?: string;
   total_hours?: number;
   overtime_hours?: number;
-  status: 'working' | 'out' | 'late' | 'leave' | 'auto-leave';
+  status: 'working' | 'out' | 'late' | 'leave' | 'auto-leave' | 'auto-out';
   note?: string;
 }
 
@@ -259,14 +259,14 @@ export async function fetchLeaveRequests(params: { userId?: string; status?: str
   }
 }
 
-export async function fetchRecentCheckins(): Promise<TimeEntry[]> {
+export async function fetchRecentCheckins(limit = 6): Promise<TimeEntry[]> {
   if (!isSupabaseConfigured) return [];
   try {
     const { data, error } = await supabase
       .from('time_entries')
       .select('*')
       .order('check_in_time', { ascending: false })
-      .limit(20);
+      .limit(limit);
     if (error) throw new Error(error.message);
     return (data || []) as TimeEntry[];
   } catch {

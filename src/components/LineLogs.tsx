@@ -46,10 +46,12 @@ const STATUS_STYLE: Record<string, string> = {
   late:       'bg-red-500/10 text-red-400 border-red-500/20',
   leave:      'bg-zinc-800 text-zinc-400',
   'auto-leave': 'bg-zinc-800 text-zinc-500',
+  'auto-out': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 };
 const STATUS_TH: Record<string, string> = {
   working: 'กำลังทำงาน', out: 'ออกงานแล้ว', late: 'มาสาย',
   leave: 'ลาหยุด', 'auto-leave': 'ลาอัตโนมัติ',
+  'auto-out': 'ออกงานอัตโนมัติ',
 };
 
 export function LineLogs() {
@@ -447,8 +449,8 @@ export function LineLogs() {
         <div className="flex items-center gap-3 mb-4">
           <Users className="w-5 h-5 text-gold/60" />
           <div>
-            <h3 className="text-sm font-bold gold-text-gradient">ลงเวลาล่าสุดวันนี้</h3>
-            <p className="text-[10px] text-zinc-500">10 คนล่าสุดที่ลงเวลาแล้ว</p>
+            <h3 className="text-sm font-bold gold-text-gradient">ลงเวลาล่าสุด</h3>
+            <p className="text-[10px] text-zinc-500">6 รายการล่าสุด (ทุกการเข้า-ออกงาน)</p>
           </div>
           <button onClick={loadPublic} className="ml-auto text-[10px] text-zinc-600 hover:text-zinc-400">รีเฟรช</button>
         </div>
@@ -946,6 +948,7 @@ export function LineLogs() {
                             className="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200">
                             <option value="working">กำลังทำงาน</option><option value="out">ออกงานแล้ว</option>
                             <option value="late">มาสาย</option><option value="leave">ลาหยุด</option>
+                            <option value="auto-out">ออกงานอัตโนมัติ</option><option value="auto-leave">ลาอัตโนมัติ</option>
                           </select>
                         </div>
                         <div>
@@ -1039,6 +1042,7 @@ export function LineLogs() {
                         className="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200">
                         <option value="working">กำลังทำงาน</option><option value="out">ออกงานแล้ว</option>
                         <option value="late">มาสาย</option><option value="leave">ลาหยุด</option>
+                        <option value="auto-out">ออกงานอัตโนมัติ</option><option value="auto-leave">ลาอัตโนมัติ</option>
                       </select>
                     </div>
                     <div>

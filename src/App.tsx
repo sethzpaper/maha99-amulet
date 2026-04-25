@@ -305,7 +305,7 @@ export default function App() {
       case 'stats': return <AdminStats />;
       case 'attendance': return <LineLogs />;
       case 'employees': return <EmployeeList />;
-      case 'settings': return <SettingsPage isAuthenticated={isAuthenticated} isSuperAdmin={isSuperAdmin} />;
+      case 'settings': return <SettingsPage isAuthenticated={isAuthenticated} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} userName={user?.username || ''} />;
     }
   };
 

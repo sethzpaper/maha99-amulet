@@ -9,28 +9,39 @@ import {
   Link,
   Music2,
   Palette,
+  Pencil,
   Plus,
   Printer,
   Save,
   Shield,
   Table,
   Trash2,
+  X,
   Lock,
 } from 'lucide-react';
-import { ACTIVITY_LOGS } from '../data/mockData';
+import { formatActivityTime, listActivityLogs, type ActivityLogRow } from '../lib/activityApi';
+import { PasswordResetAdmin } from './PasswordResetAdmin';
 import {
   createTrackedAccount,
   deleteTrackedAccount,
   listTrackedAccounts,
   TrackedAccount,
+  updateTrackedAccount,
 } from '../lib/employeeApi';
 
 interface SettingsProps {
   isSuperAdmin?: boolean;
+  isAdmin?: boolean;
   isAuthenticated?: boolean;
+  userName?: string;
 }
 
-export function Settings({ isSuperAdmin = false, isAuthenticated = false }: SettingsProps) {
+export function Settings({
+  isSuperAdmin = false,
+  isAdmin = false,
+  isAuthenticated = false,
+  userName = '',
+}: SettingsProps) {
   const [exportType, setExportType] = useState('daily');
   const [settingsTab, setSettingsTab] = useState('social');
   const [theme, setTheme] = useState(() => {
@@ -45,22 +56,60 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
     account_handle: '',
     is_competitor: false,
   });
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [accountMessage, setAccountMessage] = useState<string | null>(null);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogRow[]>([]);
+  const isEditing = editingId !== null;
 
   const loadAccounts = async () => {
     const list = await listTrackedAccounts();
     setAccounts(list);
   };
 
+  const loadActivityLogs = async () => {
+    const list = await listActivityLogs(50);
+    setActivityLogs(list);
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       loadAccounts();
+      loadActivityLogs();
     }
   }, [isAuthenticated]);
 
   const showAccountMessage = (message: string) => {
     setAccountMessage(message);
     window.setTimeout(() => setAccountMessage(null), 2500);
+  };
+
+  const resetAccountForm = () => {
+    setAccountForm({
+      platform: 'facebook',
+      account_name: '',
+      account_url: '',
+      account_handle: '',
+      is_competitor: false,
+    });
+    setEditingId(null);
+  };
+
+  const handleEditAccount = (account: TrackedAccount) => {
+    if (!isSuperAdmin) {
+      showAccountMessage('เฉพาะ Super Admin เท่านั้น');
+      return;
+    }
+    setEditingId(account.id);
+    setAccountForm({
+      platform: account.platform,
+      account_name: account.account_name,
+      account_url: account.account_url,
+      account_handle: account.account_handle ?? '',
+      is_competitor: account.is_competitor,
+    });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleAddAccount = async () => {
@@ -73,21 +122,24 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
       return;
     }
 
-    await createTrackedAccount('super_admin', {
+    const payload = {
       ...accountForm,
       account_name: accountForm.account_name.trim(),
       account_url: accountForm.account_url.trim(),
       account_handle: accountForm.account_handle.trim(),
-    });
-    setAccountForm({
-      platform: 'facebook',
-      account_name: '',
-      account_url: '',
-      account_handle: '',
-      is_competitor: false,
-    });
-    await loadAccounts();
-    showAccountMessage('บันทึกแหล่งข้อมูลสำเร็จ');
+    };
+
+    if (editingId) {
+      await updateTrackedAccount('super_admin', editingId, payload);
+      resetAccountForm();
+      await loadAccounts();
+      showAccountMessage('อัปเดตแหล่งข้อมูลสำเร็จ');
+    } else {
+      await createTrackedAccount('super_admin', payload);
+      resetAccountForm();
+      await loadAccounts();
+      showAccountMessage('บันทึกแหล่งข้อมูลสำเร็จ');
+    }
   };
 
   const handleDeleteAccount = async (id: string) => {
@@ -96,6 +148,7 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
       return;
     }
     await deleteTrackedAccount('super_admin', id);
+    if (editingId === id) resetAccountForm();
     await loadAccounts();
     showAccountMessage('ลบแหล่งข้อมูลแล้ว');
   };
@@ -169,9 +222,9 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
 
       {isAuthenticated && (
         <>
-        <div className="flex gap-1 bg-zinc-950/60 border border-zinc-900 p-1 rounded-2xl mb-6">
-          {(['social', 'export', 'system', 'log']).map((id) => {
-            const labels = { social: 'แหล่ง Social', export: 'Export', system: 'ระบบ', log: 'บันทึก' };
+        <div className="flex gap-1 bg-zinc-950/60 border border-zinc-900 p-1 rounded-2xl mb-6 flex-wrap">
+          {(['social', 'export', 'system', 'log', 'password']).map((id) => {
+            const labels = { social: 'แหล่ง Social', export: 'Export', system: 'ระบบ', log: 'บันทึก', password: 'พาสเวิร์ด' };
             return (
               <button
                 key={id}
@@ -265,18 +318,38 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
               />
             </label>
 
-            <button
-              onClick={handleAddAccount}
-              disabled={!isSuperAdmin}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 text-xs font-black text-black transition hover:bg-[#e5c55d] disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Plus className="w-4 h-4" /> บันทึกแหล่งข้อมูล
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleAddAccount}
+                disabled={!isSuperAdmin}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 text-xs font-black text-black transition hover:bg-[#e5c55d] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isEditing ? (
+                  <><Save className="w-4 h-4" /> อัปเดตแหล่งข้อมูล</>
+                ) : (
+                  <><Plus className="w-4 h-4" /> บันทึกแหล่งข้อมูล</>
+                )}
+              </button>
+              {isEditing && (
+                <button
+                  onClick={resetAccountForm}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-xs font-bold text-zinc-300 transition hover:bg-zinc-800"
+                  title="ยกเลิกการแก้ไข"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {isEditing && (
+              <p className="text-[10px] text-amber-400 italic">
+                กำลังแก้ไขรายการที่เลือก — กดอัปเดตเพื่อบันทึก หรือ × เพื่อยกเลิก
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <AccountGroup title="ช่องของเรา" accounts={ownedAccounts} onDelete={handleDeleteAccount} canDelete={isSuperAdmin} />
-            <AccountGroup title="บัญชีคู่แข่ง" accounts={competitorAccounts} onDelete={handleDeleteAccount} canDelete={isSuperAdmin} />
+            <AccountGroup title="ช่องของเรา" accounts={ownedAccounts} onDelete={handleDeleteAccount} onEdit={handleEditAccount} canEdit={isSuperAdmin} editingId={editingId} />
+            <AccountGroup title="บัญชีคู่แข่ง" accounts={competitorAccounts} onDelete={handleDeleteAccount} onEdit={handleEditAccount} canEdit={isSuperAdmin} editingId={editingId} />
           </div>
         </div>
 
@@ -377,7 +450,11 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
          </div>
 
          <div className="space-y-4">
-            {ACTIVITY_LOGS.map(log => (
+            {activityLogs.length === 0 ? (
+              <p className="text-xs text-zinc-600 italic text-center py-6">
+                ยังไม่มีบันทึกกิจกรรม — รัน <code className="text-zinc-400 bg-zinc-900 px-1 rounded">sql/activity_logs.sql</code> เพื่อเปิดใช้งาน
+              </p>
+            ) : activityLogs.map(log => (
               <div key={log.id} className="flex items-start gap-4 p-4 bg-zinc-950/50 rounded-2xl border border-zinc-900 hover:border-zinc-700 transition-all group">
                  <div className={`mt-1 p-2 rounded-lg ${
                     log.type === 'update' ? 'bg-amber-500/10 text-amber-500' :
@@ -389,19 +466,30 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
                  </div>
                  <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                       <p className="text-xs font-bold text-zinc-200 group-hover:text-gold transition-colors">{log.user}</p>
-                       <span className="text-[10px] font-mono text-zinc-600">{log.timestamp}</span>
+                       <p className="text-xs font-bold text-zinc-200 group-hover:text-gold transition-colors">{log.user_name}</p>
+                       <span className="text-[10px] font-mono text-zinc-600">{formatActivityTime(log.created_at)}</span>
                     </div>
                     <p className="text-xs text-zinc-400 leading-relaxed">{log.action}</p>
+                    {log.details && (
+                      <p className="text-[10px] text-zinc-600 mt-1 leading-relaxed">{log.details}</p>
+                    )}
                  </div>
               </div>
             ))}
          </div>
-         
-         <button className="w-full mt-8 py-3 bg-zinc-900/50 hover:bg-zinc-900 text-[10px] font-bold text-zinc-500 border border-zinc-800 rounded-2xl transition-all uppercase tracking-widest leading-none">
-            ดูบันทึกทั้งหมด (Full Audit Log)
+
+         <button onClick={loadActivityLogs} className="w-full mt-8 py-3 bg-zinc-900/50 hover:bg-zinc-900 text-[10px] font-bold text-zinc-500 border border-zinc-800 rounded-2xl transition-all uppercase tracking-widest leading-none">
+            รีเฟรชบันทึก (แสดง 50 รายการล่าสุด)
          </button>
       </div>
+      )}
+      {settingsTab === 'password' && (
+        <div className="glass-card p-6 rounded-3xl gold-border-glow">
+          <PasswordResetAdmin
+            approverName={userName || (isSuperAdmin ? 'super_admin' : 'admin')}
+            canApprove={isAdmin || isSuperAdmin}
+          />
+        </div>
       )}
         </>
       )}
@@ -411,14 +499,18 @@ export function Settings({ isSuperAdmin = false, isAuthenticated = false }: Sett
 
 function AccountGroup({
   accounts,
-  canDelete,
+  canEdit,
   onDelete,
+  onEdit,
   title,
+  editingId,
 }: {
   accounts: TrackedAccount[];
-  canDelete: boolean;
+  canEdit: boolean;
   onDelete: (id: string) => void;
+  onEdit: (account: TrackedAccount) => void;
   title: string;
+  editingId: string | null;
 }) {
   return (
     <div className="bg-zinc-950/50 rounded-2xl border border-zinc-900 p-5">
@@ -428,7 +520,12 @@ function AccountGroup({
           <p className="text-[10px] text-zinc-600">ยังไม่มีข้อมูล</p>
         ) : (
           accounts.map((account) => (
-            <div key={account.id} className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
+            <div
+              key={account.id}
+              className={`rounded-xl border bg-zinc-900/60 p-3 ${
+                editingId === account.id ? 'border-gold/60 ring-1 ring-gold/30' : 'border-zinc-800'
+              }`}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -441,9 +538,24 @@ function AccountGroup({
                   </div>
                   <p className="mt-1 text-[10px] text-zinc-500">{account.account_handle || account.platform}</p>
                 </div>
-                <button disabled={!canDelete} onClick={() => onDelete(account.id)} className="text-red-400 hover:text-red-300 disabled:opacity-30 disabled:cursor-not-allowed">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    disabled={!canEdit}
+                    onClick={() => onEdit(account)}
+                    className="text-amber-400 hover:text-amber-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="แก้ไข"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    disabled={!canEdit}
+                    onClick={() => onDelete(account.id)}
+                    className="text-red-400 hover:text-red-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="ลบ"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               <a
                 href={account.account_url}

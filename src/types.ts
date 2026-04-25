@@ -69,7 +69,7 @@ export interface AttendanceRecord {
   checkOut?: string;
   totalHours: number;
   overtime: string;
-  status: 'working' | 'out' | 'late' | 'leave' | 'auto-leave';
+  status: 'working' | 'out' | 'late' | 'leave' | 'auto-leave' | 'auto-out';
 }
 
 export interface PriceTrack {

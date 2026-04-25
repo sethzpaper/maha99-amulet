@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../lib/authStore';
 import { listEmployees, Employee } from '../lib/employeeApi';
-import { AlertCircle, Hash, Lock, LogIn, Users } from 'lucide-react';
+import { requestPasswordReset } from '../lib/passwordResetApi';
+import { AlertCircle, Hash, Key, Lock, LogIn, Users } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface LoginProps {
@@ -18,6 +19,40 @@ export function Login({ onLoginSuccess }: LoginProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotCode, setForgotCode] = useState('');
+  const [forgotReason, setForgotReason] = useState('');
+  const [forgotMsg, setForgotMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const handleForgot = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setForgotMsg(null);
+    if (!forgotCode.trim()) {
+      setForgotMsg({ type: 'err', text: 'กรุณากรอกรหัสพนักงาน' });
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await requestPasswordReset(forgotCode.trim(), forgotReason.trim() || undefined);
+      setForgotMsg({
+        type: 'ok',
+        text: 'ส่งคำขอแล้ว — กรุณารอแอดมินอนุมัติและแจ้งรหัสใหม่ให้คุณ',
+      });
+      setForgotCode('');
+      setForgotReason('');
+    } catch (err: any) {
+      setForgotMsg({
+        type: 'err',
+        text: err?.message?.includes('not found')
+          ? 'ไม่พบรหัสพนักงานนี้ในระบบ'
+          : 'ส่งคำขอไม่สำเร็จ — ลองใหม่หรือแจ้งแอดมินโดยตรง',
+      });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const loginEmployee = useAuthStore((s) => s.loginEmployee);
   const loginAdmin = useAuthStore((s) => s.login);
@@ -254,6 +289,57 @@ export function Login({ onLoginSuccess }: LoginProps) {
               </>
             )}
           </motion.button>
+
+          {/* ── Forgot password ───────────────────────────────── */}
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => { setShowForgot((v) => !v); setForgotMsg(null); }}
+              className="text-xs text-sky-600 hover:text-sky-700 underline-offset-2 hover:underline inline-flex items-center gap-1"
+            >
+              <Key className="w-3 h-3" /> ลืมรหัสผ่าน?
+            </button>
+          </div>
+
+          {showForgot && (
+            <div className="mt-2 bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3">
+              <div>
+                <p className="text-xs font-semibold text-amber-800">ส่งคำขอรีเซ็ตรหัสผ่านไปยังแอดมิน</p>
+                <p className="text-[10px] text-amber-700 mt-1">
+                  แอดมินจะอนุมัติและแจ้งรหัสใหม่ให้คุณ (ผ่าน LINE / โทรศัพท์ / ตามช่องทางที่ตกลงกัน)
+                </p>
+              </div>
+              <input
+                type="text"
+                value={forgotCode}
+                onChange={(e) => setForgotCode(e.target.value)}
+                placeholder="รหัสพนักงาน เช่น EMP001"
+                className="w-full bg-white border border-amber-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-amber-400"
+                disabled={forgotLoading}
+              />
+              <textarea
+                value={forgotReason}
+                onChange={(e) => setForgotReason(e.target.value)}
+                placeholder="เหตุผล (ไม่บังคับ)"
+                rows={2}
+                className="w-full bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-400 resize-none"
+                disabled={forgotLoading}
+              />
+              {forgotMsg && (
+                <p className={`text-xs ${forgotMsg.type === 'ok' ? 'text-emerald-700' : 'text-red-700'}`}>
+                  {forgotMsg.text}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleForgot}
+                disabled={forgotLoading}
+                className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white font-semibold py-2 rounded-xl text-xs transition-all"
+              >
+                {forgotLoading ? 'กำลังส่ง...' : 'ส่งคำขอ'}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </motion.div>

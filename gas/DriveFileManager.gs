@@ -49,6 +49,7 @@ var STATUS_FOLDERS = {
   'late':       'late',
   'leave':      'leave',
   'auto-leave': 'auto-leave',
+  'auto-out':   'auto-out',
   'pending':    'pending',
   'approved':   'approved',
   'rejected':   'rejected',

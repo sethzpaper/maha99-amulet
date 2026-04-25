@@ -68,7 +68,7 @@ create table if not exists public.time_entries (
   check_out_photo_url text,
   total_hours numeric,
   overtime_hours numeric,
-  status text not null default 'working' check (status in ('working','out','late','leave','auto-leave')),
+  status text not null default 'working' check (status in ('working','out','late','leave','auto-leave','auto-out')),
   note text,
   unique (user_id, work_date)
 );
@@ -279,3 +279,37 @@ VITE_ADMIN_GITHUB_IDS=...                    # unchanged
 - **Content tables** (`amulets`, `videos`, `line_logs`, `social_posts`, `competitor_*`, `leaderboard_*`) are best-effort: if a table is missing the UI falls back to empty arrays/null. Create the ones you actually need.
 - **No build-time dependency changes** — `@supabase/supabase-js` was already present.
 - After seeding, verify `supabase.rpc('employee_login', { p_code, p_password })` returns a row for a known employee.
+
+
+## 7. Auto-Checkout (เพิ่มใหม่)
+
+ระบบจะเปลี่ยนสถานะ `working` ที่ค้างจากวันก่อน → `auto-out` พร้อมกำหนด
+`check_out_time = 23:59:59 ของ work_date` โดยอัตโนมัติ ครอบคลุม 2 เคส:
+
+1. **เกินเวลา 23:59 ของวันนั้น** → ปิดให้ทุกคนผ่าน `pg_cron` ที่รันทุกคืน
+2. **ลงเวลาย้อนหลังของวันก่อน ๆ** → ปิด row เก่าค้างของผู้ใช้คนนั้นทันทีผ่าน DB trigger
+
+### ติดตั้ง
+
+รัน `sql/auto_checkout.sql` ใน Supabase → SQL Editor ทีละบล็อก
+(ต้องเป็น Pro plan ขึ้นไปถึงจะมี `pg_cron` — ถ้าเป็น Free tier ให้ข้ามบล็อก 3-4
+แล้วใช้ Edge Function ในข้อถัดไปแทน)
+
+### Edge Function สำรอง / ใช้แทน pg_cron
+
+ดู `supabase/functions/auto-checkout/README.md` — deploy แล้วตั้ง schedule
+ผ่าน cron-job.org หรือ GitHub Actions ที่เรียก endpoint ทุกคืน 00:01 (เวลาไทย)
+
+### สิ่งที่เปลี่ยน
+
+- เพิ่ม `'auto-out'` ใน check constraint ของ `time_entries.status`
+- TypeScript types (`src/types.ts`, `src/lib/attendanceApi.ts`, `src/lib/driveUpload.ts`)
+- UI mapping ใน `LineLogs.tsx`: badge สีอำพัน + ป้าย "ออกงานอัตโนมัติ"
+- Admin dropdown มีตัวเลือก `auto-out` / `auto-leave` ให้แก้มือได้
+- `gas/DriveFileManager.gs` เพิ่มโฟลเดอร์ `auto-out`
+
+### คอลัมน์ที่ถูกเขียนทับ
+
+ถ้า row มี `check_in_time` → จะคำนวณ `total_hours` กับ `overtime_hours` ใหม่จาก
+ระยะเวลาตั้งแต่ check-in จนถึง 23:59:59 ของวันนั้น และเพิ่ม note ต่อท้ายว่า
+`[auto-out @ YYYY-MM-DD HH:MM]` หรือ `[auto-out by trigger @ ...]`
