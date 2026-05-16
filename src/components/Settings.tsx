@@ -156,7 +156,7 @@ export function Settings({
   const ownedAccounts = accounts.filter((account) => !account.is_competitor);
   const competitorAccounts = accounts.filter((account) => account.is_competitor);
   const themes = [
-    { id: 'classic', label: 'Classic Gold', colors: ['#0c0900', '#d4af37'] },
+    { id: 'classic', label: 'Abyss', colors: ['#000c18', '#3794ff'] },
     { id: 'jade', label: 'Jade', colors: ['#05130f', '#34d399'] },
     { id: 'ruby', label: 'Ruby', colors: ['#160607', '#f43f5e'] },
   ];
@@ -314,7 +314,7 @@ export function Settings({
                 checked={accountForm.is_competitor}
                 onChange={(event) => setAccountForm({ ...accountForm, is_competitor: event.target.checked })}
                 disabled={!isSuperAdmin}
-                className="h-4 w-4 accent-[#d4af37]"
+                className="h-4 w-4 accent-[#3794ff]"
               />
             </label>
 
@@ -379,7 +379,7 @@ export function Settings({
                       key={type}
                       onClick={() => setExportType(type)}
                       className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                        exportType === type ? 'bg-gold text-black border-gold shadow-[0_0_15px_rgba(212,175,55,0.2)]' : 'bg-transparent text-zinc-500 border-zinc-800 hover:text-zinc-300'
+                        exportType === type ? 'bg-gold text-black border-gold shadow-[0_0_15px_rgba(55,148,255,0.24)]' : 'bg-transparent text-zinc-500 border-zinc-800 hover:text-zinc-300'
                       }`}
                     >
                       {type === 'daily' ? 'รายวัน' : type === 'monthly' ? 'รายเดือน' : 'รายปี'}

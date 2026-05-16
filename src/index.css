@@ -4,15 +4,24 @@
 @theme {
   --font-serif: "Pridi", serif;
   --font-sans: "IBM Plex Sans Thai", sans-serif;
-  --color-gold: #d4af37;
-  --color-primary: #1d7a62;
+  --color-gold: #3794ff;
+  --color-primary: #0e639c;
 }
 
-:root {
-  --app-bg: #0c0900;
-  --app-bg-deep: #0a0700;
-  --app-accent: #d4af37;
-  --app-accent-soft: rgba(212, 175, 55, 0.12);
+:root,
+:root[data-theme="classic"] {
+  --app-bg: #000c18;
+  --app-bg-deep: #000711;
+  --app-surface: #071527;
+  --app-surface-strong: #0b1f35;
+  --app-border: #12395a;
+  --app-border-muted: #0d2943;
+  --app-text: #d6e9ff;
+  --app-text-muted: #7aa7d9;
+  --app-accent: #3794ff;
+  --app-accent-bright: #9cdcfe;
+  --app-accent-soft: rgba(55, 148, 255, 0.18);
+  --app-accent-faint: rgba(55, 148, 255, 0.08);
 }
 
 :root[data-theme="jade"] {
@@ -33,17 +42,17 @@ body {
   margin: 0;
   min-height: 100vh;
   background: var(--app-bg);
-  color: #e8dfc8;
+  color: var(--app-text);
   font-family: var(--font-sans);
 }
 
 body::selection {
-  background: rgba(212, 175, 55, 0.25);
+  background: rgba(55, 148, 255, 0.32);
 }
 
 /* ── Glass card surface ── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.025);
+  background: color-mix(in srgb, var(--app-surface) 72%, transparent);
   border: 1px solid var(--app-accent-soft);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -52,16 +61,108 @@ body::selection {
 /* ── Gold glow border ── */
 .gold-border-glow {
   box-shadow:
-    0 0 40px color-mix(in srgb, var(--app-accent) 8%, transparent),
-    inset 0 0 40px color-mix(in srgb, var(--app-accent) 4%, transparent);
+    0 0 40px color-mix(in srgb, var(--app-accent) 10%, transparent),
+    inset 0 0 40px color-mix(in srgb, var(--app-accent) 5%, transparent);
 }
 
 /* ── Gold text gradient ── */
 .gold-text-gradient {
-  background: linear-gradient(135deg, var(--app-accent) 0%, #f5e17a 48%, var(--app-accent) 100%);
+  background: linear-gradient(135deg, var(--app-accent) 0%, var(--app-accent-bright) 52%, #4fc1ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+:root .bg-\[\#0c0900\] {
+  background-color: var(--app-bg) !important;
+}
+
+:root .bg-\[\#0a0700\] {
+  background-color: var(--app-bg-deep) !important;
+}
+
+:root .bg-\[\#c4982f\] {
+  background-color: var(--app-accent) !important;
+}
+
+:root .bg-\[\#1a1200\],
+:root .hover\:bg-\[\#140e00\]:hover {
+  background-color: var(--app-surface) !important;
+}
+
+:root .text-\[\#d4af37\],
+:root .text-\[\#c4982f\],
+:root .text-gold {
+  color: var(--app-accent) !important;
+}
+
+:root .text-\[\#8a6820\],
+:root .text-\[\#6a5018\],
+:root .text-\[\#4a3800\] {
+  color: var(--app-text-muted) !important;
+}
+
+:root .text-\[\#0a0700\] {
+  color: var(--app-bg-deep) !important;
+}
+
+:root .border-\[\#251b00\],
+:root .border-\[\#1e1500\],
+:root .border-\[\#2a1e00\] {
+  border-color: var(--app-border-muted) !important;
+}
+
+:root .border-\[\#c4982f\]\/30 {
+  border-color: color-mix(in srgb, var(--app-accent) 30%, transparent) !important;
+}
+
+:root .border-\[\#c4982f\]\/40 {
+  border-color: color-mix(in srgb, var(--app-accent) 40%, transparent) !important;
+}
+
+:root .border-\[\#c4982f\]\/50 {
+  border-color: color-mix(in srgb, var(--app-accent) 50%, transparent) !important;
+}
+
+:root .border-\[\#c4982f\]\/60 {
+  border-color: color-mix(in srgb, var(--app-accent) 60%, transparent) !important;
+}
+
+:root .border-\[\#c4982f\]\/70 {
+  border-color: color-mix(in srgb, var(--app-accent) 70%, transparent) !important;
+}
+
+:root .bg-\[\#c4982f\]\/10 {
+  background-color: color-mix(in srgb, var(--app-accent) 10%, transparent) !important;
+}
+
+:root .bg-\[\#c4982f\]\/15 {
+  background-color: color-mix(in srgb, var(--app-accent) 15%, transparent) !important;
+}
+
+:root .bg-\[\#c4982f\]\/20,
+:root .bg-\[\#c4982f\]\/25 {
+  background-color: color-mix(in srgb, var(--app-accent) 20%, transparent) !important;
+}
+
+:root .hover\:bg-\[\#c4982f\]\/10:hover {
+  background-color: color-mix(in srgb, var(--app-accent) 10%, transparent) !important;
+}
+
+:root .text-\[\#c4982f\]\/50 {
+  color: color-mix(in srgb, var(--app-accent) 50%, transparent) !important;
+}
+
+:root .text-\[\#c4982f\]\/70 {
+  color: color-mix(in srgb, var(--app-accent) 70%, transparent) !important;
+}
+
+:root .shadow-\[0_0_12px_rgba\(196\,152\,47\,0\.25\)\] {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--app-accent) 28%, transparent) !important;
+}
+
+:root .bg-\[radial-gradient\(ellipse_at_50\%_0\%\,rgba\(212\,175\,55\,0\.07\)_0\%\,transparent_60\%\)\] {
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(55, 148, 255, 0.13) 0%, transparent 60%) !important;
 }
 
 :root[data-theme="jade"] .bg-\[\#0c0900\],
@@ -90,9 +191,9 @@ body::selection {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.3);
+  background: color-mix(in srgb, var(--app-accent) 35%, transparent);
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.6);
+  background: color-mix(in srgb, var(--app-accent) 65%, transparent);
 }

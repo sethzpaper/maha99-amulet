@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+data/
+reports/
+*.sqlite3
+
+.python-*/
+python-*-embed-amd64.zip
+get-pip.py

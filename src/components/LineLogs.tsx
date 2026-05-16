@@ -281,7 +281,7 @@ export function LineLogs() {
     try {
       const res = await exportMonthlyReport(reportMonth);
       showToast('success', 'สร้างรายงานสำเร็จ');
-      window.open(res.webViewLink, '_blank');
+      console.info('monthly attendance report', res);
     } catch (err: any) { showToast('error', err.message); }
     setLoading(false);
   };

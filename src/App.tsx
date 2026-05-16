@@ -4,15 +4,24 @@ import {
   Activity,
   Award,
   BarChart3,
+  CheckCircle2,
   Clock,
+  Clapperboard,
+  Cpu,
   Crown,
+  Eye,
   Facebook,
   Flower2,
   Globe,
+  Home,
+  Image,
+  Lightbulb,
   LogIn,
   LogOut,
   Medal,
   Music2,
+  Package,
+  ReceiptText,
   Settings as SettingsIcon,
   Shield,
   Sparkles,
@@ -24,7 +33,6 @@ import { StatCards } from './components/StatCards';
 import { FacebookPosts } from './components/FacebookPosts';
 import { TikTokPosts } from './components/TikTokPosts';
 import { VideoManagement } from './components/VideoManagement';
-import { LineLogs } from './components/LineLogs';
 import { AdminStats } from './components/AdminStats';
 import { EmployeeList } from './components/EmployeeList';
 import { CompetitorComparison } from './components/CompetitorComparison';
@@ -36,61 +44,77 @@ import { dataService } from './lib/dataService';
 import { LeaderboardEntry } from './types';
 
 type Tab =
+  | 'aiVideoHome'
+  | 'videoIdeas'
+  | 'imageGen'
+  | 'storyboard'
+  | 'videoRender'
+  | 'videoReview'
+  | 'approvedVideos'
+  | 'assetLibrary'
+  | 'costTracker'
   | 'dashboard'
   | 'facebook'
   | 'tiktok'
   | 'comparison'
-  | 'video'
   | 'stats'
-  | 'attendance'
   | 'employees'
   | 'settings';
 
 type NavItem = { tab: Tab; label: string; icon: LucideIcon };
 
 const navPriority: Record<Tab, number> = {
-  attendance: 0,
-  stats: 1,
-  employees: 2,
-  dashboard: 3,
-  facebook: 4,
-  tiktok: 5,
-  comparison: 6,
-  video: 7,
-  settings: 8,
+  aiVideoHome: 0,
+  videoIdeas: 1,
+  imageGen: 2,
+  storyboard: 3,
+  videoRender: 4,
+  videoReview: 5,
+  approvedVideos: 6,
+  assetLibrary: 7,
+  costTracker: 8,
+  dashboard: 9,
+  facebook: 10,
+  tiktok: 11,
+  comparison: 12,
+  stats: 13,
+  employees: 14,
+  settings: 15,
 };
 
 const pageMeta: Record<Tab, { th: string; en: string }> = {
+  aiVideoHome: { th: '#🏠-ai-video-home', en: 'AI Video Home' },
+  videoIdeas: { th: '#💡-video-ideas', en: 'Video Ideas' },
+  imageGen: { th: '#🖼️-image-gen', en: 'Image Generation' },
+  storyboard: { th: '#🎬-storyboard', en: 'Storyboard' },
+  videoRender: { th: '#⚙️-video-render', en: 'Video Render' },
+  videoReview: { th: '#👀-video-review', en: 'Video Review' },
+  approvedVideos: { th: '#✅-approved-videos', en: 'Approved Videos' },
+  assetLibrary: { th: '#📦-asset-library', en: 'Asset Library' },
+  costTracker: { th: '#🧾-cost-tracker', en: 'Cost Tracker' },
   dashboard: { th: 'แดชบอร์ดองค์กร', en: 'Organization Dashboard' },
   facebook: { th: 'โพสต์ Facebook', en: 'Facebook Activity' },
   tiktok: { th: 'โพสต์ TikTok', en: 'TikTok Short-form Video' },
   comparison: { th: 'เปรียบเทียบคู่แข่ง', en: 'Competitor Intelligence' },
-  video: { th: 'จัดการคลังวิดีโอ', en: 'Video Asset Management' },
   stats: { th: 'สถิติพนักงาน', en: 'Admin Performance' },
-  attendance: { th: 'ลงเวลา · ลางาน', en: 'Attendance & Leave System' },
   employees: { th: 'ทำเนียบพนักงาน', en: 'Employee Directory' },
   settings: { th: 'ตั้งค่า', en: 'System Settings' },
 };
 
 const navPublicGuest: NavItem[] = [
-  { tab: 'attendance', label: 'ลงเวลา · ลางาน', icon: Clock },
-  { tab: 'dashboard', label: 'แดชบอร์ด', icon: BarChart3 },
-  { tab: 'comparison', label: 'เปรียบเทียบคู่แข่ง', icon: Activity },
-  { tab: 'stats', label: 'สถิติพนักงาน', icon: Award },
-  { tab: 'employees', label: 'ทำเนียบพนักงาน', icon: Users },
-  { tab: 'settings', label: 'ตั้งค่า', icon: SettingsIcon },
+  { tab: 'aiVideoHome', label: '#🏠-ai-video-home', icon: Home },
+  { tab: 'videoIdeas', label: '#💡-video-ideas', icon: Lightbulb },
+  { tab: 'imageGen', label: '#🖼️-image-gen', icon: Image },
+  { tab: 'storyboard', label: '#🎬-storyboard', icon: Clapperboard },
+  { tab: 'videoRender', label: '#⚙️-video-render', icon: Cpu },
+  { tab: 'videoReview', label: '#👀-video-review', icon: Eye },
+  { tab: 'approvedVideos', label: '#✅-approved-videos', icon: CheckCircle2 },
+  { tab: 'assetLibrary', label: '#📦-asset-library', icon: Package },
+  { tab: 'costTracker', label: '#🧾-cost-tracker', icon: ReceiptText },
 ];
 
 const navLoggedIn: NavItem[] = [
-  { tab: 'attendance', label: 'ลงเวลา · ลางาน', icon: Clock },
-  { tab: 'dashboard', label: 'แดชบอร์ด', icon: BarChart3 },
-  { tab: 'facebook', label: 'โพสต์ Facebook', icon: Facebook },
-  { tab: 'tiktok', label: 'โพสต์ TikTok', icon: Music2 },
-  { tab: 'comparison', label: 'เปรียบเทียบคู่แข่ง', icon: Activity },
-  { tab: 'video', label: 'จัดการวิดีโอ', icon: Video },
-  { tab: 'stats', label: 'สถิติพนักงาน', icon: Award },
-  { tab: 'employees', label: 'ทำเนียบพนักงาน', icon: Users },
-  { tab: 'settings', label: 'ตั้งค่า', icon: SettingsIcon },
+  ...navPublicGuest,
 ];
 
 const fallbackLeaderboard = [
@@ -277,8 +301,108 @@ function DashboardPage() {
   );
 }
 
+const workflowCards: Record<Tab, { title: string; description: string; columns: string[] }> = {
+  aiVideoHome: {
+    title: 'AI Video Command Center',
+    description: 'ภาพรวมงานวิดีโอทั้งหมดจากไอเดียจนถึงอนุมัติ พร้อมรอเชื่อม Discord workflow',
+    columns: ['งานใหม่', 'กำลังทำ', 'รอตรวจ', 'อนุมัติแล้ว'],
+  },
+  videoIdeas: {
+    title: 'Video Ideas',
+    description: 'รวบรวมไอเดีย hook, keyword, reference และโจทย์คลิปจากทีม',
+    columns: ['Idea Backlog', 'Selected', 'Need Assets', 'Ready'],
+  },
+  imageGen: {
+    title: 'Image Generation',
+    description: 'คิวสร้างภาพสินค้า, thumbnail, scene reference และภาพประกอบสำหรับวิดีโอ',
+    columns: ['Prompt Draft', 'Generating', 'Need Revision', 'Approved Image'],
+  },
+  storyboard: {
+    title: 'Storyboard',
+    description: 'แตกช็อต วางลำดับภาพ คำบรรยาย และจังหวะของคลิปก่อน render',
+    columns: ['Script', 'Shot List', 'Voice/Text', 'Ready Render'],
+  },
+  videoRender: {
+    title: 'Video Render',
+    description: 'ติดตามงาน render, version, output size และสถานะไฟล์ปลายทาง',
+    columns: ['Queued', 'Rendering', 'Failed', 'Rendered'],
+  },
+  videoReview: {
+    title: 'Video Review',
+    description: 'พื้นที่ตรวจคลิปก่อนโพสต์ เก็บ comment, revision และผลตรวจคุณภาพ',
+    columns: ['Waiting Review', 'Fix Needed', 'Final Check', 'Approved'],
+  },
+  approvedVideos: {
+    title: 'Approved Videos',
+    description: 'คลิปที่ผ่านการอนุมัติแล้ว รอจัดตารางโพสต์หรือบันทึกเป็นผลงาน',
+    columns: ['Approved', 'Scheduled FB', 'Scheduled TikTok', 'Posted'],
+  },
+  assetLibrary: {
+    title: 'Asset Library',
+    description: 'คลังไฟล์วิดีโอ รูปภาพ ลิงก์ Drive และสถานะ pipeline ของคอนเทนท์',
+    columns: ['Video Files', 'Product Images', 'Post Links', 'Archive'],
+  },
+  costTracker: {
+    title: 'Cost Tracker',
+    description: 'ติดตามค่าใช้จ่าย AI render, image generation, ads และต้นทุนรายคลิป',
+    columns: ['AI Cost', 'Production', 'Ads', 'Total'],
+  },
+  dashboard: { title: '', description: '', columns: [] },
+  facebook: { title: '', description: '', columns: [] },
+  tiktok: { title: '', description: '', columns: [] },
+  comparison: { title: '', description: '', columns: [] },
+  stats: { title: '', description: '', columns: [] },
+  employees: { title: '', description: '', columns: [] },
+  settings: { title: '', description: '', columns: [] },
+};
+
+function VideoWorkflowPage({ tab }: { tab: Tab }) {
+  const config = workflowCards[tab];
+
+  if (tab === 'assetLibrary') {
+    return <VideoManagement />;
+  }
+
+  if (tab === 'aiVideoHome') {
+    return (
+      <div className="space-y-8">
+        <VideoWorkflowBoard config={config} />
+        <VideoManagement />
+      </div>
+    );
+  }
+
+  return <VideoWorkflowBoard config={config} />;
+}
+
+function VideoWorkflowBoard({ config }: { config: { title: string; description: string; columns: string[] } }) {
+  return (
+    <div className="space-y-6">
+      <div className="glass-card rounded-3xl border border-gold/20 p-6 gold-border-glow">
+        <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">Discord-ready workflow</p>
+        <h2 className="mt-2 text-2xl font-serif italic font-bold gold-text-gradient">{config.title}</h2>
+        <p className="mt-2 max-w-3xl text-sm text-zinc-500">{config.description}</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+        {config.columns.map((column) => (
+          <div key={column} className="min-h-48 rounded-3xl border border-zinc-900 bg-zinc-950/40 p-5">
+            <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
+              <h3 className="text-sm font-bold text-zinc-200">{column}</h3>
+              <span className="rounded-full border border-gold/20 bg-gold/10 px-2 py-0.5 text-[10px] font-bold text-gold">0</span>
+            </div>
+            <div className="mt-5 rounded-2xl border border-dashed border-zinc-800 p-5 text-center text-xs text-zinc-600">
+              รอเชื่อมรายการจาก Discord
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('attendance');
+  const [activeTab, setActiveTab] = useState<Tab>('aiVideoHome');
   const [showLogin, setShowLogin] = useState(false);
   const [lang, setLang] = useState<'th' | 'en'>('th');
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -291,129 +415,99 @@ export default function App() {
 
   useEffect(() => {
     if (!navItems.some((item) => item.tab === activeTab)) {
-      setActiveTab('attendance');
+      setActiveTab('aiVideoHome');
     }
   }, [activeTab, navItems]);
 
   const renderPage = () => {
     switch (activeTab) {
+      case 'aiVideoHome':
+      case 'videoIdeas':
+      case 'imageGen':
+      case 'storyboard':
+      case 'videoRender':
+      case 'videoReview':
+      case 'approvedVideos':
+      case 'assetLibrary':
+      case 'costTracker':
+        return <VideoWorkflowPage tab={activeTab} />;
       case 'dashboard': return <DashboardPage />;
       case 'facebook': return <FacebookPosts />;
       case 'tiktok': return <TikTokPosts />;
       case 'comparison': return <CompetitorComparison />;
-      case 'video': return <VideoManagement />;
       case 'stats': return <AdminStats />;
-      case 'attendance': return <LineLogs />;
       case 'employees': return <EmployeeList />;
       case 'settings': return <SettingsPage isAuthenticated={isAuthenticated} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} userName={user?.username || ''} />;
     }
   };
 
   return (
-    <div className="min-h-screen flex bg-[#0c0900]">
-      <div className="fixed inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(212,175,55,0.07)_0%,transparent_60%)]" />
+    <div className="min-h-screen flex bg-[var(--app-bg)]">
+      <div className="fixed inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(55,148,255,0.13)_0%,transparent_60%)]" />
 
-      <aside className="fixed top-0 left-0 h-full w-64 z-30 bg-[#0a0700] border-r border-[#251b00] flex flex-col">
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-[#1e1500]">
-          <div className="grid h-10 w-10 place-items-center bg-[#c4982f] text-[#0a0700] shrink-0">
+      <aside className="fixed top-0 left-0 h-full w-64 z-30 bg-[var(--app-bg-deep)] border-r border-[var(--app-border-muted)] flex flex-col">
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-[var(--app-border-muted)]">
+          <div className="grid h-10 w-10 place-items-center bg-[var(--app-accent)] text-[var(--app-bg-deep)] shrink-0">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-bold text-[#d4af37]">มหานิยม999 เช็คชื่อ</p>
+            <p className="text-sm font-bold text-gold">มหานิยม999 เช็คชื่อ</p>
             <p className="text-[10px] text-[#6a5018] uppercase tracking-widest">Amulet Stat Hub</p>
           </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pt-4 space-y-0.5">
-          {orderedNavItems.filter(n => n.tab === 'attendance').map(({ tab, label, icon: Icon }) => (
+          <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">AI Video Workflow</p>
+          {orderedNavItems.map(({ tab, label, icon: Icon }) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`w-full flex items-center gap-2.5 px-3 py-3 text-sm font-bold rounded-xl transition-all text-left mb-3 ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold rounded-xl transition-all text-left ${
                 activeTab === tab
-                  ? 'bg-[#c4982f]/25 text-[#d4af37] border-2 border-[#c4982f]/60 shadow-[0_0_12px_rgba(196,152,47,0.25)]'
-                  : 'text-[#c4982f] border-2 border-[#c4982f]/30 hover:bg-[#c4982f]/10 hover:border-[#c4982f]/50'
+                  ? 'bg-gold/20 text-gold border-2 border-gold/60 shadow-[0_0_12px_rgba(55,148,255,0.28)]'
+                  : 'text-gold border-2 border-gold/30 hover:bg-gold/10 hover:border-gold/50'
               }`}
             >
-              <Clock className="h-4 w-4 shrink-0 text-[#c4982f]" />
               <Icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{pageMeta[tab][lang]}</span>
+              <span className="truncate">{label}</span>
             </button>
           ))}
-
-          <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">เครื่องมือทั่วไป</p>
-          {orderedNavItems.filter(n => !['attendance', 'video', 'settings'].includes(n.tab)).map(({ tab, label, icon: Icon }) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg transition-all text-left ${
-                activeTab === tab
-                  ? 'bg-[#c4982f]/15 text-[#d4af37] border border-[#c4982f]/30'
-                  : 'text-[#8a6820] hover:bg-[#140e00] hover:text-[#c4982f]'
-              }`}
-            >
-              <Flower2 className="h-3 w-3 shrink-0 text-[#c4982f]/70" />
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{pageMeta[tab][lang]}</span>
-            </button>
-          ))}
-
-          {isAdmin && (
-            <>
-              <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">จัดการคอนเทนต์</p>
-              {orderedNavItems.filter(n => ['video'].includes(n.tab)).map(({ tab, label, icon: Icon }) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg transition-all text-left ${
-                    activeTab === tab
-                      ? 'bg-[#c4982f]/15 text-[#d4af37] border border-[#c4982f]/30'
-                      : 'text-[#8a6820] hover:bg-[#140e00] hover:text-[#c4982f]'
-                  }`}
-                >
-                  <Flower2 className="h-3 w-3 shrink-0 text-[#c4982f]/70" />
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{pageMeta[tab][lang]}</span>
-                </button>
-              ))}
-            </>
-          )}
 
           <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">ระบบ</p>
           <button
             onClick={() => setActiveTab('settings')}
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg transition-all text-left ${
               activeTab === 'settings'
-                ? 'bg-[#c4982f]/15 text-[#d4af37] border border-[#c4982f]/30'
-                : 'text-[#8a6820] hover:bg-[#140e00] hover:text-[#c4982f]'
+                ? 'bg-gold/15 text-gold border border-gold/30'
+                : 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-gold'
             }`}
           >
-            <Flower2 className="h-3 w-3 shrink-0 text-[#c4982f]/70" />
+            <Flower2 className="h-3 w-3 shrink-0 text-gold/70" />
             <SettingsIcon className="h-4 w-4 shrink-0" />
             <span className="truncate">ตั้งค่า</span>
             {!isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">เฉพาะแอดมิน</span>}
           </button>
         </nav>
 
-        <div className="px-3 py-4 border-t border-[#1e1500] space-y-2">
+        <div className="px-3 py-4 border-t border-[var(--app-border-muted)] space-y-2">
           {isAuthenticated ? (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#1a1200] rounded-xl border border-[#2a1e00]">
-                <div className="w-7 h-7 rounded-full bg-[#c4982f]/20 flex items-center justify-center">
+              <div className="flex items-center gap-2 px-3 py-2 bg-[var(--app-surface)] rounded-xl border border-[var(--app-border-muted)]">
+                <div className="w-7 h-7 rounded-full bg-gold/20 flex items-center justify-center">
                   {user?.avatarUrl
                     ? <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full" />
-                    : <span className="text-xs font-bold text-[#c4982f]">{user?.nickname?.[0] || user?.username?.[0] || '?'}</span>
+                    : <span className="text-xs font-bold text-gold">{user?.nickname?.[0] || user?.username?.[0] || '?'}</span>
                   }
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-[#d4af37] truncate">{user?.nickname || user?.username}</p>
+                  <p className="text-xs font-bold text-gold truncate">{user?.nickname || user?.username}</p>
                   <p className="text-[9px] text-[#6a5018] truncate">{user?.role === 'super_admin' ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : 'Employee'}</p>
                 </div>
-                {isSuperAdmin && <Shield className="w-4 h-4 text-[#c4982f] shrink-0" />}
+                {isSuperAdmin && <Shield className="w-4 h-4 text-gold shrink-0" />}
               </div>
               <button
                 onClick={() => logout()}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#8a6820] hover:text-red-400 hover:bg-red-500/5 rounded-lg transition-all"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--app-text-muted)] hover:text-red-400 hover:bg-red-500/5 rounded-lg transition-all"
               >
                 <LogOut className="w-4 h-4" />
                 <span>ออกจากระบบ</span>
@@ -422,7 +516,7 @@ export default function App() {
           ) : (
             <button
               onClick={() => setShowLogin(true)}
-              className="w-full flex items-center gap-2.5 px-3 py-3 text-sm font-bold rounded-xl transition-all bg-[#1a1200] border border-[#c4982f]/40 text-[#c4982f] hover:bg-[#c4982f]/10 hover:border-[#c4982f]/70"
+              className="w-full flex items-center gap-2.5 px-3 py-3 text-sm font-bold rounded-xl transition-all bg-[var(--app-surface)] border border-gold/40 text-gold hover:bg-gold/10 hover:border-gold/70"
             >
               <Shield className="h-4 w-4 shrink-0" />
               <LogIn className="h-4 w-4 shrink-0" />
@@ -431,22 +525,22 @@ export default function App() {
           )}
           <button
             onClick={() => setLang(lang === 'th' ? 'en' : 'th')}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#8a6820] hover:text-[#c4982f] hover:bg-[#140e00] rounded-lg transition-all"
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--app-text-muted)] hover:text-gold hover:bg-[var(--app-surface)] rounded-lg transition-all"
           >
             <Globe className="w-4 h-4" />
             <span>{lang === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}</span>
           </button>
-          <p className="px-1 text-sm font-extrabold leading-6 text-[#d4af37]">
+          <p className="px-1 text-sm font-extrabold leading-6 text-gold">
             "คนศรัทธาพระ บุญช่วยนำพา ต้องทำอย่างเต็มที่ ต้องทำให้ดีที่สุด"
           </p>
         </div>
       </aside>
 
       <div className="ml-64 flex-1 flex flex-col min-h-screen relative z-10">
-        <header className="sticky top-0 z-20 bg-[#0c0900]/80 backdrop-blur-xl border-b border-[#251b00] px-8 py-4 flex items-center justify-between">
+        <header className="sticky top-0 z-20 bg-[color-mix(in_srgb,var(--app-bg)_80%,transparent)] backdrop-blur-xl border-b border-[var(--app-border-muted)] px-8 py-4 flex items-center justify-between">
           <div>
             <p className="text-[10px] text-[#6a5018] uppercase tracking-[0.2em]">{meta.en}</p>
-            <h1 className="text-xl font-bold text-[#d4af37] mt-0.5">{meta.th}</h1>
+            <h1 className="text-xl font-bold text-gold mt-0.5">{meta.th}</h1>
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated && (
@@ -467,7 +561,7 @@ export default function App() {
               </div>
             )}
             <div className="flex items-center gap-2 text-[10px] text-[#4a3800]">
-              <Flower2 className="h-3 w-3 text-[#c4982f]/50" />
+              <Flower2 className="h-3 w-3 text-gold/50" />
               <span>มหานิยม999 เช็คชื่อ</span>
             </div>
           </div>
@@ -477,7 +571,7 @@ export default function App() {
           {renderPage()}
         </main>
 
-        <footer className="border-t border-[#1e1500] px-8 py-5 flex items-center justify-between">
+        <footer className="border-t border-[var(--app-border-muted)] px-8 py-5 flex items-center justify-between">
           <p className="text-[10px] text-[#4a3800]">(c) 2026 เว็บ มหานิยม999 เช็คชื่อ</p>
           <p className="text-[10px] text-[#4a3800]">developed by Sasiskis84 • Amulet Stat Hub v2.0</p>
         </footer>
