@@ -1,27 +1,17 @@
 import { useEffect, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
   Award,
   BarChart3,
-  CheckCircle2,
   Clock,
-  Clapperboard,
-  Cpu,
   Crown,
-  Eye,
   Facebook,
   Flower2,
   Globe,
-  Home,
-  Image,
-  Lightbulb,
   LogIn,
   LogOut,
   Medal,
   Music2,
-  Package,
-  ReceiptText,
   Settings as SettingsIcon,
   Shield,
   Sparkles,
@@ -61,7 +51,7 @@ type Tab =
   | 'employees'
   | 'settings';
 
-type NavItem = { tab: Tab; label: string; icon: LucideIcon };
+type NavItem = { tab: Tab; label: string; icon: string };
 
 const navPriority: Record<Tab, number> = {
   aiVideoHome: 0,
@@ -83,15 +73,15 @@ const navPriority: Record<Tab, number> = {
 };
 
 const pageMeta: Record<Tab, { th: string; en: string }> = {
-  aiVideoHome: { th: '#🏠-ai-video-home', en: 'AI Video Home' },
-  videoIdeas: { th: '#💡-video-ideas', en: 'Video Ideas' },
-  imageGen: { th: '#🖼️-image-gen', en: 'Image Generation' },
-  storyboard: { th: '#🎬-storyboard', en: 'Storyboard' },
-  videoRender: { th: '#⚙️-video-render', en: 'Video Render' },
-  videoReview: { th: '#👀-video-review', en: 'Video Review' },
-  approvedVideos: { th: '#✅-approved-videos', en: 'Approved Videos' },
-  assetLibrary: { th: '#📦-asset-library', en: 'Asset Library' },
-  costTracker: { th: '#🧾-cost-tracker', en: 'Cost Tracker' },
+  aiVideoHome: { th: 'ศูนย์งานวิดีโอ', en: 'AI Video Home' },
+  videoIdeas: { th: 'ไอเดียวิดีโอ', en: 'Video Ideas' },
+  imageGen: { th: 'สร้างภาพ AI', en: 'Image Generation' },
+  storyboard: { th: 'สตอรี่บอร์ด', en: 'Storyboard' },
+  videoRender: { th: 'เรนเดอร์วิดีโอ', en: 'Video Render' },
+  videoReview: { th: 'ตรวจงานวิดีโอ', en: 'Video Review' },
+  approvedVideos: { th: 'วิดีโออนุมัติแล้ว', en: 'Approved Videos' },
+  assetLibrary: { th: 'คลังไฟล์คอนเทนต์', en: 'Asset Library' },
+  costTracker: { th: 'ต้นทุนคอนเทนต์', en: 'Cost Tracker' },
   dashboard: { th: 'แดชบอร์ดองค์กร', en: 'Organization Dashboard' },
   facebook: { th: 'โพสต์ Facebook', en: 'Facebook Activity' },
   tiktok: { th: 'โพสต์ TikTok', en: 'TikTok Short-form Video' },
@@ -102,15 +92,15 @@ const pageMeta: Record<Tab, { th: string; en: string }> = {
 };
 
 const navPublicGuest: NavItem[] = [
-  { tab: 'aiVideoHome', label: '#🏠-ai-video-home', icon: Home },
-  { tab: 'videoIdeas', label: '#💡-video-ideas', icon: Lightbulb },
-  { tab: 'imageGen', label: '#🖼️-image-gen', icon: Image },
-  { tab: 'storyboard', label: '#🎬-storyboard', icon: Clapperboard },
-  { tab: 'videoRender', label: '#⚙️-video-render', icon: Cpu },
-  { tab: 'videoReview', label: '#👀-video-review', icon: Eye },
-  { tab: 'approvedVideos', label: '#✅-approved-videos', icon: CheckCircle2 },
-  { tab: 'assetLibrary', label: '#📦-asset-library', icon: Package },
-  { tab: 'costTracker', label: '#🧾-cost-tracker', icon: ReceiptText },
+  { tab: 'aiVideoHome', label: 'ศูนย์งานวิดีโอ', icon: 'video_library' },
+  { tab: 'videoIdeas', label: 'ไอเดียวิดีโอ', icon: 'lightbulb' },
+  { tab: 'imageGen', label: 'สร้างภาพ AI', icon: 'auto_awesome' },
+  { tab: 'storyboard', label: 'สตอรี่บอร์ด', icon: 'movie_edit' },
+  { tab: 'videoRender', label: 'เรนเดอร์วิดีโอ', icon: 'settings_suggest' },
+  { tab: 'videoReview', label: 'ตรวจงานวิดีโอ', icon: 'preview' },
+  { tab: 'approvedVideos', label: 'วิดีโออนุมัติแล้ว', icon: 'verified' },
+  { tab: 'assetLibrary', label: 'คลังไฟล์คอนเทนต์', icon: 'inventory_2' },
+  { tab: 'costTracker', label: 'ต้นทุนคอนเทนต์', icon: 'receipt_long' },
 ];
 
 const navLoggedIn: NavItem[] = [
@@ -401,6 +391,37 @@ function VideoWorkflowBoard({ config }: { config: { title: string; description: 
   );
 }
 
+function AdminGate({ onLogin }: { onLogin: () => void }) {
+  return (
+    <div className="mx-auto flex min-h-[calc(100vh-220px)] max-w-3xl items-center">
+      <div className="glass-card w-full rounded-3xl border border-gold/20 p-8 gold-border-glow">
+        <div className="flex items-start gap-4">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-gold/30 bg-gold/10 text-gold">
+            <Shield className="h-6 w-6" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a5018]">Admin only</p>
+            <h2 className="mt-2 text-2xl font-serif italic font-bold gold-text-gradient">
+              เมนูหลักถูกซ่อนไว้
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500">
+              ระบบจัดการคอนเทนต์และข้อมูล workflow เปิดให้เฉพาะบัญชีแอดมินเท่านั้น
+              กรุณาเข้าสู่ระบบด้วยบัญชี admin หรือ super admin เพื่อจัดการงานวิดีโอจาก Discord
+            </p>
+            <button
+              onClick={onLogin}
+              className="mt-6 inline-flex items-center gap-2 rounded-xl border border-gold/40 bg-[var(--app-surface)] px-4 py-3 text-sm font-bold text-gold transition-all hover:border-gold/70 hover:bg-gold/10"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>เข้าสู่ระบบแอดมิน</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('aiVideoHome');
   const [showLogin, setShowLogin] = useState(false);
@@ -409,17 +430,22 @@ export default function App() {
 
   const isSuperAdmin = user?.role === 'super_admin';
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
-  const navItems = isAdmin ? navLoggedIn : navPublicGuest;
+  const navItems: NavItem[] = isAdmin ? navLoggedIn : [];
   const orderedNavItems = [...navItems].sort((a, b) => navPriority[a.tab] - navPriority[b.tab]);
   const meta = pageMeta[activeTab];
 
   useEffect(() => {
+    if (!isAdmin) return;
     if (!navItems.some((item) => item.tab === activeTab)) {
       setActiveTab('aiVideoHome');
     }
-  }, [activeTab, navItems]);
+  }, [activeTab, isAdmin, navItems]);
 
   const renderPage = () => {
+    if (!isAdmin) {
+      return <AdminGate onLogin={() => setShowLogin(true)} />;
+    }
+
     switch (activeTab) {
       case 'aiVideoHome':
       case 'videoIdeas':
@@ -451,42 +477,54 @@ export default function App() {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-bold text-gold">มหานิยม999 เช็คชื่อ</p>
+            <p className="text-sm font-bold text-gold">มหานิยม 999 หน่วยหลังบ้าน</p>
             <p className="text-[10px] text-[#6a5018] uppercase tracking-widest">Amulet Stat Hub</p>
           </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pt-4 space-y-0.5">
-          <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">AI Video Workflow</p>
-          {orderedNavItems.map(({ tab, label, icon: Icon }) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold rounded-xl transition-all text-left ${
-                activeTab === tab
-                  ? 'bg-gold/20 text-gold border-2 border-gold/60 shadow-[0_0_12px_rgba(55,148,255,0.28)]'
-                  : 'text-gold border-2 border-gold/30 hover:bg-gold/10 hover:border-gold/50'
-              }`}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{label}</span>
-            </button>
-          ))}
+          <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">จัดการคอนเทนต์</p>
+          {isAdmin ? (
+            <>
+              {orderedNavItems.map(({ tab, label, icon }) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold rounded-xl transition-all text-left ${
+                    activeTab === tab
+                      ? 'bg-gold/20 text-gold border-2 border-gold/60 shadow-[0_0_12px_rgba(55,148,255,0.28)]'
+                      : 'text-gold border-2 border-gold/30 hover:bg-gold/10 hover:border-gold/50'
+                  }`}
+                >
+                  <span className="material-symbols-rounded h-5 w-5 shrink-0 items-center justify-center text-[20px]">{icon}</span>
+                  <span className="truncate">{label}</span>
+                </button>
+              ))}
 
-          <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">ระบบ</p>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg transition-all text-left ${
-              activeTab === 'settings'
-                ? 'bg-gold/15 text-gold border border-gold/30'
-                : 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-gold'
-            }`}
-          >
-            <Flower2 className="h-3 w-3 shrink-0 text-gold/70" />
-            <SettingsIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">ตั้งค่า</span>
-            {!isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">เฉพาะแอดมิน</span>}
-          </button>
+              <p className="px-2 py-1.5 mt-4 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">ระบบ</p>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg transition-all text-left ${
+                  activeTab === 'settings'
+                    ? 'bg-gold/15 text-gold border border-gold/30'
+                    : 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-gold'
+                }`}
+              >
+                <Flower2 className="h-3 w-3 shrink-0 text-gold/70" />
+                <SettingsIcon className="h-4 w-4 shrink-0" />
+                <span className="truncate">ตั้งค่า</span>
+                {!isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">เฉพาะแอดมิน</span>}
+              </button>
+            </>
+          ) : (
+            <div className="rounded-2xl border border-gold/20 bg-gold/5 px-3 py-4 text-sm leading-6 text-zinc-500">
+              <div className="mb-2 flex items-center gap-2 text-gold">
+                <Shield className="h-4 w-4" />
+                <span className="font-bold">เมนูหลักเฉพาะแอดมิน</span>
+              </div>
+              <p>เข้าสู่ระบบด้วยบัญชี admin เพื่อเปิดเมนูจัดการคอนเทนต์และ workflow</p>
+            </div>
+          )}
         </nav>
 
         <div className="px-3 py-4 border-t border-[var(--app-border-muted)] space-y-2">
@@ -562,7 +600,7 @@ export default function App() {
             )}
             <div className="flex items-center gap-2 text-[10px] text-[#4a3800]">
               <Flower2 className="h-3 w-3 text-gold/50" />
-              <span>มหานิยม999 เช็คชื่อ</span>
+              <span>มหานิยม 999 หน่วยหลังบ้าน</span>
             </div>
           </div>
         </header>
@@ -572,7 +610,7 @@ export default function App() {
         </main>
 
         <footer className="border-t border-[var(--app-border-muted)] px-8 py-5 flex items-center justify-between">
-          <p className="text-[10px] text-[#4a3800]">(c) 2026 เว็บ มหานิยม999 เช็คชื่อ</p>
+          <p className="text-[10px] text-[#4a3800]">(c) 2026 เว็บ มหานิยม 999 หน่วยหลังบ้าน</p>
           <p className="text-[10px] text-[#4a3800]">developed by Sasiskis84 • Amulet Stat Hub v2.0</p>
         </footer>
       </div>
