@@ -3,6 +3,27 @@
 ระบบนี้ใช้ Discord เป็น frontend สำหรับคุยงานและ track งานวิดีโอ AI โดยเก็บ metadata ลง SQLite
 และสามารถส่งต่อ webhook ไป Notion, Supabase, Postgres, Google Drive index หรือ automation อื่นได้
 
+## โครงสร้างโค้ด
+
+```text
+bot.py                         entrypoint
+bot_app.py                     bot lifecycle, extension loading, shared HTTP session
+app_config.py                  environment configuration
+cogs/attendance.py             attendance slash commands
+cogs/video_pipeline.py         video project slash commands
+cogs/admin.py                  setup/check/template commands
+services/attendance.py         attendance logging and webhook routing
+services/video_pipeline.py     project lookup, channel routing, webhook routing
+ui_components.py               Discord Components V2 dashboards
+attendance_db.py               attendance SQLite repository
+video_pipeline_db.py           local SQLite repository
+supabase_db.py                 production Supabase repositories
+```
+
+`/video-status`, `/new-video-project`, stage dashboard, approval dashboard และ
+`/project-template` ใช้ Discord Components V2 เพื่อแสดงข้อมูลเป็น container,
+section, separator และปุ่มลิงก์ Notion/Storage/Final แทนข้อความยาวแบบเดิม
+
 ## 1. Discord Workflow
 
 สร้าง channels ตามนี้:

@@ -9,7 +9,16 @@ from pathlib import Path
 from typing import Optional
 
 
-STAGES = ("idea", "image_gen", "storyboard", "render", "review", "edits", "approved")
+STAGES = (
+    "idea",
+    "image_gen",
+    "storyboard",
+    "render",
+    "pending_review",
+    "review",
+    "edits",
+    "approved",
+)
 ASSET_TYPES = ("prompt", "reference", "image", "storyboard", "video", "final", "drive", "other")
 
 
@@ -412,6 +421,16 @@ class VideoPipelineDB:
                 (thread_id,),
             ).fetchone()
         return self._project_from_row(row) if row else None
+
+    def list_projects(self) -> list[VideoProject]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT * FROM video_projects
+                ORDER BY updated_at DESC
+                """
+            ).fetchall()
+        return [self._project_from_row(row) for row in rows]
 
     def get_asset(self, asset_id: int) -> VideoAsset:
         with self._connect() as conn:

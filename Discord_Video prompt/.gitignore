@@ -1,12 +1,18 @@
 .env
 __pycache__/
 *.py[cod]
+*.log
 .pytest_cache/
 
 data/
+runtime/
 reports/
 *.sqlite3
+worktime-example-*.png
 
 .python-*/
 python-*-embed-amd64.zip
 get-pip.py
+.compile-cache/
+activity/node_modules/
+.publish/
