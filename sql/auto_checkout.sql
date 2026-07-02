@@ -62,7 +62,7 @@ begin
                              ((extract(epoch from
                                (te.work_date + interval '23 hours 59 minutes 59 seconds')::timestamptz
                                - te.check_in_time
-                             ) / 3600.0) - 8)::numeric,
+                             ) / 3600.0) - 11)::numeric,
                              2
                            )
                          ),
@@ -143,7 +143,7 @@ begin
                            ((extract(epoch from
                              (te.work_date + interval '23 hours 59 minutes 59 seconds')::timestamptz
                              - te.check_in_time
-                           ) / 3600.0) - 8)::numeric,
+                           ) / 3600.0) - 11)::numeric,
                            2
                          )
                        ),

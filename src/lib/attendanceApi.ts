@@ -38,6 +38,7 @@ export interface LeaveQuota {
 
 const STORAGE_BUCKET = 'attendance-photos';
 const LEAVE_MONTHLY_LIMIT = 2;
+export const OVERTIME_THRESHOLD_HOURS = 11;
 
 function ensureConfigured() {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured');
@@ -143,7 +144,7 @@ export async function checkOut(params: {
   const nowIso = new Date().toISOString();
   const checkInMs = existing.check_in_time ? new Date(existing.check_in_time).getTime() : Date.now();
   const totalHours = Math.max(0, (Date.now() - checkInMs) / (1000 * 60 * 60));
-  const overtimeHours = Math.max(0, totalHours - 8);
+  const overtimeHours = Math.max(0, totalHours - OVERTIME_THRESHOLD_HOURS);
 
   const update: Partial<TimeEntry> = {
     check_out_time: nowIso,
@@ -344,6 +345,8 @@ export async function exportMonthlyReport(month: string) {
     days: number;
     total_hours: number;
     overtime_hours: number;
+    overtime_days: number;
+    heavy_days: number;
     late_days: number;
     leave_days: number;
   }>();
@@ -354,12 +357,16 @@ export async function exportMonthlyReport(month: string) {
       days: 0,
       total_hours: 0,
       overtime_hours: 0,
+      overtime_days: 0,
+      heavy_days: 0,
       late_days: 0,
       leave_days: 0,
     };
     agg.days += 1;
     agg.total_hours += Number(e.total_hours || 0);
-    agg.overtime_hours += Number(e.overtime_hours || 0);
+    agg.overtime_hours += Math.max(0, Number(e.total_hours || 0) - OVERTIME_THRESHOLD_HOURS);
+    if (Number(e.total_hours || 0) > OVERTIME_THRESHOLD_HOURS) agg.overtime_days += 1;
+    if (Number(e.total_hours || 0) >= OVERTIME_THRESHOLD_HOURS) agg.heavy_days += 1;
     if (e.status === 'late') agg.late_days += 1;
     if (e.status === 'leave' || e.status === 'auto-leave') agg.leave_days += 1;
     byUser.set(e.user_id, agg);
