@@ -77,28 +77,16 @@ const pageMeta: Record<Tab, { th: string; en: string }> = {
   settings: { th: 'ตั้งค่า', en: 'System Settings' },
 };
 
+const trendNavItems: NavItem[] = [
+  { tab: 'dashboard', label: 'แดชบอร์ดองค์กร', icon: 'dashboard' },
+  { tab: 'comparison', label: 'เทียบคู่แข่ง', icon: 'query_stats' },
+  { tab: 'stats', label: 'อันดับผลงาน', icon: 'leaderboard' },
+];
+
 const navSections: NavSection[] = [
   {
-    title: 'บอร์ด',
-    items: [
-      { tab: 'aiVideoHome', label: 'ศูนย์งานวิดีโอ', icon: 'video_library' },
-      { tab: 'videoIdeas', label: 'ไอเดียวิดีโอ', icon: 'lightbulb' },
-      { tab: 'imageGen', label: 'สร้างภาพ AI', icon: 'auto_awesome' },
-      { tab: 'storyboard', label: 'สตอรี่บอร์ด', icon: 'movie_edit' },
-      { tab: 'videoRender', label: 'เรนเดอร์วิดีโอ', icon: 'settings_suggest' },
-      { tab: 'videoReview', label: 'ตรวจงานวิดีโอ', icon: 'preview' },
-      { tab: 'approvedVideos', label: 'วิดีโออนุมัติแล้ว', icon: 'verified' },
-      { tab: 'assetLibrary', label: 'คลังคอนเทนต์', icon: 'inventory_2' },
-      { tab: 'costTracker', label: 'ต้นทุนคอนเทนต์', icon: 'receipt_long' },
-    ],
-  },
-  {
     title: 'แนวโน้ม',
-    items: [
-      { tab: 'dashboard', label: 'แดชบอร์ดองค์กร', icon: 'dashboard' },
-      { tab: 'comparison', label: 'เทียบคู่แข่ง', icon: 'query_stats' },
-      { tab: 'stats', label: 'อันดับผลงาน', icon: 'leaderboard' },
-    ],
+    items: trendNavItems,
   },
   {
     title: 'บริษัท',
@@ -115,6 +103,14 @@ const navSections: NavSection[] = [
     ],
   },
   {
+    title: 'บอร์ด',
+    items: [
+      { tab: 'aiVideoHome', label: 'ศูนย์งานวิดีโอ', icon: 'video_library' },
+      { tab: 'assetLibrary', label: 'คลังคอนเทนต์', icon: 'inventory_2' },
+      { tab: 'costTracker', label: 'ต้นทุนคอนเทนต์', icon: 'receipt_long' },
+    ],
+  },
+  {
     title: 'จัดการระบบ',
     items: [
       { tab: 'settings', label: 'ตั้งค่าระบบ', icon: 'admin_panel_settings' },
@@ -122,7 +118,14 @@ const navSections: NavSection[] = [
   },
 ];
 
+const publicNavSections: NavSection[] = [
+  {
+    title: 'แนวโน้ม',
+    items: trendNavItems,
+  },
+];
 
+const publicTabs = new Set<Tab>(trendNavItems.map((item) => item.tab));
 const fallbackLeaderboard = [
   { rank: 1, name: 'พี่ใหญ่', role: 'Director / Producer', kpi: 100, icon: Crown },
   { rank: 2, name: 'น้องเอ', role: 'Editor', kpi: 99, icon: Medal },
@@ -536,25 +539,26 @@ function AdminGate({ onLogin }: { onLogin: () => void }) {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('aiVideoHome');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [showLogin, setShowLogin] = useState(false);
   const [lang, setLang] = useState<'th' | 'en'>('th');
   const { user, isAuthenticated, logout } = useAuthStore();
 
   const isSuperAdmin = user?.role === 'super_admin';
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
-  const navItems: NavItem[] = isAdmin ? navSections.flatMap((section) => section.items) : [];
-  const meta = pageMeta[activeTab];
+  const visibleNavSections = isAdmin ? navSections : publicNavSections;
+  const navItems: NavItem[] = visibleNavSections.flatMap((section) => section.items);
+  const canViewActiveTab = isAdmin || publicTabs.has(activeTab);
+  const meta = pageMeta[canViewActiveTab ? activeTab : 'dashboard'];
 
   useEffect(() => {
-    if (!isAdmin) return;
     if (!navItems.some((item) => item.tab === activeTab)) {
-      setActiveTab('aiVideoHome');
+      setActiveTab('dashboard');
     }
-  }, [activeTab, isAdmin, navItems]);
+  }, [activeTab, navItems]);
 
   const renderPage = () => {
-    if (!isAdmin) {
+    if (!canViewActiveTab) {
       return <AdminGate onLogin={() => setShowLogin(true)} />;
     }
 
@@ -596,38 +600,36 @@ export default function App() {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pt-4 space-y-0.5">
-          {isAdmin ? (
-            <>
-              {navSections.map((section) => (
-                <div key={section.title} className="mb-4">
-                  <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">{section.title}</p>
-                  <div className="space-y-1">
-                    {section.items.map(({ tab, label, icon }) => (
-                      <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold rounded-xl transition-all text-left ${
-                          activeTab === tab
-                            ? 'bg-gold/20 text-gold border-2 border-gold/60 shadow-[0_0_12px_rgba(55,148,255,0.28)]'
-                            : 'text-gold border-2 border-gold/30 hover:bg-gold/10 hover:border-gold/50'
-                        }`}
-                      >
-                        <span className="material-symbols-rounded h-5 w-5 shrink-0 items-center justify-center text-[20px]">{icon}</span>
-                        <span className="truncate">{label}</span>
-                        {tab === 'settings' && !isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">admin</span>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </>
-          ) : (
+          {visibleNavSections.map((section) => (
+            <div key={section.title} className="mb-4">
+              <p className="px-2 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#4a3800]">{section.title}</p>
+              <div className="space-y-1">
+                {section.items.map(({ tab, label, icon }) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold rounded-xl transition-all text-left ${
+                      activeTab === tab
+                        ? 'bg-gold/20 text-gold border-2 border-gold/60 shadow-[0_0_12px_rgba(55,148,255,0.28)]'
+                        : 'text-gold border-2 border-gold/30 hover:bg-gold/10 hover:border-gold/50'
+                    }`}
+                  >
+                    <span className="material-symbols-rounded h-5 w-5 shrink-0 items-center justify-center text-[20px]">{icon}</span>
+                    <span className="truncate">{label}</span>
+                    {tab === 'settings' && !isSuperAdmin && <span className="ml-auto text-[9px] text-[#4a3800]">admin</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {!isAdmin && (
             <div className="rounded-2xl border border-gold/20 bg-gold/5 px-3 py-4 text-sm leading-6 text-zinc-500">
               <div className="mb-2 flex items-center gap-2 text-gold">
                 <Shield className="h-4 w-4" />
-                <span className="font-bold">เมนูหลักเฉพาะแอดมิน</span>
+                <span className="font-bold">เมนูอื่นสำหรับแอดมิน</span>
               </div>
-              <p>เข้าสู่ระบบด้วยบัญชี admin เพื่อเปิดเมนูจัดการคอนเทนต์และ workflow</p>
+              <p>ดูหมวดแนวโน้มได้ทันที ส่วนบริษัท พนักงาน บอร์ด และจัดการระบบต้องเข้าสู่ระบบแอดมินก่อน</p>
             </div>
           )}
         </nav>
