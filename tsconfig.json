@@ -24,6 +24,7 @@
     "noEmit": true
   },
   "exclude": [
+    "_backup_before_latest_20260704-214003",
     "supabase/functions/**",
     "node_modules",
     "dist"

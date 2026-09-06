@@ -67,8 +67,8 @@ export function EmployeeList() {
   };
 
   const handleCreate = async () => {
-    if (!user || !newData.nickname || !newData.employee_code || !newData.password) {
-      showToast('error', 'กรุณากรอกชื่อเล่น รหัสพนักงาน และรหัสผ่าน');
+    if (!user || !newData.nickname || !newData.employee_code) {
+      showToast('error', 'กรุณากรอกชื่อเล่นและรหัสพนักงาน');
       return;
     }
     try {
@@ -180,7 +180,6 @@ export function EmployeeList() {
                   { key: 'phone', label: 'เบอร์โทร', type: 'tel' },
                   { key: 'position', label: 'ตำแหน่ง', type: 'text' },
                   { key: 'employee_code', label: 'รหัสพนักงาน', type: 'text' },
-                  { key: 'password', label: 'รหัสผ่าน *', type: 'password' },
                   { key: 'avatar_url', label: 'ลิงก์รูปพนักงาน', type: 'url' },
                   { key: 'start_date', label: 'วันเริ่มงาน', type: 'date' },
                 ].map(({ key, label, type }) => (

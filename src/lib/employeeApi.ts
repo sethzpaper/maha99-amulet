@@ -2,6 +2,7 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 export interface Employee {
   id: string;
+  auth_user_id?: string;
   employee_code?: string;
   nickname: string;
   full_name?: string;
@@ -130,18 +131,6 @@ function ensureConfigured() {
   }
 }
 
-async function setEmployeePassword(employeeCode: string, password: string) {
-  const { error } = await supabase.rpc('set_employee_password', {
-    p_code: employeeCode,
-    p_password: password,
-  });
-
-  if (error) {
-    throw new Error(
-      'Unable to set employee password. Create the `set_employee_password` RPC from MIGRATION_NOTES.md first.'
-    );
-  }
-}
 
 // ---- Employees ----
 export async function listEmployees(): Promise<Employee[]> {
@@ -182,21 +171,19 @@ export async function getEmployee(id: string): Promise<Employee & { badges: Empl
   return { ...(employee as Employee), badges };
 }
 
-export async function loginEmployee(employeeCode: string, password: string) {
+export async function loginEmployee(employeeCode: string, _password: string) {
   ensureConfigured();
-  const { data, error } = await supabase.rpc('employee_login', {
-    p_code: employeeCode,
-    p_password: password,
-  });
-  if (error) throw new Error(error.message || 'login failed');
-  // RPC returns a single row or an array with one row depending on definition
-  const emp = Array.isArray(data) ? data[0] : data;
-  if (!emp) throw new Error('invalid credentials');
-  return { employee: emp };
+  const { data: auth, error: authError } = await supabase.auth.getUser();
+  if (authError || !auth.user) throw new Error('กรุณาเข้าสู่ระบบด้วยอีเมลก่อน');
+  const { data, error } = await supabase.from('employees').select('*')
+    .eq('auth_user_id', auth.user.id).eq('employee_code', employeeCode).single();
+  if (error || !data) throw new Error('เลือกบัญชีพนักงานที่ผูกกับอีเมลที่เข้าสู่ระบบ');
+  return { employee: data };
 }
 
 export async function createEmployee(_role: string, body: Partial<Employee> & { password?: string }) {
   ensureConfigured();
+  if (body.password) throw new Error('จัดการรหัสผ่านผ่าน Supabase Auth');
   const {
     password,
     badges: _b,
@@ -215,14 +202,12 @@ export async function createEmployee(_role: string, body: Partial<Employee> & { 
     .select()
     .single();
   if (error) throw new Error(error.message);
-  if (password) {
-    await setEmployeePassword(rest.employee_code, password);
-  }
   return data;
 }
 
 export async function updateEmployee(_role: string, id: string, body: Partial<Employee> & { password?: string }) {
   ensureConfigured();
+  if (body.password) throw new Error('จัดการรหัสผ่านผ่าน Supabase Auth');
   // Strip fields that don't belong in the UPDATE payload
   // (badges comes from getEmployee join; id/created_at/updated_at are read-only)
   const {
@@ -241,13 +226,6 @@ export async function updateEmployee(_role: string, id: string, body: Partial<Em
     .select()
     .single();
   if (error) throw new Error(error.message);
-  if (password) {
-    const employeeCode = update.employee_code || data?.employee_code;
-    if (!employeeCode) {
-      throw new Error('employee_code is required to update password');
-    }
-    await setEmployeePassword(employeeCode, password);
-  }
   return data;
 }
 
@@ -338,21 +316,7 @@ export async function createTrackedAccount(_role: string, body: Partial<TrackedA
     if (error) throw new Error(error.message);
     return data;
   } catch (err) {
-    console.warn('createTrackedAccount fallback:', err);
-    const accounts = readLocalTrackedAccounts();
-    const account: TrackedAccount = {
-      id: `local-${Date.now()}`,
-      platform: body.platform || 'facebook',
-      account_name: body.account_name || 'Untitled account',
-      account_url: body.account_url || '#',
-      account_handle: body.account_handle,
-      is_active: true,
-      is_competitor: Boolean(body.is_competitor),
-      note: body.note,
-      created_at: new Date().toISOString(),
-    };
-    writeLocalTrackedAccounts([...accounts, account]);
-    return account;
+    throw err;
   }
 }
 
@@ -375,10 +339,7 @@ export async function deleteTrackedAccount(_role: string, id: string) {
     if (error) throw new Error(error.message);
     return { ok: true };
   } catch (err) {
-    console.warn('deleteTrackedAccount fallback:', err);
-    const accounts = readLocalTrackedAccounts().filter((account) => account.id !== id);
-    writeLocalTrackedAccounts(accounts);
-    return { ok: true };
+    throw err;
   }
 }
 

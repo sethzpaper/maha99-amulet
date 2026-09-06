@@ -38,6 +38,26 @@ export interface LeaveQuota {
 
 const STORAGE_BUCKET = 'attendance-photos';
 const LEAVE_MONTHLY_LIMIT = 2;
+async function signEntryPhotos(rows: TimeEntry[]): Promise<TimeEntry[]> {
+  async function sign(value?: string) {
+    if (!value) return undefined;
+    let path = value;
+    if (value.startsWith('http')) {
+      const marker = '/attendance-photos/';
+      const url = new URL(value);
+      const index = url.pathname.indexOf(marker);
+      if (index < 0) return undefined;
+      path = decodeURIComponent(url.pathname.slice(index + marker.length));
+    }
+    const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, 3600);
+    return error ? undefined : data?.signedUrl;
+  }
+  return Promise.all(rows.map(async (row) => ({
+    ...row,
+    check_in_photo_url: await sign(row.check_in_photo_url),
+    check_out_photo_url: await sign(row.check_out_photo_url),
+  })));
+}
 export const OVERTIME_THRESHOLD_HOURS = 11;
 
 function ensureConfigured() {
@@ -63,8 +83,7 @@ async function uploadPhoto(userId: string, kind: 'checkin' | 'checkout', photo: 
     console.warn('photo upload error:', error.message);
     return undefined;
   }
-  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  return path;
 }
 
 export async function checkIn(params: {
@@ -179,7 +198,7 @@ export async function fetchEntries(params: { userId?: string; month?: string }):
     }
     const { data, error } = await q;
     if (error) throw new Error(error.message);
-    return (data || []) as TimeEntry[];
+    return await signEntryPhotos((data || []) as TimeEntry[]);
   } catch (err) {
     console.warn('fetchEntries error:', err);
     return [];
@@ -269,7 +288,7 @@ export async function fetchRecentCheckins(limit = 6): Promise<TimeEntry[]> {
       .order('check_in_time', { ascending: false })
       .limit(limit);
     if (error) throw new Error(error.message);
-    return (data || []) as TimeEntry[];
+    return await signEntryPhotos((data || []) as TimeEntry[]);
   } catch {
     return [];
   }

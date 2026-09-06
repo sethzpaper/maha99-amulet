@@ -8,6 +8,7 @@ import {
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 class DataService {
+  invalidateVideos() { this.cache.delete(this.getCacheKey('videos')); }
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
@@ -89,7 +90,10 @@ class DataService {
   async updateVideo(id: string, video: Partial<VideoRecord>): Promise<VideoRecord | null> {
     if (!isSupabaseConfigured) return null;
     try {
-      const { data, error } = await supabase.from('videos').update(video).eq('id', id).select().single();
+      // The asset editor must not overwrite workflow fields from a stale row.
+      const fields: (keyof VideoRecord)[] = ['entryDate', 'fileName', 'productName', 'productImage', 'driveLink', 'creator', 'isPostedFB', 'isPostedTT', 'fbPostDate', 'ttPostDate', 'fbViews', 'fbLikes', 'ttViews', 'ttLikes'];
+      const payload = Object.fromEntries(fields.filter((field) => field in video).map((field) => [field, video[field]]));
+      const { data, error } = await supabase.from('videos').update(payload).eq('id', id).select().single();
       if (error) throw new Error(error.message);
       this.cache.delete(this.getCacheKey('videos'));
       return data as VideoRecord;

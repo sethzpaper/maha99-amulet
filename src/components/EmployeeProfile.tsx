@@ -85,8 +85,8 @@ export function EmployeeProfile() {
 
   const handleCreate = async () => {
     try {
-      if (!formData.nickname || !formData.employee_code || !formData.password) {
-        throw new Error('กรุณากรอกชื่อเล่น รหัสพนักงาน และรหัสผ่าน');
+      if (!formData.nickname || !formData.employee_code) {
+        throw new Error('กรุณากรอกชื่อเล่นและรหัสพนักงาน');
       }
       await createEmployee('super_admin', formData);
       showToast('success', 'เพิ่มพนักงานสำเร็จ');
@@ -301,12 +301,6 @@ export function EmployeeProfile() {
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest block mb-1">รหัสผ่าน</label>
-                  <input type="password" value={formData.password || ''}
-                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
-                </div>
-                <div>
                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest block mb-1">บทบาท</label>
                   <select value={formData.role || 'user'} onChange={e => setFormData({ ...formData, role: e.target.value as any })}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm">
@@ -427,14 +421,6 @@ export function EmployeeProfile() {
                       value={formData.avatar_url as string | undefined}
                       onChange={(url) => setFormData({ ...formData, avatar_url: url })}
                     />
-                  </div>
-                )}
-                {editMode && (
-                  <div className="col-span-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-widest block mb-1">รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)</label>
-                    <input type="password" value={formData.password || ''}
-                      onChange={e => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400" />
                   </div>
                 )}
               </div>

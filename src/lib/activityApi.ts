@@ -28,8 +28,12 @@ export async function logActivity(params: {
 }): Promise<void> {
   if (!isSupabaseConfigured) return;
   try {
-    await supabase.from('activity_logs').insert({
-      user_id: params.userId ?? null,
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return;
+    const { data: employee } = await supabase.from('employees').select('id')
+      .eq('auth_user_id', auth.user.id).maybeSingle();
+    const { error } = await supabase.from('activity_logs').insert({
+      user_id: employee?.id ?? null,
       user_name: params.userName,
       action: params.action,
       details: params.details ?? null,
@@ -37,6 +41,7 @@ export async function logActivity(params: {
       ref_table: params.refTable ?? null,
       ref_id: params.refId ?? null,
     });
+    if (error) throw error;
   } catch (err) {
     console.warn('logActivity error:', err);
   }

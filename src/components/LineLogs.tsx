@@ -131,7 +131,7 @@ export function LineLogs() {
   // ── Derived ───────────────────────────────────────────────────────────────
   const todayStr = now.toISOString().slice(0, 10);
   const todayEntry = entries.find((e) => e.work_date === todayStr);
-  const effectiveUser = verifiedEmp ?? (authUser ? { id: authUser.id, nickname: authUser.nickname || authUser.username, username: authUser.username } as any : null);
+  const effectiveUser = employees.find((employee) => employee.auth_user_id === authUser?.id) ?? verifiedEmp;
 
   // ── Load public data ──────────────────────────────────────────────────────
   const loadPublic = async () => {
@@ -183,8 +183,8 @@ export function LineLogs() {
 
   useEffect(() => { loadPublic(); }, []);
   useEffect(() => {
-    if (authUser) loadPersonal(authUser);
-  }, [authUser?.id]);
+    if (effectiveUser) loadPersonal(effectiveUser);
+  }, [effectiveUser?.id]);
   useEffect(() => {
     if (isSuperAdmin && activeSubTab === 'admin') loadAdminEntries();
   }, [isSuperAdmin, activeSubTab]);
@@ -196,7 +196,7 @@ export function LineLogs() {
 
   // ── Verify employee ───────────────────────────────────────────────────────
   const handleVerify = async () => {
-    if (!verifyEmpId || !verifyPassword) { setVerifyError('เลือกชื่อและใส่รหัสผ่าน'); return; }
+    if (!verifyEmpId) { setVerifyError('เลือกชื่อพนักงาน'); return; }
     setVerifyLoading(true);
     setVerifyError('');
     try {
@@ -230,7 +230,7 @@ export function LineLogs() {
     try {
       await checkIn({
         userId: effectiveUser.id,
-        userName: effectiveUser.nickname || effectiveUser.username || effectiveUser.id,
+        userName: effectiveUser.nickname || effectiveUser.id,
         photo: photoFile ?? undefined,
       });
       showToast('success', 'เข้างานสำเร็จ');
@@ -246,7 +246,7 @@ export function LineLogs() {
     try {
       await checkOut({
         userId: effectiveUser.id,
-        userName: effectiveUser.nickname || effectiveUser.username || effectiveUser.id,
+        userName: effectiveUser.nickname || effectiveUser.id,
         photo: photoFile ?? undefined,
       });
       showToast('success', 'ออกงานสำเร็จ');
@@ -264,7 +264,7 @@ export function LineLogs() {
     try {
       await submitLeaveRequest({
         userId: effectiveUser.id,
-        userName: effectiveUser.nickname || effectiveUser.username || effectiveUser.id,
+        userName: effectiveUser.nickname || effectiveUser.id,
         leaveDate: selectedDate, leaveType, reason: leaveReason,
         managerEmail: MANAGER_EMAIL,
       });
@@ -510,26 +510,13 @@ export function LineLogs() {
               </div>
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="text-[10px] text-zinc-500 uppercase block mb-1">รหัสผ่านของคุณ</label>
-              <input
-                type="password"
-                value={verifyPassword}
-                onChange={(e) => { setVerifyPassword(e.target.value); setVerifyError(''); }}
-                onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
-                placeholder="รหัสผ่าน"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-3 text-sm text-zinc-200 focus:outline-none focus:border-gold/50"
-              />
-            </div>
-
             {verifyError && (
               <p className="text-xs text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{verifyError}</p>
             )}
 
             <button
               onClick={handleVerify}
-              disabled={verifyLoading || !verifyEmpId || !verifyPassword}
+              disabled={verifyLoading || !verifyEmpId}
               className="w-full bg-gold text-black font-bold py-3 rounded-xl text-sm uppercase disabled:opacity-40 hover:bg-gold/90 flex items-center justify-center gap-2"
             >
               <LogIn className="w-4 h-4" />

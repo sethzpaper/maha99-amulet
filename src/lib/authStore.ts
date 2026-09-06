@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import type { User as AuthUser } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 export interface User {
@@ -12,152 +12,79 @@ export interface User {
   avatarUrl?: string;
   email?: string;
 }
-
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
-  loginEmployee: (employeeCode: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   loadSession: () => Promise<void>;
   getUser: () => User | null;
 }
-
-const SUPER_ADMIN = {
-  username: 'admin',
-  password: '11221122',
-  id: 'super-admin',
-  role: 'super_admin' as const,
-};
-
-const normalizeRole = (role: unknown): User['role'] => {
-  return role === 'super_admin' || role === 'admin' || role === 'user' ? role : 'user';
-};
-
-const mapSupabaseUser = (supabaseUser: any): User => {
-  const username =
-    supabaseUser.user_metadata?.name ||
-    supabaseUser.user_metadata?.user_name ||
-    supabaseUser.email ||
-    'User';
-
+function mapUser(user: AuthUser): User {
+  // Privileges must come exclusively from server-managed metadata.
+  const role = user.app_metadata?.role;
   return {
-    id: supabaseUser.id,
-    username,
-    role: normalizeRole(supabaseUser.user_metadata?.role || supabaseUser.app_metadata?.role),
-    provider: supabaseUser.app_metadata?.provider || 'email',
+    id: user.id, username: user.user_metadata?.name || user.email || 'User',
+    nickname: user.user_metadata?.nickname, avatarUrl: user.user_metadata?.avatar_url,
+    email: user.email, provider: user.app_metadata?.provider,
+    role: role === 'admin' || role === 'super_admin' ? role : 'user',
     isAuthenticated: true,
-    email: supabaseUser.email,
-    avatarUrl: supabaseUser.user_metadata?.avatar_url,
   };
-};
-
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      isAuthenticated: false,
-
-      login: async (username: string, password: string) => {
-        if (username === SUPER_ADMIN.username && password === SUPER_ADMIN.password) {
-          const user: User = {
-            id: SUPER_ADMIN.id,
-            username: SUPER_ADMIN.username,
-            role: SUPER_ADMIN.role,
-            isAuthenticated: true,
-          };
-          set({ user, isAuthenticated: true });
-          return true;
-        }
-
-        if (isSupabaseConfigured) {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: username,
-            password,
-          });
-
-          if (error) {
-            console.warn('Supabase sign-in error:', error.message);
-            return false;
-          }
-
-          if (data.session?.user) {
-            set({
-              user: mapSupabaseUser(data.session.user),
-              isAuthenticated: true,
-            });
-            return true;
-          }
-        }
-
-        return false;
-      },
-
-      loginEmployee: async (employeeCode: string, password: string) => {
-        try {
-          if (!isSupabaseConfigured) {
-            return { ok: false, error: 'Supabase is not configured' };
-          }
-          const { data, error } = await supabase.rpc('employee_login', {
-            p_code: employeeCode,
-            p_password: password,
-          });
-          if (error) return { ok: false, error: error.message || 'login failed' };
-          const emp = Array.isArray(data) ? data[0] : data;
-          if (!emp) return { ok: false, error: 'invalid credentials' };
-
-          const user: User = {
-            id: emp.id,
-            username: emp.nickname,
-            nickname: emp.nickname,
-            avatarUrl: emp.avatar_url,
-            email: emp.email,
-            role: normalizeRole(emp.role),
-            provider: 'employee',
-            isAuthenticated: true,
-          };
-          set({ user, isAuthenticated: true });
-          return { ok: true };
-        } catch (err: any) {
-          return { ok: false, error: err.message };
-        }
-      },
-
-      logout: async () => {
-        if (isSupabaseConfigured) {
-          await supabase.auth.signOut();
-        }
-        set({ user: null, isAuthenticated: false });
-      },
-
-      loadSession: async () => {
-        if (!isSupabaseConfigured) return;
-
-        const { data } = await supabase.auth.getSession();
-
-        if (data.session?.user) {
-          set({
-            user: mapSupabaseUser(data.session.user),
-            isAuthenticated: true,
-          });
-        }
-
-        supabase.auth.onAuthStateChange((_event, session) => {
-          if (session?.user) {
-            set({
-              user: mapSupabaseUser(session.user),
-              isAuthenticated: true,
-            });
-          } else {
-            set({ user: null, isAuthenticated: false });
+}
+let subscribed = false;
+let revision = 0;
+let signingIn = false;
+export const useAuthStore = create<AuthState>((set, get) => {
+  const verify = async () => {
+    const current = ++revision;
+    if (!get().isAuthenticated) set({ isLoading: true });
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (current !== revision) return;
+      const user = !error && data.user ? mapUser(data.user) : null;
+      set({ user, isAuthenticated: !!user, isLoading: false });
+    } catch {
+      if (current === revision) set({ user: null, isAuthenticated: false, isLoading: false });
+    }
+  };
+  return {
+    user: null, isAuthenticated: false, isLoading: isSupabaseConfigured,
+    login: async (email, password) => {
+      if (!isSupabaseConfigured) return false;
+      signingIn = true;
+      set({ user: null, isAuthenticated: false });
+      try {
+        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+        if (error) return false;
+        await verify();
+        return get().isAuthenticated;
+      } catch { return false; }
+      finally { signingIn = false; }
+    },
+    logout: async () => {
+      ++revision;
+      set({ user: null, isAuthenticated: false, isLoading: false });
+      if (isSupabaseConfigured) await supabase.auth.signOut();
+    },
+    loadSession: async () => {
+      localStorage.removeItem('auth-storage');
+      if (!isSupabaseConfigured) return;
+      if (!subscribed) {
+        subscribed = true;
+        supabase.auth.onAuthStateChange((event) => {
+          if (event === 'SIGNED_IN' && signingIn) return;
+          if (event === 'SIGNED_OUT') {
+            ++revision;
+            set({ user: null, isAuthenticated: false, isLoading: false });
+          } else if (event !== 'INITIAL_SESSION') {
+            // Defer API calls until the auth callback releases its lock.
+            setTimeout(() => { void verify(); }, 0);
           }
         });
-      },
-
-      getUser: () => get().user,
-    }),
-    {
-      name: 'auth-storage',
-    }
-  )
-);
+      }
+      await verify();
+    },
+    getUser: () => get().user,
+  };
+});

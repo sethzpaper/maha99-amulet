@@ -20,7 +20,6 @@ import {
   Lock,
 } from 'lucide-react';
 import { formatActivityTime, listActivityLogs, type ActivityLogRow } from '../lib/activityApi';
-import { PasswordResetAdmin } from './PasswordResetAdmin';
 import {
   createTrackedAccount,
   deleteTrackedAccount,
@@ -223,7 +222,7 @@ export function Settings({
       {isAuthenticated && (
         <>
         <div className="flex gap-1 bg-zinc-950/60 border border-zinc-900 p-1 rounded-2xl mb-6 flex-wrap">
-          {(['social', 'export', 'system', 'log', 'password']).map((id) => {
+          {(['social', 'export', 'system', 'log']).map((id) => {
             const labels = { social: 'แหล่ง Social', export: 'Export', system: 'ระบบ', log: 'บันทึก', password: 'พาสเวิร์ด' };
             return (
               <button
@@ -482,14 +481,6 @@ export function Settings({
             รีเฟรชบันทึก (แสดง 50 รายการล่าสุด)
          </button>
       </div>
-      )}
-      {settingsTab === 'password' && (
-        <div className="glass-card p-6 rounded-3xl gold-border-glow">
-          <PasswordResetAdmin
-            approverName={userName || (isSuperAdmin ? 'super_admin' : 'admin')}
-            canApprove={isAdmin || isSuperAdmin}
-          />
-        </div>
       )}
         </>
       )}
