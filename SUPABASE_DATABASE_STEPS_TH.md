@@ -19,7 +19,9 @@ SQL หลักอยู่ที่ `sql/supabase_setup_step_by_step.sql` แ�
 11. รัน `STEP 16` verification queries
 12. รัน `supabase/migrations/202609060001_verified_auth_rls.sql` (สิทธิ์ตาม Supabase Auth)
 13. รัน `supabase/migrations/202611020001_leave_booking_today_board.sql` (จองวันลา + หน้าแรก)
-14. ทดสอบ: `supabase/tests/verified_auth_rls.sql` และ `supabase/tests/leave_booking.sql` (rollback เองทุกครั้ง)
+14. รัน `supabase/migrations/202611020002_qr_attendance.sql` (จุดลงเวลา + สแกน QR)
+15. ทดสอบ: `supabase/tests/verified_auth_rls.sql`, `leave_booking.sql`, `qr_attendance.sql` (rollback เองทุกครั้ง)
+16. เข้าเว็บด้วยบัญชีแอดมิน → เมนู "จุดลงเวลา & QR" → เพิ่มจุด → พิมพ์ QR ไปติด
 
 ## ตารางที่หน้าใหม่ต้องใช้
 

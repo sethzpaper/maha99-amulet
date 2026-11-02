@@ -157,7 +157,7 @@ export function Settings({
   };
 
   const themes = [
-    { id: 'classic', label: 'Neon (ค่าเริ่มต้น)', colors: ['#0f1311', '#39ff88'] },
+    { id: 'classic', label: 'Forest & Lime (ค่าเริ่มต้น)', colors: ['#0c3a2b', '#c4f542'] },
     { id: 'jade', label: 'Jade', colors: ['#05130f', '#34d399'] },
     { id: 'ruby', label: 'Ruby', colors: ['#160607', '#f43f5e'] },
   ];

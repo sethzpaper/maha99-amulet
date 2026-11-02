@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { DashboardPage } from './pages/DashboardPage';
 import { ComingSoonPage } from './pages/ComingSoonPage';
+import { ScanPage } from './pages/ScanPage';
+import { SitesPage } from './pages/SitesPage';
 import { type Tab, tabPaths, pathTabs } from './routes';
 import {
   Menu,
@@ -32,6 +34,8 @@ import { LineLogs } from './components/LineLogs';
 import { Settings as SettingsPage } from './components/Settings';
 import { Login } from './components/Login';
 import { useAuthStore } from './lib/authStore';
+
+import { SLOGAN } from './lib/brand';
 
 type NavItem = { tab: Tab; label: string; icon: string };
 type NavSection = { title: string; items: NavItem[] };
@@ -172,8 +176,8 @@ export default function App() {
     }
 
     switch (activeTab) {
-      case 'scan': return <ComingSoonPage title="สแกนลงเวลาด้วย QR Code" phase="เฟส 4">สแกน QR ที่ติดไว้ ณ จุดลงเวลา ระบบจะตรวจพิกัด GPS แล้วบันทึกเข้า/ออกงานให้อัตโนมัติ</ComingSoonPage>;
-      case 'sites': return <ComingSoonPage title="จุดลงเวลา & QR Code" phase="เฟส 4">กำหนดพิกัดและรัศมีของแต่ละจุด แล้วพิมพ์ QR ไปติดหน้างาน</ComingSoonPage>;
+      case 'scan': return <ScanPage />;
+      case 'sites': return <SitesPage />;
       case 'clips': return <ComingSoonPage title="คลิปประจำเดือน" phase="เฟส 2">เลือกเดือนแล้วดูรายการคลิป: วันที่ ชื่อคลิป ผู้ทำ (รอข้อมูลจาก Google Sheet)</ComingSoonPage>;
       case 'dashboard': return <DashboardPage />;
       case 'facebook': return <FacebookPosts />;
@@ -210,6 +214,7 @@ export default function App() {
                   <NavLink
                     key={tab}
                     to={tabPaths[tab]}
+                    end
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold rounded-xl transition-all text-left ${
                       activeTab === tab
                         ? 'bg-gold/10 text-gold border border-gold/20'
@@ -277,9 +282,7 @@ export default function App() {
             <Globe className="w-4 h-4" />
             <span>{lang === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}</span>
           </button>
-          <p className="px-1 text-sm font-extrabold leading-6 text-gold">
-            "คนศรัทธาพระ บุญช่วยนำพา ต้องทำอย่างเต็มที่ ต้องทำให้ดีที่สุด"
-          </p>
+          <p className="px-1 font-display text-lg font-bold leading-6 text-gold">{SLOGAN}</p>
         </div>
       </aside>
 
@@ -292,8 +295,8 @@ export default function App() {
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated && (
-              <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
-                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-emerald-500/20 text-sm font-bold text-emerald-200">
+              <div className="flex items-center gap-3 rounded-full bg-[var(--forest)] py-1.5 pl-1.5 pr-4 text-white">
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[var(--app-accent)] text-sm font-bold text-[var(--app-on-accent)]">
                   {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
@@ -301,8 +304,8 @@ export default function App() {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-emerald-100">{user?.nickname || user?.username}</p>
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-emerald-300">
+                  <p className="truncate text-sm font-bold text-white">{user?.nickname || user?.username}</p>
+                  <p className="text-[10px] uppercase text-[var(--app-accent)]">
                     {isSuperAdmin ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : 'Employee'}
                   </p>
                 </div>

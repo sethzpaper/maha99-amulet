@@ -1,13 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AlertCircle, Calendar, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock,
   Download, Edit2, Gift, LogIn, LogOut, Plus, Save, Shield,
-  Star, Timer, Users, X,
+  QrCode, Star, Timer, Users, X,
 } from 'lucide-react';
 import { useAuthStore } from '../lib/authStore';
 import { listEmployees, loginEmployee as apiLoginEmployee, Employee } from '../lib/employeeApi';
 import {
-  checkIn, checkOut,
   fetchEntries, fetchLeaveQuota, fetchLeaveRequests, submitLeaveRequest,
   exportMonthlyReport, fetchRecentCheckins, adminUpdateEntry, adminCreateEntry,
   managerRecordLeave, LEAVE_MONTHLY_LIMIT,
@@ -210,35 +210,6 @@ export function LineLogs() {
       setVerifyError(err.message || 'รหัสผ่านไม่ถูกต้อง');
     }
     setVerifyLoading(false);
-  };
-
-  // ── Check In / Out ────────────────────────────────────────────────────────
-  const doCheckIn = async () => {
-    if (!effectiveUser) return;
-    setLoading(true);
-    try {
-      await checkIn({
-        userId: effectiveUser.id,
-        userName: effectiveUser.nickname || effectiveUser.id,
-      });
-      showToast('success', 'เข้างานสำเร็จ');
-      await Promise.all([loadPersonal(effectiveUser), loadPublic()]);
-    } catch (err: any) { showToast('error', err.message); }
-    setLoading(false);
-  };
-
-  const doCheckOut = async () => {
-    if (!effectiveUser) return;
-    setLoading(true);
-    try {
-      await checkOut({
-        userId: effectiveUser.id,
-        userName: effectiveUser.nickname || effectiveUser.id,
-      });
-      showToast('success', 'ออกงานสำเร็จ');
-      await Promise.all([loadPersonal(effectiveUser), loadPublic()]);
-    } catch (err: any) { showToast('error', err.message); }
-    setLoading(false);
   };
 
   // ── Leave ─────────────────────────────────────────────────────────────────
@@ -584,22 +555,9 @@ export function LineLogs() {
                 )}
 
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={doCheckIn}
-                    disabled={loading || !!todayEntry?.check_in_time}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gold text-black font-bold py-3 rounded-xl text-xs uppercase disabled:opacity-30"
-                  >
-                    <LogIn className="w-4 h-4" /> เข้างาน
-                  </button>
-                  <button
-                    onClick={doCheckOut}
-                    disabled={loading || !!todayEntry?.check_out_time}
-                    className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 text-zinc-200 font-bold py-3 rounded-xl text-xs uppercase disabled:opacity-30"
-                  >
-                    <LogOut className="w-4 h-4" /> ออกงาน
-                  </button>
-                </div>
+                <Link to="/scan" className="btn-pill btn-lime w-full justify-center">
+                  <QrCode className="w-4 h-4" /> สแกน QR เข้า / ออกงาน
+                </Link>
               </div>
 
               {/* History table */}
