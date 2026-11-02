@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   AlertCircle, Calendar, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock,
   Download, Edit2, Gift, LogIn, LogOut, Plus, Save, Shield,
-  Star, Timer, Upload, Users, X,
+  Star, Timer, Users, X,
 } from 'lucide-react';
 import { useAuthStore } from '../lib/authStore';
 import { listEmployees, loginEmployee as apiLoginEmployee, Employee } from '../lib/employeeApi';
@@ -89,11 +89,6 @@ export function LineLogs() {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [quota, setQuota] = useState<LeaveQuota | null>(null);
-
-  // ── Photo upload (optional) ───────────────────────────────────────────────
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Sub-tabs ──────────────────────────────────────────────────────────────
   const [activeSubTab, setActiveSubTab] = useState<'attendance' | 'leave' | 'report' | 'admin'>('attendance');
@@ -215,14 +210,6 @@ export function LineLogs() {
     setVerifyLoading(false);
   };
 
-  // ── Photo picker ──────────────────────────────────────────────────────────
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-  };
-
   // ── Check In / Out ────────────────────────────────────────────────────────
   const doCheckIn = async () => {
     if (!effectiveUser) return;
@@ -231,10 +218,8 @@ export function LineLogs() {
       await checkIn({
         userId: effectiveUser.id,
         userName: effectiveUser.nickname || effectiveUser.id,
-        photo: photoFile ?? undefined,
       });
       showToast('success', 'เข้างานสำเร็จ');
-      setPhotoFile(null); setPhotoPreview(null);
       await Promise.all([loadPersonal(effectiveUser), loadPublic()]);
     } catch (err: any) { showToast('error', err.message); }
     setLoading(false);
@@ -247,10 +232,8 @@ export function LineLogs() {
       await checkOut({
         userId: effectiveUser.id,
         userName: effectiveUser.nickname || effectiveUser.id,
-        photo: photoFile ?? undefined,
       });
       showToast('success', 'ออกงานสำเร็จ');
-      setPhotoFile(null); setPhotoPreview(null);
       await Promise.all([loadPersonal(effectiveUser), loadPublic()]);
     } catch (err: any) { showToast('error', err.message); }
     setLoading(false);
@@ -590,25 +573,6 @@ export function LineLogs() {
                   <p className="text-xs text-zinc-500 italic">ยังไม่มีบันทึกวันนี้</p>
                 )}
 
-                {/* Photo upload (optional) */}
-                <div>
-                  <p className="text-[10px] text-zinc-500 uppercase mb-2">แนบรูป (ไม่บังคับ)</p>
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-                  {photoPreview ? (
-                    <div className="relative">
-                      <img src={photoPreview} alt="preview" className="w-full rounded-xl max-h-32 object-cover" />
-                      <button onClick={() => { setPhotoFile(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                        className="absolute top-1 right-1 bg-black/70 rounded-full p-1 text-white">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => fileInputRef.current?.click()}
-                      className="w-full border-2 border-dashed border-zinc-800 hover:border-zinc-600 rounded-xl py-3 text-xs text-zinc-500 flex items-center justify-center gap-2 transition">
-                      <Upload className="w-4 h-4" /> เลือกรูป
-                    </button>
-                  )}
-                </div>
 
                 <div className="flex gap-2">
                   <button
@@ -639,12 +603,12 @@ export function LineLogs() {
                     <thead>
                       <tr className="text-[10px] text-zinc-500 uppercase tracking-widest border-b border-zinc-900">
                         <th className="pb-3">วันที่</th><th className="pb-3">เข้า</th><th className="pb-3">ออก</th>
-                        <th className="pb-3">ชม.</th><th className="pb-3">รูป</th><th className="pb-3 text-right">สถานะ</th>
+                        <th className="pb-3">ชม.</th><th className="pb-3 text-right">สถานะ</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-900/50">
                       {entries.length === 0 && (
-                        <tr><td colSpan={6} className="py-6 text-center text-xs text-zinc-500">{loading ? 'กำลังโหลด…' : 'ยังไม่มีข้อมูล'}</td></tr>
+                        <tr><td colSpan={5} className="py-6 text-center text-xs text-zinc-500">{loading ? 'กำลังโหลด…' : 'ยังไม่มีข้อมูล'}</td></tr>
                       )}
                       {entries.map((e) => (
                         <tr key={e.id}>
@@ -652,10 +616,6 @@ export function LineLogs() {
                           <td className="py-3 text-xs text-zinc-500 font-mono">{e.check_in_time ? new Date(e.check_in_time).toLocaleTimeString('th-TH') : '-'}</td>
                           <td className="py-3 text-xs text-zinc-500 font-mono">{e.check_out_time ? new Date(e.check_out_time).toLocaleTimeString('th-TH') : '-'}</td>
                           <td className="py-3 text-xs text-zinc-200 font-bold">{e.total_hours || 0}</td>
-                          <td className="py-3 flex gap-1">
-                            {e.check_in_photo_url && <a href={e.check_in_photo_url} target="_blank" rel="noreferrer" className="text-gold text-[10px] underline">เข้า</a>}
-                            {e.check_out_photo_url && <a href={e.check_out_photo_url} target="_blank" rel="noreferrer" className="text-gold text-[10px] underline">ออก</a>}
-                          </td>
                           <td className="py-3 text-right">
                             <span className={`text-[10px] px-2 py-1 rounded-full uppercase font-bold border ${STATUS_STYLE[e.status] || ''}`}>
                               {STATUS_TH[e.status] || e.status}

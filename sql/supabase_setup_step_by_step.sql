@@ -157,8 +157,6 @@ create table if not exists public.time_entries (
   work_date date not null,
   check_in_time timestamptz,
   check_out_time timestamptz,
-  check_in_photo_url text,
-  check_out_photo_url text,
   total_hours numeric(8,2),
   overtime_hours numeric(8,2),
   status text not null default 'working'
@@ -251,25 +249,7 @@ select
 from public.time_entries
 group by date_trunc('month', work_date)::date, user_id;
 
--- ============================================================
--- STEP 08: attendance-photos storage bucket
--- Used by: check-in/out photo uploads
--- ============================================================
-insert into storage.buckets (id, name, public)
-values ('attendance-photos', 'attendance-photos', true)
-on conflict (id) do nothing;
-
-drop policy if exists "attendance photos read" on storage.objects;
-create policy "attendance photos read"
-  on storage.objects for select
-  to anon, authenticated
-  using (bucket_id = 'attendance-photos');
-
-drop policy if exists "attendance photos upload" on storage.objects;
-create policy "attendance photos upload"
-  on storage.objects for insert
-  to anon, authenticated
-  with check (bucket_id = 'attendance-photos');
+-- STEP 08: (removed) attendance-photos bucket — selfie check-in was dropped.
 
 -- ============================================================
 -- STEP 09: videos

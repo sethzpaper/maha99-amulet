@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "node --test tests/auth.test.cjs tests/workflow.test.cjs tests/workflow-api.test.cjs"
+    "test": "node --test tests/auth.test.cjs tests/leave.test.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",

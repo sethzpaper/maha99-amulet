@@ -7,8 +7,6 @@ export interface TimeEntry {
   work_date: string;
   check_in_time?: string;
   check_out_time?: string;
-  check_in_photo_url?: string;
-  check_out_photo_url?: string;
   total_hours?: number;
   overtime_hours?: number;
   status: 'working' | 'out' | 'late' | 'leave' | 'auto-leave' | 'auto-out';
@@ -36,28 +34,7 @@ export interface LeaveQuota {
   allowed: boolean;
 }
 
-const STORAGE_BUCKET = 'attendance-photos';
 const LEAVE_MONTHLY_LIMIT = 2;
-async function signEntryPhotos(rows: TimeEntry[]): Promise<TimeEntry[]> {
-  async function sign(value?: string) {
-    if (!value) return undefined;
-    let path = value;
-    if (value.startsWith('http')) {
-      const marker = '/attendance-photos/';
-      const url = new URL(value);
-      const index = url.pathname.indexOf(marker);
-      if (index < 0) return undefined;
-      path = decodeURIComponent(url.pathname.slice(index + marker.length));
-    }
-    const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, 3600);
-    return error ? undefined : data?.signedUrl;
-  }
-  return Promise.all(rows.map(async (row) => ({
-    ...row,
-    check_in_photo_url: await sign(row.check_in_photo_url),
-    check_out_photo_url: await sign(row.check_out_photo_url),
-  })));
-}
 export const OVERTIME_THRESHOLD_HOURS = 11;
 
 function ensureConfigured() {
@@ -72,33 +49,14 @@ function todayWorkDate(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-async function uploadPhoto(userId: string, kind: 'checkin' | 'checkout', photo: Blob): Promise<string | undefined> {
-  const ts = Date.now();
-  const path = `${userId}/${todayWorkDate()}/${kind}-${ts}.jpg`;
-  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, photo, {
-    contentType: 'image/jpeg',
-    upsert: true,
-  });
-  if (error) {
-    console.warn('photo upload error:', error.message);
-    return undefined;
-  }
-  return path;
-}
-
 export async function checkIn(params: {
   userId: string;
   userName: string;
   userEmail?: string;
-  photo?: Blob;
   note?: string;
 }) {
   ensureConfigured();
   const workDate = todayWorkDate();
-  let photoUrl: string | undefined;
-  if (params.photo) {
-    photoUrl = await uploadPhoto(params.userId, 'checkin', params.photo);
-  }
 
   // If entry exists for today, update; else insert new
   const { data: existing } = await supabase
@@ -114,7 +72,6 @@ export async function checkIn(params: {
     user_name: params.userName,
     work_date: workDate,
     check_in_time: nowIso,
-    check_in_photo_url: photoUrl,
     status: 'working',
     note: params.note,
   };
@@ -141,15 +98,10 @@ export async function checkIn(params: {
 export async function checkOut(params: {
   userId: string;
   userName: string;
-  photo?: Blob;
   note?: string;
 }) {
   ensureConfigured();
   const workDate = todayWorkDate();
-  let photoUrl: string | undefined;
-  if (params.photo) {
-    photoUrl = await uploadPhoto(params.userId, 'checkout', params.photo);
-  }
 
   const { data: existing, error: existingErr } = await supabase
     .from('time_entries')
@@ -167,7 +119,6 @@ export async function checkOut(params: {
 
   const update: Partial<TimeEntry> = {
     check_out_time: nowIso,
-    check_out_photo_url: photoUrl || existing.check_out_photo_url,
     total_hours: Number(totalHours.toFixed(2)),
     overtime_hours: Number(overtimeHours.toFixed(2)),
     status: 'out',
@@ -198,7 +149,7 @@ export async function fetchEntries(params: { userId?: string; month?: string }):
     }
     const { data, error } = await q;
     if (error) throw new Error(error.message);
-    return await signEntryPhotos((data || []) as TimeEntry[]);
+    return (data || []) as TimeEntry[];
   } catch (err) {
     console.warn('fetchEntries error:', err);
     return [];
@@ -288,7 +239,7 @@ export async function fetchRecentCheckins(limit = 6): Promise<TimeEntry[]> {
       .order('check_in_time', { ascending: false })
       .limit(limit);
     if (error) throw new Error(error.message);
-    return await signEntryPhotos((data || []) as TimeEntry[]);
+    return (data || []) as TimeEntry[];
   } catch {
     return [];
   }

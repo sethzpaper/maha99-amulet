@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { DashboardPage } from './pages/DashboardPage';
-import { VideoWorkflowPage } from './pages/VideoWorkflowPage';
+import { ComingSoonPage } from './pages/ComingSoonPage';
 import { type Tab, tabPaths, pathTabs } from './routes';
 import {
   Menu,
@@ -14,8 +14,8 @@ import {
   Users,
   Clock,
   Video,
-  FolderArchive,
-  Receipt,
+  ScanLine,
+  MapPin,
   Settings,
   Flower2,
   Globe,
@@ -39,20 +39,14 @@ type NavSection = { title: string; items: NavItem[] };
 const navIcons = {
   dashboard: BarChart3, query_stats: TrendingUp, leaderboard: Trophy,
   facebook: Facebook, music_note: Music2, groups: Users, schedule: Clock,
-  video_library: Video, inventory_2: FolderArchive, receipt_long: Receipt,
+  qr_scan: ScanLine, map_pin: MapPin, video_library: Video,
   admin_panel_settings: Settings,
 };
 
 const pageMeta: Record<Tab, { th: string; en: string }> = {
-  aiVideoHome: { th: 'ศูนย์งานวิดีโอ', en: 'AI Video Home' },
-  videoIdeas: { th: 'ไอเดียวิดีโอ', en: 'Video Ideas' },
-  imageGen: { th: 'สร้างภาพ AI', en: 'Image Generation' },
-  storyboard: { th: 'สตอรี่บอร์ด', en: 'Storyboard' },
-  videoRender: { th: 'เรนเดอร์วิดีโอ', en: 'Video Render' },
-  videoReview: { th: 'ตรวจงานวิดีโอ', en: 'Video Review' },
-  approvedVideos: { th: 'วิดีโออนุมัติแล้ว', en: 'Approved Videos' },
-  assetLibrary: { th: 'คลังไฟล์คอนเทนต์', en: 'Asset Library' },
-  costTracker: { th: 'ต้นทุนคอนเทนต์', en: 'Cost Tracker' },
+  scan: { th: 'สแกนลงเวลา', en: 'QR Check-in' },
+  sites: { th: 'จุดลงเวลา & QR', en: 'Attendance Sites' },
+  clips: { th: 'คลิปประจำเดือน', en: 'Monthly Clips' },
   dashboard: { th: 'แดชบอร์ดองค์กร', en: 'Organization Dashboard' },
   facebook: { th: 'โพสต์ Facebook', en: 'Facebook Activity' },
   tiktok: { th: 'โพสต์ TikTok', en: 'TikTok Short-form Video' },
@@ -69,6 +63,8 @@ const trendNavItems: NavItem[] = [
   { tab: 'stats', label: 'อันดับผลงาน', icon: 'leaderboard' },
 ];
 
+const scanNavItem: NavItem = { tab: 'scan', label: 'สแกนลงเวลา', icon: 'qr_scan' };
+
 const navSections: NavSection[] = [
   {
     title: 'แนวโน้ม',
@@ -82,18 +78,23 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'พนักงาน',
+    title: 'ลงเวลา',
     items: [
-      { tab: 'employees', label: 'ทำเนียบพนักงาน', icon: 'groups' },
-      { tab: 'lineLogs', label: 'ลงเวลา / Workload', icon: 'schedule' },
+      scanNavItem,
+      { tab: 'lineLogs', label: 'ตารางลงเวลา / OT', icon: 'schedule' },
+      { tab: 'sites', label: 'จุดลงเวลา & QR', icon: 'map_pin' },
     ],
   },
   {
-    title: 'บอร์ด',
+    title: 'คอนเทนต์',
     items: [
-      { tab: 'aiVideoHome', label: 'ศูนย์งานวิดีโอ', icon: 'video_library' },
-      { tab: 'assetLibrary', label: 'คลังคอนเทนต์', icon: 'inventory_2' },
-      { tab: 'costTracker', label: 'ต้นทุนคอนเทนต์', icon: 'receipt_long' },
+      { tab: 'clips', label: 'คลิปประจำเดือน', icon: 'video_library' },
+    ],
+  },
+  {
+    title: 'พนักงาน',
+    items: [
+      { tab: 'employees', label: 'ทำเนียบพนักงาน', icon: 'groups' },
     ],
   },
   {
@@ -111,7 +112,13 @@ const publicNavSections: NavSection[] = [
   },
 ];
 
+const employeeNavSections: NavSection[] = [
+  ...publicNavSections,
+  { title: 'ลงเวลา', items: [scanNavItem] },
+];
+
 const publicTabs = new Set<Tab>(trendNavItems.map((item) => item.tab));
+const employeeTabs = new Set<Tab>([...publicTabs, 'scan']);
 function AdminGate({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="mx-auto flex min-h-[calc(100vh-220px)] max-w-3xl items-center">
@@ -121,20 +128,20 @@ function AdminGate({ onLogin }: { onLogin: () => void }) {
             <Shield className="h-6 w-6" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a5018]">Admin only</p>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a5018]">Members only</p>
             <h2 className="mt-2 text-2xl font-serif italic font-bold gold-text-gradient">
               เมนูหลักถูกซ่อนไว้
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500">
-              ระบบจัดการคอนเทนต์และข้อมูล workflow เปิดให้เฉพาะบัญชีแอดมินเท่านั้น
-              กรุณาเข้าสู่ระบบด้วยบัญชี admin หรือ super admin เพื่อจัดการงานวิดีโอจาก Discord
+              หน้านี้เปิดให้เฉพาะผู้ที่เข้าสู่ระบบแล้ว ส่วนข้อมูลลงเวลา คลิปประจำเดือน และพนักงาน
+              ต้องใช้บัญชี admin หรือ super admin
             </p>
             <button
               onClick={onLogin}
               className="mt-6 inline-flex items-center gap-2 rounded-xl border border-gold/40 bg-[var(--app-surface)] px-4 py-3 text-sm font-bold text-gold transition-all hover:border-gold/70 hover:bg-gold/10"
             >
               <LogIn className="h-4 w-4" />
-              <span>เข้าสู่ระบบแอดมิน</span>
+              <span>เข้าสู่ระบบ</span>
             </button>
           </div>
         </div>
@@ -155,8 +162,8 @@ export default function App() {
 
   const isSuperAdmin = user?.role === 'super_admin';
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
-  const visibleNavSections = isAdmin ? navSections : publicNavSections;
-  const canViewActiveTab = isAdmin || publicTabs.has(activeTab);
+  const visibleNavSections = isAdmin ? navSections : isAuthenticated ? employeeNavSections : publicNavSections;
+  const canViewActiveTab = isAdmin || (isAuthenticated ? employeeTabs : publicTabs).has(activeTab);
   const meta = pageMeta[activeTab || 'dashboard'];
 
 
@@ -168,16 +175,9 @@ export default function App() {
     }
 
     switch (activeTab) {
-      case 'aiVideoHome':
-      case 'videoIdeas':
-      case 'imageGen':
-      case 'storyboard':
-      case 'videoRender':
-      case 'videoReview':
-      case 'approvedVideos':
-      case 'assetLibrary':
-      case 'costTracker':
-        return <VideoWorkflowPage tab={activeTab} />;
+      case 'scan': return <ComingSoonPage title="สแกนลงเวลาด้วย QR Code" phase="เฟส 4">สแกน QR ที่ติดไว้ ณ จุดลงเวลา ระบบจะตรวจพิกัด GPS แล้วบันทึกเข้า/ออกงานให้อัตโนมัติ</ComingSoonPage>;
+      case 'sites': return <ComingSoonPage title="จุดลงเวลา & QR Code" phase="เฟส 4">กำหนดพิกัดและรัศมีของแต่ละจุด แล้วพิมพ์ QR ไปติดหน้างาน</ComingSoonPage>;
+      case 'clips': return <ComingSoonPage title="คลิปประจำเดือน" phase="เฟส 2">เลือกเดือนแล้วดูรายการคลิป: วันที่ ชื่อคลิป ผู้ทำ (รอข้อมูลจาก Google Sheet)</ComingSoonPage>;
       case 'dashboard': return <DashboardPage />;
       case 'facebook': return <FacebookPosts />;
       case 'tiktok': return <TikTokPosts />;
@@ -235,7 +235,7 @@ export default function App() {
                 <Shield className="h-4 w-4" />
                 <span className="font-bold">เมนูอื่นสำหรับแอดมิน</span>
               </div>
-              <p>ดูหมวดแนวโน้มได้ทันที ส่วนบริษัท พนักงาน บอร์ด และจัดการระบบต้องเข้าสู่ระบบแอดมินก่อน</p>
+              <p>{isAuthenticated ? 'เมนูบริษัท ลงเวลา คอนเทนต์ พนักงาน และจัดการระบบ สำหรับแอดมิน' : 'ดูหมวดแนวโน้มได้ทันที เข้าสู่ระบบเพื่อสแกนลงเวลา'}</p>
             </div>
           )}
         </nav>

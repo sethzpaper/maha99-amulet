@@ -64,8 +64,6 @@ create table if not exists public.time_entries (
   work_date date not null,
   check_in_time timestamptz,
   check_out_time timestamptz,
-  check_in_photo_url text,
-  check_out_photo_url text,
   total_hours numeric,
   overtime_hours numeric,
   status text not null default 'working' check (status in ('working','out','late','leave','auto-leave','auto-out')),
@@ -194,24 +192,9 @@ set password_hash = crypt('new-password', gen_salt('bf', 10))
 where employee_code = 'EMP001';
 ```
 
-## 3. Storage bucket: attendance-photos
+## 3. Storage bucket
 
-Create bucket `attendance-photos` (public read):
-
-```sql
-insert into storage.buckets (id, name, public)
-values ('attendance-photos', 'attendance-photos', true)
-on conflict (id) do nothing;
-
--- allow anon uploads (tighten to authenticated if you add Supabase Auth for employees)
-create policy "attendance upload" on storage.objects
-  for insert to anon, authenticated
-  with check (bucket_id = 'attendance-photos');
-
-create policy "attendance read" on storage.objects
-  for select to anon, authenticated
-  using (bucket_id = 'attendance-photos');
-```
+Not needed — the `attendance-photos` bucket was removed with the selfie feature.
 
 ## 4. RLS recommendations
 
@@ -273,7 +256,7 @@ VITE_ADMIN_GITHUB_IDS=...                    # unchanged
 
 - **Employee logins**: every row in `employees` needs `password_hash = crypt(plaintext, gen_salt('bf', 10))`. Existing rows that had passwords on the old worker DB must be re-seeded.
 - **Super-admin** hardcoded login (`admin` / `11221122`) still works client-side (unchanged in `authStore.ts`).
-- **Check-in/out photos** are now uploaded to the Supabase Storage bucket `attendance-photos`; create it first or uploads silently fail (entry still saves without photo URL).
+- **Check-in/out photos** have been removed; check-in will move to QR + GPS (see `REVAMP_PLAN_QR_ATTENDANCE_TH.md`).
 - **Monthly report export** is now computed client-side — response shape changed to `{ month, entries, summary[] }`. Any component that previously relied on a worker-specific payload may need tweaks.
 - **Leave quota** is hardcoded at 2 per calendar month in the client (`LEAVE_MONTHLY_LIMIT`). Move this into the DB if policy changes.
 - **Content tables** (`amulets`, `videos`, `line_logs`, `social_posts`, `competitor_*`, `leaderboard_*`) are best-effort: if a table is missing the UI falls back to empty arrays/null. Create the ones you actually need.

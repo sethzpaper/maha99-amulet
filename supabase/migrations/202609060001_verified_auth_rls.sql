@@ -92,11 +92,4 @@ begin
   end if;
 end $$;
 
-drop policy if exists "attendance photos read" on storage.objects;
-drop policy if exists "attendance photos upload" on storage.objects;
-create policy attendance_admin on storage.objects for all to authenticated
-using (bucket_id = 'attendance-photos' and public.app_is_admin())
-with check (bucket_id = 'attendance-photos' and public.app_is_admin());
-update storage.buckets set public = false where id = 'attendance-photos';
-
 commit;

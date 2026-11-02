@@ -36,7 +36,6 @@ Attendance identity is now resolved from the signed-in user's linked employee
 profile; admins can also manage attendance records. The old password reset approval UI cannot change Auth
 passwords and is removed from Settings.
 
-Attendance photos are private and are read through expiring signed URLs.
 The migration replaces policies on the listed tables only. Audit any additional
 deployed tables, RPCs, views and storage policies before production rollout.
 Do not rerun legacy SQL scripts that recreate permissive policies.

@@ -11,7 +11,7 @@ SQL หลักอยู่ที่ `sql/supabase_setup_step_by_step.sql` แ�
 3. รัน `STEP 01-03` ระบบพนักงานและ badge
 4. รัน `STEP 04` tracked accounts สำหรับ dashboard/social overview
 5. รัน `STEP 05-07` ลงเวลา, ลางาน, workload views สำหรับการ์ดและกราฟ dashboard
-6. รัน `STEP 08` storage bucket `attendance-photos`
+6. (ข้าม `STEP 08` — ตัดระบบรูปลงเวลาออกแล้ว)
 7. รัน `STEP 09-11` content/social/leaderboard
 8. รัน `STEP 12-13` activity log และ password reset
 9. รัน `STEP 14` RLS policies

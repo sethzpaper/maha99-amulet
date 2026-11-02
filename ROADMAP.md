@@ -23,20 +23,20 @@
 | หน้า | ค้นหา | กรอง | วันที่ |
 |------|------|------|------|
 | EmployeeList | ✅ ค้นหาชื่อ/อีเมล | ❌ | ❌ |
-| VideoManagement | ❌ | ❌ | ❌ |
+| ClipsPage (`/clips`) | ❌ | ❌ | ⚠️ เลือกเดือน (เฟส 2) |
 | AmuletList | ❌ | ❌ | ❌ |
 | LineLogs (ลางาน) | ❌ | ❌ | ⚠️ เลือกเดือนเดียว |
 | Settings (tracked accounts) | ❌ | ❌ | ❌ |
 
 ### สิ่งที่ต้องทำ
-- [ ] **VideoManagement** — search ชื่อไฟล์/ชื่อสินค้า + filter โดย creator + date range "วันที่บันทึก"
+- [ ] **ClipsPage** — search ชื่อคลิป + filter ผู้ทำ (ดู `REVAMP_PLAN_QR_ATTENDANCE_TH.md`)
 - [ ] **AmuletList** — search ชื่อพระ + filter ประเภท/trend
 - [ ] **LineLogs** — date range picker แทน month-only selector + filter สถานะ (working/late/leave)
 - [ ] **Settings tracked accounts** — search ชื่อ/platform + filter competitor flag
 - [ ] **EmployeeList** — เพิ่ม filter แผนก/สถานะ (ถ้ามีในอนาคต)
 
 ### ไฟล์ที่ต้องแก้
-- `src/components/VideoManagement.tsx`
+- `src/pages/ClipsPage.tsx`
 - `src/components/AmuletList.tsx`
 - `src/components/LineLogs.tsx`
 - `src/components/Settings.tsx`
