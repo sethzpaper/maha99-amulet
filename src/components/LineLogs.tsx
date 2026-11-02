@@ -10,10 +10,11 @@ import {
   checkIn, checkOut,
   fetchEntries, fetchLeaveQuota, fetchLeaveRequests, submitLeaveRequest,
   exportMonthlyReport, fetchRecentCheckins, adminUpdateEntry, adminCreateEntry,
+  managerRecordLeave, LEAVE_MONTHLY_LIMIT,
   TimeEntry, LeaveRequest, LeaveQuota,
 } from '../lib/attendanceApi';
+import { todayBangkok } from '../lib/dates';
 
-const MANAGER_EMAIL = (import.meta.env.VITE_MANAGER_EMAIL as string) || '';
 
 // ── Thai national holidays 2026 ────────────────────────────────────────────
 const THAI_HOLIDAYS: { name: string; date: string }[] = [
@@ -113,7 +114,8 @@ export function LineLogs() {
   const [newEntryForm, setNewEntryForm] = useState({
     userId: '', userName: '', workDate: '', checkInTime: '', checkOutTime: '', status: 'working', note: '',
   });
-  const [adminTab, setAdminTab] = useState<'edit' | 'create'>('edit');
+  const [adminTab, setAdminTab] = useState<'edit' | 'create' | 'leave'>('edit');
+  const [managerLeave, setManagerLeave] = useState({ employeeId: '', leaveDate: '', leaveType: 'sick' as LeaveRequest['leave_type'], reason: '' });
 
   // ── Loading / toast ───────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
@@ -124,7 +126,7 @@ export function LineLogs() {
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = todayBangkok(now);
   const todayEntry = entries.find((e) => e.work_date === todayStr);
   const effectiveUser = employees.find((employee) => employee.auth_user_id === authUser?.id) ?? verifiedEmp;
 
@@ -242,15 +244,10 @@ export function LineLogs() {
   // ── Leave ─────────────────────────────────────────────────────────────────
   const handleSubmitLeave = async () => {
     if (!effectiveUser || !selectedDate) { showToast('error', 'เลือกวันที่ก่อน'); return; }
-    if (quota && !quota.allowed) { showToast('error', `โควต้าหมดแล้ว (${quota.used_count}/4)`); return; }
+    if (quota && !quota.allowed) { showToast('error', `โควต้าหมดแล้ว (${quota.used_count}/${LEAVE_MONTHLY_LIMIT})`); return; }
     setLoading(true);
     try {
-      await submitLeaveRequest({
-        userId: effectiveUser.id,
-        userName: effectiveUser.nickname || effectiveUser.id,
-        leaveDate: selectedDate, leaveType, reason: leaveReason,
-        managerEmail: MANAGER_EMAIL,
-      });
+      await submitLeaveRequest({ leaveDate: selectedDate, leaveType, reason: leaveReason });
       showToast('success', 'ส่งคำขอลาเรียบร้อย — รอหัวหน้าอนุมัติ');
       setSelectedDate(null); setLeaveReason('');
       await loadPersonal(effectiveUser);
@@ -292,6 +289,19 @@ export function LineLogs() {
       });
       showToast('success', 'แก้ไขข้อมูลสำเร็จ');
       setEditingEntry(null);
+      loadAdminEntries();
+    } catch (err: any) { showToast('error', err.message); }
+    setLoading(false);
+  };
+
+  // ── Manager records leave (incl. retroactive) ─────────────────────────────
+  const handleManagerLeave = async () => {
+    if (!managerLeave.employeeId || !managerLeave.leaveDate) { showToast('error', 'เลือกพนักงานและวันที่ก่อน'); return; }
+    setLoading(true);
+    try {
+      await managerRecordLeave(managerLeave);
+      showToast('success', 'บันทึกวันลาแล้ว (อนุมัติทันที)');
+      setManagerLeave({ employeeId: '', leaveDate: '', leaveType: 'sick', reason: '' });
       loadAdminEntries();
     } catch (err: any) { showToast('error', err.message); }
     setLoading(false);
@@ -637,12 +647,12 @@ export function LineLogs() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-base font-serif italic font-bold gold-text-gradient">เลือกวันลา</h2>
-                    <p className="text-[10px] text-zinc-500 mt-1">ลาได้เดือนละ 4 ครั้ง • คลิกวันที่เพื่อขอลา</p>
+                    <p className="text-[10px] text-zinc-500 mt-1">ลาได้เดือนละ {LEAVE_MONTHLY_LIMIT} ครั้ง • จองล่วงหน้าอย่างน้อย 1 วัน • คลิกวันที่เพื่อจอง</p>
                   </div>
                   {quota && (
                     <div className="text-right">
                       <p className="text-[10px] text-zinc-500 uppercase">โควต้าคงเหลือ</p>
-                      <p className={`text-2xl font-bold ${quota.remaining > 0 ? 'gold-text-gradient' : 'text-red-500'}`}>{quota.remaining}/4</p>
+                      <p className={`text-2xl font-bold ${quota.remaining > 0 ? 'gold-text-gradient' : 'text-red-500'}`}>{quota.remaining}/{LEAVE_MONTHLY_LIMIT}</p>
                     </div>
                   )}
                 </div>
@@ -663,7 +673,8 @@ export function LineLogs() {
                   {['อา','จ','อ','พ','พฤ','ศ','ส'].map(d => <div key={d} className="text-center text-[10px] text-zinc-500 pb-1">{d}</div>)}
                   {calendarDays.map(({ date, day, hasLeave, leaveStatus }) => {
                     const isSelected = selectedDate === date;
-                    const isPast = date < todayStr;
+                    // จองได้ตั้งแต่พรุ่งนี้เท่านั้น (วันนี้/ย้อนหลัง ให้ผู้จัดการบันทึกให้)
+                    const isPast = date <= todayStr;
                     const sc = leaveStatus === 'approved' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
                       : leaveStatus === 'rejected' ? 'bg-red-500/10 border-red-500/30 text-red-400'
                       : leaveStatus === 'pending' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : '';
@@ -830,7 +841,7 @@ export function LineLogs() {
 
               <div className="lg:col-span-3 p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
-                <p className="text-xs text-zinc-400">ลาได้เดือนละ 4 ครั้ง • ระบบส่งอีเมลแจ้งผู้จัดการอัตโนมัติ • ต้องขอลาก่อน 12:00</p>
+                <p className="text-xs text-zinc-400">จองวันลาล่วงหน้าอย่างน้อย 1 วัน แล้วรอผู้จัดการอนุมัติ • ลาเดือนละไม่เกิน {LEAVE_MONTHLY_LIMIT} ครั้ง • ลาป่วยกะทันหันหรือลาย้อนหลัง ให้ผู้จัดการบันทึกให้ • วันที่ลาได้รับอนุมัติแล้ว จะสแกน QR เข้างานไม่ได้</p>
               </div>
             </div>
           )}
@@ -866,7 +877,7 @@ export function LineLogs() {
 
               {/* Admin sub-tabs */}
               <div className="flex gap-2">
-                {[{k:'edit',label:'แก้ไขรายการ'},{k:'create',label:'สร้างรายการใหม่'}].map(t => (
+                {[{k:'edit',label:'แก้ไขรายการ'},{k:'create',label:'สร้างรายการใหม่'},{k:'leave',label:'บันทึกวันลาให้พนักงาน'}].map(t => (
                   <button key={t.k} onClick={() => setAdminTab(t.k as any)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${adminTab === t.k ? 'bg-gold/20 border-gold text-gold' : 'border-zinc-800 text-zinc-500'}`}>{t.label}</button>
                 ))}
@@ -1001,6 +1012,36 @@ export function LineLogs() {
                   <button onClick={handleAdminCreate} disabled={loading || !newEntryForm.userId || !newEntryForm.workDate}
                     className="flex items-center gap-2 bg-gold text-black font-bold px-5 py-3 rounded-xl text-xs uppercase disabled:opacity-40">
                     <Plus className="w-4 h-4" /> สร้างรายการ
+                  </button>
+                </div>
+              )}
+
+              {/* Manager records leave (any date, incl. retroactive) */}
+              {adminTab === 'leave' && (
+                <div className="space-y-4 max-w-lg">
+                  <p className="text-xs text-zinc-500">บันทึกวันลาให้พนักงาน ใช้ได้ทั้งวันนี้และย้อนหลัง ระบบจะอนุมัติทันทีและลงสถานะ "ลา" ในตารางลงเวลา (ถ้าวันนั้นพนักงานสแกนเข้างานแล้ว จะบันทึกไม่ได้)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="work-field col-span-2 sm:col-span-1">พนักงาน
+                      <select value={managerLeave.employeeId} onChange={e => setManagerLeave({ ...managerLeave, employeeId: e.target.value })}>
+                        <option value="">— เลือก —</option>
+                        {employees.filter(e => e.is_active).map(emp => <option key={emp.id} value={emp.id}>{emp.nickname}</option>)}
+                      </select>
+                    </label>
+                    <label className="work-field col-span-2 sm:col-span-1">วันที่ลา
+                      <input type="date" value={managerLeave.leaveDate} onChange={e => setManagerLeave({ ...managerLeave, leaveDate: e.target.value })} />
+                    </label>
+                    <label className="work-field col-span-2 sm:col-span-1">ประเภท
+                      <select value={managerLeave.leaveType} onChange={e => setManagerLeave({ ...managerLeave, leaveType: e.target.value as LeaveRequest['leave_type'] })}>
+                        <option value="sick">ลาป่วย</option><option value="personal">ลากิจ</option>
+                        <option value="vacation">ลาพักร้อน</option><option value="other">อื่น ๆ</option>
+                      </select>
+                    </label>
+                    <label className="work-field col-span-2 sm:col-span-1">เหตุผล
+                      <input value={managerLeave.reason} onChange={e => setManagerLeave({ ...managerLeave, reason: e.target.value })} placeholder="เช่น ป่วย แจ้งทางโทรศัพท์" />
+                    </label>
+                  </div>
+                  <button onClick={handleManagerLeave} disabled={loading || !managerLeave.employeeId || !managerLeave.leaveDate} className="work-button work-primary">
+                    <Plus className="w-4 h-4" /> บันทึกวันลา
                   </button>
                 </div>
               )}

@@ -1,5 +1,7 @@
 # Migration Notes: Cloudflare Worker → Supabase (browser-direct)
 
+> **Historical document.** For a new Supabase project follow `SUPABASE_DATABASE_STEPS_TH.md`. Competitor tables and attendance photos described below have since been removed.
+
 The frontend now calls Supabase directly via `@supabase/supabase-js`. The Cloudflare Worker backend and `VITE_API_URL` are removed. This document lists everything you must provision in your Supabase project.
 
 ## 1. SQL: tables

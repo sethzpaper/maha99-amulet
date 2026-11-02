@@ -13,7 +13,7 @@ export function TikTokPosts() {
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
-      const trackedAccounts = await listTrackedAccounts({ platform: 'tiktok', competitor: false });
+      const trackedAccounts = await listTrackedAccounts({ platform: 'tiktok' });
       setAccounts(trackedAccounts);
       const data = await dataService.fetchTikTokPosts();
       const fallbackPosts: SocialPost[] = trackedAccounts.map((account, index) => ({

@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "mahaniyom999-teamday",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "node --test tests/auth.test.cjs tests/leave.test.cjs"
+    "test": "node --test tests/auth.test.cjs tests/leave.test.cjs tests/today-board.test.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",

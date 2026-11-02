@@ -21,7 +21,7 @@ export function Login({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
   return (
     <form onSubmit={submit} className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-6 space-y-5">
       <Lock className="h-6 w-6 text-gold" />
-      <h2 className="text-xl font-semibold">เข้าสู่ระบบ มหานิยม 999</h2>
+      <h2 className="text-xl font-semibold">เข้าสู่ระบบ มหานิยม999ทีมพร้อม</h2>
       <label className="block space-y-2"><span>อีเมล</span>
         <input autoFocus required type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded border p-3" />
       </label>

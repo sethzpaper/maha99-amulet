@@ -99,17 +99,3 @@ export interface GoogleTrend {
   growth: string;
 }
 
-export interface CompetitorAnalysis {
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  trends: string[];
-  recommendations: string[];
-  marketPosition: string;
-}
-
-export interface CompetitorAnalysisResponse {
-  facebook: CompetitorAnalysis;
-  tiktok: CompetitorAnalysis;
-  timestamp: string;
-}

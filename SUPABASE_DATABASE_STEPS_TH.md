@@ -1,4 +1,4 @@
-# Supabase Database Steps - Project Amulet Base
+# Supabase Database Steps - มหานิยม999ทีมพร้อม (Teamday)
 
 ไฟล์นี้เป็นลำดับทำฐานข้อมูลใน Supabase แบบทีละตาราง สำหรับหน้าตาใหม่ของ sidebar/dashboard/workload
 
@@ -17,16 +17,18 @@ SQL หลักอยู่ที่ `sql/supabase_setup_step_by_step.sql` แ�
 9. รัน `STEP 14` RLS policies
 10. รัน `STEP 15` seed super admin และบัญชี social ตัวอย่าง
 11. รัน `STEP 16` verification queries
+12. รัน `supabase/migrations/202609060001_verified_auth_rls.sql` (สิทธิ์ตาม Supabase Auth)
+13. รัน `supabase/migrations/202611020001_leave_booking_today_board.sql` (จองวันลา + หน้าแรก)
+14. ทดสอบ: `supabase/tests/verified_auth_rls.sql` และ `supabase/tests/leave_booking.sql` (rollback เองทุกครั้ง)
 
 ## ตารางที่หน้าใหม่ต้องใช้
 
 - `employees`: ทำเนียบพนักงาน, login, role
 - `time_entries`: ลงเวลา, total hours, OT, dashboard workload
-- `leave_requests`: ลางานและ quota
-- `tracked_accounts`: Facebook/TikTok ของเราและคู่แข่ง
+- `leave_requests`: จองวันลาล่วงหน้า / ผู้จัดการบันทึกให้ (`source`), quota เดือนละ 2
+- `tracked_accounts`: ช่องทางของบริษัท (Facebook / TikTok / เว็บไซต์) ไม่เกิน 5 ช่อง
 - `videos`: คลังวิดีโอ/บอร์ดคอนเทนต์
 - `social_posts`: Facebook/TikTok posts
-- `competitor_facebook`, `competitor_tiktok`, `competitor_analysis`: หน้าเทียบคู่แข่ง
 - `leaderboard_views`, `leaderboard_likes_fb`, `leaderboard_likes_tt`, `leaderboard_hours`: leaderboard cards
 - `activity_logs`: audit trail
 - `password_reset_requests`: ลืมรหัสผ่าน

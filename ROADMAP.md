@@ -32,7 +32,7 @@
 - [ ] **ClipsPage** — search ชื่อคลิป + filter ผู้ทำ (ดู `REVAMP_PLAN_QR_ATTENDANCE_TH.md`)
 - [ ] **AmuletList** — search ชื่อพระ + filter ประเภท/trend
 - [ ] **LineLogs** — date range picker แทน month-only selector + filter สถานะ (working/late/leave)
-- [ ] **Settings tracked accounts** — search ชื่อ/platform + filter competitor flag
+- [ ] **Settings tracked accounts** — search ชื่อ/platform
 - [ ] **EmployeeList** — เพิ่ม filter แผนก/สถานะ (ถ้ามีในอนาคต)
 
 ### ไฟล์ที่ต้องแก้

@@ -1,6 +1,6 @@
 {
-  "name": "มหานิยม 999 หน่วยหลังบ้าน",
-  "description": "Amulet Stat Hub - ระบบวิเคราะห์สถิติพระเครื่องและระบบจัดการแอดมินระดับพรีเมียม",
-  "requestFramePermissions": [],
+  "name": "มหานิยม999ทีมพร้อม Teamday",
+  "description": "Teamday - ระบบ HR ของทีมมหานิยม999: สแกนลงเวลาด้วย QR, จองวันลา, จัดอันดับคนขยัน และบันทึกคลิปประจำเดือน",
+  "requestFramePermissions": ["camera", "geolocation"],
   "majorCapabilities": []
 }

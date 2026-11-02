@@ -5,24 +5,28 @@
 @theme {
   --font-serif: "Pridi", serif;
   --font-sans: "IBM Plex Sans Thai", sans-serif;
-  --color-gold: #5ee0c0;
-  --color-primary: #167c68;
+  --color-gold: #39ff88;
+  --color-primary: #16a34a;
 }
 
 :root,
 :root[data-theme="classic"] {
-  --app-bg: #18181b;
-  --app-bg-deep: #121214;
-  --app-surface: #232326;
-  --app-surface-strong: #2c2c30;
-  --app-border: #46464d;
-  --app-border-muted: #343439;
-  --app-text: #f4f4f5;
-  --app-text-muted: #b0b0b8;
-  --app-accent: #5ee0c0;
-  --app-accent-bright: #a7f3d0;
-  --app-accent-soft: rgba(94, 224, 192, 0.14);
-  --app-accent-faint: rgba(94, 224, 192, 0.06);
+  /* Teamday neon: calm dark surfaces, neon green only on highlights */
+  --app-bg: #0f1311;
+  --app-bg-deep: #0a0d0b;
+  --app-surface: #171c19;
+  --app-surface-strong: #1f2622;
+  --app-border: #34403a;
+  --app-border-muted: #232b27;
+  --app-text: #f1f5f2;
+  --app-text-muted: #a3b0a8;
+  --app-accent: #39ff88;
+  --app-accent-bright: #8dffbb;
+  --app-accent-soft: rgba(57, 255, 136, 0.14);
+  --app-accent-faint: rgba(57, 255, 136, 0.06);
+  --app-glow: 0 0 0 1px rgba(57, 255, 136, 0.45), 0 0 18px rgba(57, 255, 136, 0.35);
+  --app-glow-strong: 0 0 0 2px rgba(57, 255, 136, 0.7), 0 0 28px rgba(57, 255, 136, 0.55);
+  --app-img-shadow: 0 18px 48px -18px rgba(57, 255, 136, 0.55), 0 0 0 1px rgba(57, 255, 136, 0.22);
 }
 
 :root[data-theme="jade"] {
@@ -60,8 +64,8 @@ body {
   font-family: var(--font-sans);
 }
 
-body::selection {
-  background: rgba(55, 148, 255, 0.32);
+::selection {
+  background: rgba(57, 255, 136, 0.3);
 }
 
 /* ── Glass card surface ── */
@@ -70,10 +74,49 @@ body::selection {
   border: 1px solid var(--app-border-muted);
 }
 
-/* ── Gold glow border ── */
+/* ── Neon glow border (legacy class name) ── */
 .gold-border-glow {
-  box-shadow: none;
+  transition: box-shadow 160ms, border-color 160ms;
 }
+.gold-border-glow:hover {
+  border-color: color-mix(in srgb, var(--app-accent) 45%, transparent);
+  box-shadow: 0 0 22px -6px rgba(57, 255, 136, 0.35);
+}
+
+/* ── Neon interaction layer: highlights, image shadows, click states ── */
+.neon-img { box-shadow: var(--app-img-shadow); }
+.neon-chip { color: var(--app-accent); background: var(--app-accent-soft); border: 1px solid color-mix(in srgb, var(--app-accent) 40%, transparent); }
+.neon-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 10px 18px; border-radius: 10px;
+  background: var(--app-accent); color: #04140a; font-weight: 700;
+  box-shadow: 0 0 18px rgba(57, 255, 136, 0.35);
+  transition: transform 120ms, box-shadow 160ms, background 160ms;
+}
+.neon-button:hover { background: var(--app-accent-bright); box-shadow: var(--app-glow-strong); }
+.neon-outline {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 10px 18px; border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 55%, transparent); color: var(--app-accent);
+  transition: box-shadow 160ms, background 160ms;
+}
+.neon-outline:hover { background: var(--app-accent-faint); box-shadow: var(--app-glow); }
+.app-shell button:not(:disabled):active,
+.app-shell a:active {
+  box-shadow: var(--app-glow-strong) !important;
+  transform: translateY(1px);
+}
+.app-shell aside nav a[aria-current="page"] {
+  box-shadow: inset 3px 0 0 var(--app-accent), 0 0 16px -4px rgba(57, 255, 136, 0.45);
+}
+.hr-card {
+  background: var(--app-surface); border: 1px solid var(--app-border-muted); border-radius: 14px;
+  transition: border-color 160ms, box-shadow 160ms;
+}
+.hr-card:hover { border-color: color-mix(in srgb, var(--app-accent) 35%, transparent); }
+.live-dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--app-accent); box-shadow: 0 0 10px var(--app-accent); animation: live-pulse 1.6s ease-in-out infinite; }
+@keyframes live-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
 
 /* ── Gold text gradient ── */
 .gold-text-gradient {
@@ -169,7 +212,7 @@ body::selection {
 }
 
 :root .bg-\[radial-gradient\(ellipse_at_50\%_0\%\,rgba\(212\,175\,55\,0\.07\)_0\%\,transparent_60\%\)\] {
-  background-image: radial-gradient(ellipse at 50% 0%, rgba(55, 148, 255, 0.13) 0%, transparent 60%) !important;
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(57, 255, 136, 0.1) 0%, transparent 60%) !important;
 }
 
 :root[data-theme="jade"] .bg-\[\#0c0900\],
@@ -207,7 +250,7 @@ body::selection {
 
 /* Shared operational surfaces, including legacy dashboard components. */
 * { letter-spacing: 0 !important; }
-.rounded-xl, .rounded-2xl, .rounded-3xl { border-radius: 8px; }
+.rounded-xl, .rounded-2xl, .rounded-3xl { border-radius: 12px; }
 .app-shell h1, .app-shell h2, .app-shell h3 { font-family: var(--font-sans); font-style: normal; }
 .app-shell .text-zinc-600, .app-shell .text-zinc-500 { color: var(--app-text-muted); }
 .app-shell table { font-size: 14px; line-height: 1.65; }
@@ -220,8 +263,8 @@ body::selection {
 .work-button, .work-icon { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--app-border); border-radius: 6px; min-height: 40px; padding: 8px 12px; font-size: 14px; }
 .work-icon { width: 40px; height: 40px; padding: 0; flex-shrink: 0; }
 .work-button:hover, .work-icon:hover { background: var(--app-surface-strong); }
-.work-primary { background: var(--app-accent); color: #121214; border-color: transparent; font-weight: 600; }
-.work-primary:hover { background: var(--app-accent-bright); }
+.work-primary { background: var(--app-accent); color: #04140a; border-color: transparent; font-weight: 600; box-shadow: 0 0 14px rgba(57, 255, 136, 0.3); }
+.work-primary:hover { background: var(--app-accent-bright); box-shadow: var(--app-glow); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 .work-dialog { margin: auto; width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 24px; border: 1px solid var(--app-border); border-radius: 8px; background: var(--app-surface); color: var(--app-text); overflow-y: auto; }
 .work-dialog::backdrop { background: rgb(0 0 0 / .7); }

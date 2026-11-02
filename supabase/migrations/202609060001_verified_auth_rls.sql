@@ -30,7 +30,6 @@ begin
   foreach t in array array[
     'employees', 'badges', 'employee_badges', 'tracked_accounts',
     'time_entries', 'leave_requests', 'videos', 'amulets', 'social_posts',
-    'competitor_facebook', 'competitor_tiktok', 'competitor_analysis',
     'leaderboard_views', 'leaderboard_likes_fb', 'leaderboard_likes_tt',
     'leaderboard_hours', 'activity_logs', 'password_reset_requests'
   ] loop
@@ -55,8 +54,7 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'amulets', 'social_posts', 'competitor_facebook', 'competitor_tiktok',
-    'competitor_analysis', 'leaderboard_views', 'leaderboard_likes_fb',
+    'amulets', 'social_posts', 'leaderboard_views', 'leaderboard_likes_fb',
     'leaderboard_likes_tt', 'leaderboard_hours'
   ] loop
     if to_regclass('public.' || t) is null then continue; end if;

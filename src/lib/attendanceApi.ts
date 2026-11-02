@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { todayBangkok } from './dates';
 
 export interface TimeEntry {
   id: string;
@@ -25,6 +26,8 @@ export interface LeaveRequest {
   manager_email?: string;
   manager_note?: string;
   approved_at?: string;
+  /** employee = ลาล่วงหน้า · manager = ผู้จัดการบันทึกให้ (รวมย้อนหลัง) */
+  source?: 'employee' | 'manager';
   created_at: string;
 }
 
@@ -34,7 +37,7 @@ export interface LeaveQuota {
   allowed: boolean;
 }
 
-const LEAVE_MONTHLY_LIMIT = 2;
+export const LEAVE_MONTHLY_LIMIT = 2;
 export const OVERTIME_THRESHOLD_HOURS = 11;
 
 function ensureConfigured() {
@@ -156,36 +159,23 @@ export async function fetchEntries(params: { userId?: string; month?: string }):
   }
 }
 
+/** พนักงานจองวันลาล่วงหน้า (อย่างน้อยพรุ่งนี้) → รออนุมัติ; ตรวจซ้ำที่ฐานข้อมูล (RPC request_leave) */
 export async function submitLeaveRequest(params: {
-  userId: string;
-  userName: string;
-  userEmail?: string;
   leaveDate: string;
-  leaveType?: 'personal' | 'sick' | 'vacation' | 'other';
+  leaveType?: LeaveRequest['leave_type'];
   reason?: string;
-  managerEmail?: string;
 }) {
   ensureConfigured();
-  const managerEmail =
-    params.managerEmail || (import.meta.env.VITE_MANAGER_EMAIL as string) || undefined;
-
-  const insert = {
-    user_id: params.userId,
-    user_name: params.userName,
-    user_email: params.userEmail,
-    leave_date: params.leaveDate,
-    leave_type: params.leaveType || 'personal',
-    reason: params.reason,
-    manager_email: managerEmail,
-    status: 'pending' as const,
-  };
-  const { data, error } = await supabase
-    .from('leave_requests')
-    .insert(insert)
-    .select()
-    .single();
+  if (params.leaveDate <= todayBangkok()) {
+    throw new Error('ต้องลาล่วงหน้าอย่างน้อย 1 วัน ถ้าลาวันนี้หรือย้อนหลัง ให้ผู้จัดการบันทึกให้');
+  }
+  const { data, error } = await supabase.rpc('request_leave', {
+    p_date: params.leaveDate,
+    p_type: params.leaveType || 'personal',
+    p_reason: params.reason?.trim() || null,
+  });
   if (error) throw new Error(error.message || 'submit leave failed');
-  return data;
+  return data as LeaveRequest;
 }
 
 export async function fetchLeaveQuota(userId: string, date?: string): Promise<LeaveQuota> {
@@ -347,4 +337,47 @@ export async function exportMonthlyReport(month: string) {
     entries: list,
     summary: Array.from(byUser.values()),
   };
+}
+
+export interface TodayBoard {
+  entries: TimeEntry[];
+  leaves: LeaveRequest[];
+  employees: { id: string; nickname: string; is_active: boolean }[];
+}
+
+/** ข้อมูลหน้าแรก (RPC today_board): ลงเวลาวันนี้ + ใบลาที่อนุมัติวันนี้ + รายชื่อพนักงาน — พนักงานทุกคนที่ login เรียกได้ */
+export async function fetchTodayBoard(): Promise<TodayBoard> {
+  if (!isSupabaseConfigured) return { entries: [], leaves: [], employees: [] };
+  const { data, error } = await supabase.rpc('today_board');
+  if (error) throw new Error(error.message);
+  const board = (data || {}) as Partial<TodayBoard>;
+  return { entries: board.entries || [], leaves: board.leaves || [], employees: board.employees || [] };
+}
+
+/** ผู้จัดการบันทึกวันลาให้พนักงาน ใช้ได้ทั้งวันนี้ ล่วงหน้า และย้อนหลัง (อนุมัติทันที) */
+export async function managerRecordLeave(params: {
+  employeeId: string;
+  leaveDate: string;
+  leaveType: LeaveRequest['leave_type'];
+  reason?: string;
+}) {
+  ensureConfigured();
+  const { data, error } = await supabase.rpc('manager_record_leave', {
+    p_employee_id: params.employeeId,
+    p_date: params.leaveDate,
+    p_type: params.leaveType,
+    p_reason: params.reason?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as LeaveRequest;
+}
+
+/** ฟังการเปลี่ยนแปลง time_entries แบบเรียลไทม์ คืนฟังก์ชันยกเลิก */
+export function subscribeTimeEntries(onChange: () => void): () => void {
+  if (!isSupabaseConfigured) return () => {};
+  const channel = supabase
+    .channel('time-entries-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'time_entries' }, onChange)
+    .subscribe();
+  return () => { void supabase.removeChannel(channel); };
 }

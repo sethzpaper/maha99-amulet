@@ -1,6 +1,5 @@
 export type Tab =
   | 'dashboard'
-  | 'comparison'
   | 'stats'
   | 'facebook'
   | 'tiktok'
@@ -13,7 +12,6 @@ export type Tab =
 
 export const tabPaths: Record<Tab, string> = {
   dashboard: '/',
-  comparison: '/comparison',
   stats: '/stats',
   facebook: '/facebook',
   tiktok: '/tiktok',

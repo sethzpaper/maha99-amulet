@@ -1,6 +1,6 @@
-# Amulet Dashboard
+# มหานิยม999ทีมพร้อม · Teamday
 
-Frontend dashboard built with React, TypeScript, Vite, Tailwind CSS, Supabase, and Cloudflare-hosted API services.
+HR web app for the มหานิยม999 team (QR check-in, leave booking, team ranking, monthly clips), built with React, TypeScript, Vite, Tailwind CSS, Supabase, and Cloudflare-hosted API services.
 
 ## Scripts
 

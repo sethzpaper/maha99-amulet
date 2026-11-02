@@ -7,7 +7,7 @@ import {
   Menu,
   X,
   BarChart3,
-  TrendingUp,
+  LayoutDashboard,
   Trophy,
   Facebook,
   Music2,
@@ -29,7 +29,6 @@ import { TikTokPosts } from './components/TikTokPosts';
 import { AdminStats } from './components/AdminStats';
 import { EmployeeList } from './components/EmployeeList';
 import { LineLogs } from './components/LineLogs';
-import { CompetitorComparison } from './components/CompetitorComparison';
 import { Settings as SettingsPage } from './components/Settings';
 import { Login } from './components/Login';
 import { useAuthStore } from './lib/authStore';
@@ -37,7 +36,7 @@ import { useAuthStore } from './lib/authStore';
 type NavItem = { tab: Tab; label: string; icon: string };
 type NavSection = { title: string; items: NavItem[] };
 const navIcons = {
-  dashboard: BarChart3, query_stats: TrendingUp, leaderboard: Trophy,
+  dashboard: LayoutDashboard, leaderboard: Trophy,
   facebook: Facebook, music_note: Music2, groups: Users, schedule: Clock,
   qr_scan: ScanLine, map_pin: MapPin, video_library: Video,
   admin_panel_settings: Settings,
@@ -47,27 +46,25 @@ const pageMeta: Record<Tab, { th: string; en: string }> = {
   scan: { th: 'สแกนลงเวลา', en: 'QR Check-in' },
   sites: { th: 'จุดลงเวลา & QR', en: 'Attendance Sites' },
   clips: { th: 'คลิปประจำเดือน', en: 'Monthly Clips' },
-  dashboard: { th: 'แดชบอร์ดองค์กร', en: 'Organization Dashboard' },
+  dashboard: { th: 'หน้าแรก', en: 'Teamday Overview' },
   facebook: { th: 'โพสต์ Facebook', en: 'Facebook Activity' },
   tiktok: { th: 'โพสต์ TikTok', en: 'TikTok Short-form Video' },
-  comparison: { th: 'เปรียบเทียบคู่แข่ง', en: 'Competitor Intelligence' },
-  stats: { th: 'สถิติพนักงาน', en: 'Admin Performance' },
+  stats: { th: 'อันดับคนขยัน', en: 'Team Ranking' },
   employees: { th: 'ทำเนียบพนักงาน', en: 'Employee Directory' },
   lineLogs: { th: 'ลงเวลาและ OT', en: 'Attendance Workload' },
   settings: { th: 'ตั้งค่า', en: 'System Settings' },
 };
 
 const trendNavItems: NavItem[] = [
-  { tab: 'dashboard', label: 'แดชบอร์ดองค์กร', icon: 'dashboard' },
-  { tab: 'comparison', label: 'เทียบคู่แข่ง', icon: 'query_stats' },
-  { tab: 'stats', label: 'อันดับผลงาน', icon: 'leaderboard' },
+  { tab: 'dashboard', label: 'หน้าแรก', icon: 'dashboard' },
+  { tab: 'stats', label: 'อันดับคนขยัน', icon: 'leaderboard' },
 ];
 
 const scanNavItem: NavItem = { tab: 'scan', label: 'สแกนลงเวลา', icon: 'qr_scan' };
 
 const navSections: NavSection[] = [
   {
-    title: 'แนวโน้ม',
+    title: 'ภาพรวม',
     items: trendNavItems,
   },
   {
@@ -107,7 +104,7 @@ const navSections: NavSection[] = [
 
 const publicNavSections: NavSection[] = [
   {
-    title: 'แนวโน้ม',
+    title: 'ภาพรวม',
     items: trendNavItems,
   },
 ];
@@ -181,7 +178,6 @@ export default function App() {
       case 'dashboard': return <DashboardPage />;
       case 'facebook': return <FacebookPosts />;
       case 'tiktok': return <TikTokPosts />;
-      case 'comparison': return <CompetitorComparison />;
       case 'stats': return <AdminStats />;
       case 'employees': return <EmployeeList />;
       case 'lineLogs': return <LineLogs />;
@@ -200,8 +196,8 @@ export default function App() {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-bold text-gold">มหานิยม 999 หน่วยหลังบ้าน</p>
-            <p className="text-[10px] text-[#6a5018] uppercase tracking-widest">Amulet Stat Hub</p>
+            <p className="text-sm font-bold text-[var(--app-text)]">มหานิยม999ทีมพร้อม</p>
+            <p className="text-[11px] font-bold uppercase text-gold">Teamday</p>
           </div>
         </div>
 
@@ -314,7 +310,7 @@ export default function App() {
             )}
             <div className="flex items-center gap-2 text-[10px] text-[#4a3800]">
               <Flower2 className="h-3 w-3 text-gold/50" />
-              <span>มหานิยม 999 หน่วยหลังบ้าน</span>
+              <span>มหานิยม999ทีมพร้อม · Teamday</span>
             </div>
           </div>
         </header>
@@ -324,8 +320,8 @@ export default function App() {
         </main>
 
         <footer className="border-t border-[var(--app-border-muted)] px-8 py-5 flex items-center justify-between">
-          <p className="text-[10px] text-[#4a3800]">(c) 2026 เว็บ มหานิยม 999 หน่วยหลังบ้าน</p>
-          <p className="text-[10px] text-[#4a3800]">developed by Sasiskis84 • Amulet Stat Hub v2.0</p>
+          <p className="text-[10px] text-[#4a3800]">© 2026 มหานิยม999ทีมพร้อม</p>
+          <p className="text-[10px] text-[#4a3800]">developed by Sasiskis84 • Teamday v3.0</p>
         </footer>
       </div>
 
