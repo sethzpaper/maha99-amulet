@@ -3,17 +3,22 @@ import { Link } from 'react-router-dom';
 import {
   AlertCircle, Calendar, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock,
   Download, Edit2, Gift, LogIn, LogOut, Plus, Save, Shield,
-  QrCode, Star, Timer, Users, X,
+  Printer, QrCode, Star, Timer, Users, X,
 } from 'lucide-react';
 import { useAuthStore } from '../lib/authStore';
 import { listEmployees, loginEmployee as apiLoginEmployee, Employee } from '../lib/employeeApi';
 import {
   fetchEntries, fetchLeaveQuota, fetchLeaveRequests, submitLeaveRequest,
-  exportMonthlyReport, fetchRecentCheckins, adminUpdateEntry, adminCreateEntry,
+  fetchMonthlyReportData, fetchRecentCheckins, adminUpdateEntry, adminCreateEntry,
   managerRecordLeave, LEAVE_MONTHLY_LIMIT,
   TimeEntry, LeaveRequest, LeaveQuota,
 } from '../lib/attendanceApi';
 import { todayBangkok } from '../lib/dates';
+import {
+  buildDetail, buildSummary, DETAIL_HEADERS, downloadText, monthLabel, reportHtml, SUMMARY_HEADERS, toCsv,
+  type DetailRow, type SummaryRow,
+} from '../lib/monthlyReport';
+import { BRAND_NAME, BRAND_SHORT } from '../lib/brand';
 
 
 // ── Thai national holidays 2026 ────────────────────────────────────────────
@@ -58,6 +63,7 @@ const STATUS_TH: Record<string, string> = {
 export function LineLogs() {
   const authUser = useAuthStore((s) => s.user);
   const isSuperAdmin = authUser?.role === 'super_admin';
+  const isAdminUser = isSuperAdmin || authUser?.role === 'admin';
 
   // ── Live clock ────────────────────────────────────────────────────────────
   const [now, setNow] = useState(new Date());
@@ -227,14 +233,34 @@ export function LineLogs() {
   };
 
   // ── Export ────────────────────────────────────────────────────────────────
-  const handleExport = async () => {
+  const [report, setReport] = useState<{ month: string; summary: SummaryRow[]; detail: DetailRow[] } | null>(null);
+  const loadReport = async (): Promise<{ month: string; summary: SummaryRow[]; detail: DetailRow[] } | null> => {
+    if (report && report.month === reportMonth) return report;
     setLoading(true);
     try {
-      const res = await exportMonthlyReport(reportMonth);
-      showToast('success', 'สร้างรายงานสำเร็จ');
-      console.info('monthly attendance report', res);
-    } catch (err: any) { showToast('error', err.message); }
-    setLoading(false);
+      const data = await fetchMonthlyReportData(reportMonth);
+      const next = { month: reportMonth, summary: buildSummary(data.entries, data.leaves), detail: buildDetail(data.entries, data.siteNames) };
+      setReport(next);
+      return next;
+    } catch (err: any) { showToast('error', err.message); return null; }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (activeSubTab === 'report') void loadReport(); }, [activeSubTab, reportMonth]); // eslint-disable-line react-hooks/exhaustive-deps
+  const downloadSummary = async () => {
+    const r = await loadReport(); if (!r) return;
+    downloadText(`สรุปลงเวลา-${r.month}.csv`, toCsv(r.summary, SUMMARY_HEADERS));
+  };
+  const downloadDetail = async () => {
+    const r = await loadReport(); if (!r) return;
+    downloadText(`ลงเวลารายวัน-${r.month}.csv`, toCsv(r.detail, DETAIL_HEADERS));
+  };
+  const printReport = async () => {
+    const win = window.open('', '_blank');
+    if (!win) { showToast('error', 'เบราว์เซอร์บล็อกหน้าต่างใหม่ อนุญาต pop-up แล้วลองอีกครั้ง'); return; }
+    const r = await loadReport();
+    if (!r) { win.close(); return; }
+    win.document.write(reportHtml({ brand: `${BRAND_NAME} · ${BRAND_SHORT}`, month: r.month, summary: r.summary, detail: r.detail }));
+    win.document.close();
   };
 
   // ── Admin edit ────────────────────────────────────────────────────────────
@@ -451,42 +477,13 @@ export function LineLogs() {
             โหมดผู้ชมเปิดให้ดูเวลาและรายการลงเวลาล่าสุดเท่านั้น กรุณาเข้าสู่ระบบด้วยรายชื่อหรือเบอร์โทรเพื่อเข้างาน ออกงาน ขอวันลา หรือดูรายงานส่วนตัว
           </p>
         </div>
-      ) : !effectiveUser ? (
-        /* Not verified — show picker */
-        <div className="glass-card p-8 rounded-3xl gold-border-glow max-w-lg">
-          <h3 className="text-lg font-serif italic font-bold gold-text-gradient mb-5">ลงเวลางาน</h3>
-          <div className="space-y-4">
-            {/* Employee picker */}
-            <div>
-              <label className="text-[10px] text-zinc-500 uppercase block mb-1">เลือกชื่อพนักงาน</label>
-              <div className="relative">
-                <select
-                  value={verifyEmpId}
-                  onChange={(e) => { setVerifyEmpId(e.target.value); setVerifyError(''); }}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-3 text-sm text-zinc-200 appearance-none focus:outline-none focus:border-gold/50"
-                >
-                  <option value="">— เลือกชื่อ —</option>
-                  {employees.filter(e => e.is_active).map((emp) => (
-                    <option key={emp.id} value={emp.id}>{emp.nickname}{emp.full_name ? ` (${emp.full_name})` : ''}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
-              </div>
-            </div>
-
-            {verifyError && (
-              <p className="text-xs text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{verifyError}</p>
-            )}
-
-            <button
-              onClick={handleVerify}
-              disabled={verifyLoading || !verifyEmpId}
-              className="w-full bg-gold text-black font-bold py-3 rounded-xl text-sm uppercase disabled:opacity-40 hover:bg-gold/90 flex items-center justify-center gap-2"
-            >
-              <LogIn className="w-4 h-4" />
-              {verifyLoading ? 'กำลังตรวจสอบ…' : 'ยืนยันตัวตน'}
-            </button>
-          </div>
+      ) : !effectiveUser && !isAdminUser ? (
+        /* Logged in but the account is not linked to an employee record */
+        <div className="hr-card p-8 max-w-2xl">
+          <h3 className="text-lg font-semibold mb-3">บัญชีนี้ยังไม่ผูกกับข้อมูลพนักงาน</h3>
+          <p className="text-sm text-[var(--app-text-muted)] leading-6">
+            ให้แอดมินตรวจว่าอีเมลของบัญชีนี้ตรงกับอีเมลในทำเนียบพนักงาน แล้วลองออกจากระบบและเข้าใหม่ ระหว่างนี้ลงเวลาได้ที่หน้า "สแกนลงเวลา" ไม่ได้ จนกว่าจะผูกบัญชีเรียบร้อย
+          </p>
         </div>
       ) : (
         /* Verified — show action area */
@@ -806,22 +803,37 @@ export function LineLogs() {
 
           {/* ── Report tab ── */}
           {activeSubTab === 'report' && (
-            <div className="glass-card p-8 rounded-3xl gold-border-glow">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-serif italic font-bold gold-text-gradient">ส่งออกรายงานรายเดือน</h2>
-                <Calendar className="w-5 h-5 text-gold/30" />
-              </div>
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <label className="text-[10px] text-zinc-500 uppercase">เดือน (YYYY-MM)</label>
-                  <input type="month" value={reportMonth} onChange={e => setReportMonth(e.target.value)}
-                    className="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200" />
+            <div className="hr-card p-6 sm:p-8 space-y-6">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <span className="pill-label">รายงานประจำเดือน</span>
+                  <h2 className="mt-3 text-2xl font-semibold">ส่งออกรายงานลงเวลา</h2>
+                  <p className="mt-1 text-sm text-[var(--app-text-muted)]">{isSuperAdmin || authUser?.role === 'admin' ? 'ข้อมูลพนักงานทุกคน' : 'ข้อมูลของคุณเท่านั้น'} · {monthLabel(reportMonth)}</p>
                 </div>
-                <button onClick={handleExport} disabled={loading}
-                  className="flex items-center gap-2 bg-gold text-black font-bold px-6 py-3 rounded-xl text-xs uppercase disabled:opacity-40">
-                  <Download className="w-4 h-4" /> ส่งออก
-                </button>
+                <label className="work-field w-48">เดือน
+                  <input type="month" value={reportMonth} onChange={e => e.target.value && setReportMonth(e.target.value)} />
+                </label>
               </div>
+              <div className="flex flex-wrap gap-3">
+                <button onClick={downloadSummary} disabled={loading} className="btn-pill btn-lime"><Download className="w-4 h-4" />สรุปรายคน (Excel)</button>
+                <button onClick={downloadDetail} disabled={loading} className="btn-pill btn-outline-lime"><Download className="w-4 h-4" />รายละเอียดรายวัน (Excel)</button>
+                <button onClick={printReport} disabled={loading} className="btn-pill btn-dark"><Printer className="w-4 h-4" />พิมพ์ / บันทึก PDF</button>
+              </div>
+              <div className="overflow-x-auto rounded-2xl border border-[var(--app-border-muted)]">
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead><tr className="bg-[var(--app-surface-strong)]">{SUMMARY_HEADERS.map(([key, label]) => <th key={key} className="px-3">{label}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-[var(--app-border-muted)]">
+                    {loading && !report ? (
+                      <tr><td colSpan={SUMMARY_HEADERS.length} className="px-3 text-center text-[var(--app-text-muted)]">กำลังโหลด…</td></tr>
+                    ) : !report || report.summary.length === 0 ? (
+                      <tr><td colSpan={SUMMARY_HEADERS.length} className="px-3 text-center text-[var(--app-text-muted)]">ไม่มีข้อมูลเดือนนี้</td></tr>
+                    ) : report.summary.map((row) => (
+                      <tr key={row.user_id}>{SUMMARY_HEADERS.map(([key]) => <td key={key} className="px-3 tabular-nums">{row[key]}</td>)}</tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-[var(--app-text-muted)]">ไฟล์ .csv เปิดด้วย Excel / Google Sheets ได้ทันที · OT นับเมื่อเกิน 11 ชม./วัน · มาสาย = เข้างานหลัง 12:00 น.</p>
             </div>
           )}
 

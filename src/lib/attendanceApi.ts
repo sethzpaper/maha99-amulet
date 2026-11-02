@@ -196,61 +196,25 @@ export async function adminCreateEntry(
   return data;
 }
 
-export async function exportMonthlyReport(month: string) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured');
-  // month format YYYY-MM
+/** ข้อมูลดิบของรายงานประจำเดือน (แอดมินเห็นทุกคน, พนักงานเห็นเฉพาะของตัวเองตาม RLS) */
+export async function fetchMonthlyReportData(month: string): Promise<{
+  entries: TimeEntry[];
+  leaves: LeaveRequest[];
+  siteNames: Record<string, string>;
+}> {
+  ensureConfigured();
   const start = `${month}-01`;
   const [y, m] = month.split('-').map(Number);
   const nextMonth = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
-
-  const { data: entries, error } = await supabase
-    .from('time_entries')
-    .select('*')
-    .gte('work_date', start)
-    .lt('work_date', nextMonth)
-    .order('work_date', { ascending: true });
-  if (error) throw new Error(error.message || 'export failed');
-
-  const list = (entries || []) as TimeEntry[];
-  // client-side aggregation per user
-  const byUser = new Map<string, {
-    user_id: string;
-    user_name: string;
-    days: number;
-    total_hours: number;
-    overtime_hours: number;
-    overtime_days: number;
-    heavy_days: number;
-    late_days: number;
-    leave_days: number;
-  }>();
-  for (const e of list) {
-    const agg = byUser.get(e.user_id) || {
-      user_id: e.user_id,
-      user_name: e.user_name,
-      days: 0,
-      total_hours: 0,
-      overtime_hours: 0,
-      overtime_days: 0,
-      heavy_days: 0,
-      late_days: 0,
-      leave_days: 0,
-    };
-    agg.days += 1;
-    agg.total_hours += Number(e.total_hours || 0);
-    agg.overtime_hours += Math.max(0, Number(e.total_hours || 0) - OVERTIME_THRESHOLD_HOURS);
-    if (Number(e.total_hours || 0) > OVERTIME_THRESHOLD_HOURS) agg.overtime_days += 1;
-    if (Number(e.total_hours || 0) >= OVERTIME_THRESHOLD_HOURS) agg.heavy_days += 1;
-    if (e.status === 'late') agg.late_days += 1;
-    if (e.status === 'leave' || e.status === 'auto-leave') agg.leave_days += 1;
-    byUser.set(e.user_id, agg);
-  }
-
-  return {
-    month,
-    entries: list,
-    summary: Array.from(byUser.values()),
-  };
+  const [entries, leaves, sites] = await Promise.all([
+    supabase.from('time_entries').select('*').gte('work_date', start).lt('work_date', nextMonth).order('work_date'),
+    supabase.from('leave_requests').select('*').eq('status', 'approved').gte('leave_date', start).lt('leave_date', nextMonth),
+    supabase.from('attendance_sites').select('id,name'),
+  ]);
+  if (entries.error) throw new Error(entries.error.message);
+  if (leaves.error) throw new Error(leaves.error.message);
+  const siteNames = Object.fromEntries(((sites.data || []) as { id: string; name: string }[]).map((site) => [site.id, site.name]));
+  return { entries: (entries.data || []) as TimeEntry[], leaves: (leaves.data || []) as LeaveRequest[], siteNames };
 }
 
 export interface TodayBoard {

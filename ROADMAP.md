@@ -10,7 +10,7 @@
 | ฟีเจอร์ | สถานะ | ความยาก |
 |--------|------|--------|
 | Search / Filter / Date range | ⚠️ Partial | M |
-| Export CSV / Excel / PDF | ❌ Not started | M |
+| Export CSV / Excel / PDF | ✅ Done (ตารางลงเวลา → แท็บรายงาน) | M |
 | Activity log จริงจาก DB | ⚠️ Mock only | S |
 | Edit tracked account | ⚠️ Partial (no UI) | S |
 | Actionable dashboard | ❌ Not started | L |

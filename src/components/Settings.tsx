@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
   Activity,
-  Download,
   ExternalLink,
   Facebook,
-  FileText,
   Globe,
   History,
   Link,
@@ -12,10 +10,8 @@ import {
   Palette,
   Pencil,
   Plus,
-  Printer,
   Save,
   Shield,
-  Table,
   Trash2,
   X,
   Lock,
@@ -44,7 +40,6 @@ export function Settings({
   isAuthenticated = false,
   userName = '',
 }: SettingsProps) {
-  const [exportType, setExportType] = useState('daily');
   const [settingsTab, setSettingsTab] = useState('social');
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'classic';
@@ -172,8 +167,8 @@ export function Settings({
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-serif text-zinc-100 italic">{isAuthenticated ? 'Settings & Export' : 'Settings'}</h2>
-          <p className="text-zinc-500 text-sm">จัดการระบบและส่งออกรายงานสถิติ</p>
+          <h2 className="text-2xl font-serif text-zinc-100 italic">ตั้งค่าระบบ</h2>
+          <p className="text-zinc-500 text-sm">ช่องทางบริษัท ระบบ และบันทึกการใช้งาน · ส่งออกรายงานอยู่ที่หน้าตารางลงเวลา → แท็บรายงาน</p>
         </div>
       </div>
 
@@ -224,7 +219,7 @@ export function Settings({
       {isAuthenticated && (
         <>
         <div className="flex gap-1 bg-zinc-950/60 border border-zinc-900 p-1 rounded-2xl mb-6 flex-wrap">
-          {(['social', 'export', 'system', 'log']).map((id) => {
+          {(['social', 'system', 'log']).map((id) => {
             const labels = { social: 'แหล่ง Social', export: 'Export', system: 'ระบบ', log: 'บันทึก', password: 'พาสเวิร์ด' };
             return (
               <button
@@ -357,50 +352,6 @@ export function Settings({
           ช่องทางที่ตั้งค่านี้แสดงบนหน้าแรก และใช้ในหน้าโพสต์ Facebook / TikTok
         </p>
       </div>
-      )}
-      {settingsTab === 'export' && (
-        <div className="glass-card p-8 rounded-3xl gold-border-glow">
-          <div className="flex items-center gap-3 mb-8">
-             <div className="w-10 h-10 bg-gold/10 rounded-xl flex items-center justify-center border border-gold/20">
-                <Download className="w-6 h-6 text-gold" />
-             </div>
-             <div>
-                <h3 className="text-xl font-serif italic font-bold text-zinc-100 gold-text-gradient">Export รายงาน</h3>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Daily, Monthly, Yearly Analysis</p>
-             </div>
-          </div>
-
-          <div className="space-y-6">
-            <div>
-               <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-3 block">เลือกช่วงเวลา</label>
-               <div className="grid grid-cols-3 gap-3">
-                  {['daily', 'monthly', 'yearly'].map(type => (
-                    <button 
-                      key={type}
-                      onClick={() => setExportType(type)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                        exportType === type ? 'bg-gold text-black border-gold shadow-[0_0_15px_rgba(55,148,255,0.24)]' : 'bg-transparent text-zinc-500 border-zinc-800 hover:text-zinc-300'
-                      }`}
-                    >
-                      {type === 'daily' ? 'รายวัน' : type === 'monthly' ? 'รายเดือน' : 'รายปี'}
-                    </button>
-                  ))}
-               </div>
-            </div>
-
-            <div className="pt-6 border-t border-zinc-900 grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <button disabled={!isSuperAdmin} className="flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 py-3 rounded-2xl transition-all font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed">
-                  <FileText className="w-4 h-4" /> Export PDF
-               </button>
-               <button disabled={!isSuperAdmin} className="flex items-center justify-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 py-3 rounded-2xl transition-all font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed">
-                  <Table className="w-4 h-4" /> Export Excel
-               </button>
-               <button disabled={!isSuperAdmin} className="sm:col-span-2 flex items-center justify-center gap-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 py-3 rounded-2xl transition-all font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed">
-                  <Printer className="w-4 h-4" /> พิมพ์รายงาน (Print)
-               </button>
-            </div>
-          </div>
-        </div>
       )}
       {settingsTab === 'system' && (
       <div className="glass-card p-8 rounded-3xl gold-border-glow border-zinc-800/50">
