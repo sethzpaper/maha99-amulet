@@ -19,6 +19,7 @@ import {
   type DetailRow, type SummaryRow,
 } from '../lib/monthlyReport';
 import { BRAND_NAME, BRAND_SHORT } from '../lib/brand';
+import { listEvents, type CalendarEvent } from '../lib/calendarApi';
 
 
 // ── Thai national holidays 2026 ────────────────────────────────────────────
@@ -109,6 +110,12 @@ export function LineLogs() {
   const [calendarMonth, setCalendarMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [overviewEntries, setOverviewEntries] = useState<TimeEntry[]>([]);
   const [overviewLeaves, setOverviewLeaves] = useState<LeaveRequest[]>([]);
+  // วันสำคัญ / วันไลฟ์ของทีม (ไฮไลท์สีเหลืองในปฏิทินลา)
+  const [teamEvents, setTeamEvents] = useState<CalendarEvent[]>([]);
+  useEffect(() => {
+    const month = todayBangkok().slice(0, 7);
+    listEvents(`${month}-01`, `${month}-31`).then(setTeamEvents).catch(() => setTeamEvents([]));
+  }, []);
 
   // ── Report ────────────────────────────────────────────────────────────────
   const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -633,10 +640,13 @@ export function LineLogs() {
                     const sc = leaveStatus === 'approved' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
                       : leaveStatus === 'rejected' ? 'bg-red-500/10 border-red-500/30 text-red-400'
                       : leaveStatus === 'pending' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : '';
+                    const teamDay = teamEvents.filter((e) => e.event_date === date);
+                    const live = teamDay.length > 0 && !hasLeave && !isSelected;
                     return (
                       <button key={date} disabled={isPast || hasLeave} onClick={() => setSelectedDate(date)}
+                        title={teamDay.length ? teamDay.map((e) => e.title + (e.needs_live ? ' (ต้องไลฟ์)' : '')).join(', ') : undefined}
                         className={`p-2 rounded-xl border text-left transition-all text-xs font-bold
-                          ${isSelected ? 'bg-gold/20 border-gold text-gold' : hasLeave ? sc : isPast ? 'bg-zinc-950 border-zinc-900 text-zinc-700 cursor-not-allowed' : 'bg-zinc-950/50 border-zinc-900 text-zinc-300 hover:border-gold/40'}`}>
+                          ${isSelected ? 'bg-gold/20 border-gold text-gold' : hasLeave ? sc : live ? '!bg-yellow-200 !border-yellow-400 !text-[#3f3300]' : isPast ? 'bg-zinc-950 border-zinc-900 text-zinc-700 cursor-not-allowed' : 'bg-zinc-950/50 border-zinc-900 text-zinc-300 hover:border-gold/40'} ${live && isPast ? 'opacity-60 cursor-not-allowed' : ''}`}>
                         {day}
                         {hasLeave && <CheckCircle2 className="w-2.5 h-2.5 mt-0.5" />}
                       </button>
@@ -765,6 +775,11 @@ export function LineLogs() {
                   <>
                     <div><label className="text-[10px] text-zinc-500 uppercase">วันที่</label>
                       <p className="text-sm font-bold text-gold mt-1">{selectedDate}</p></div>
+                    {teamEvents.some((e) => e.event_date === selectedDate && e.needs_live) && (
+                      <p role="note" className="rounded-xl border border-yellow-400 bg-yellow-100 px-3 py-2 text-xs font-semibold text-[#3f3300]">
+                        วันนี้ทีมต้องไลฟ์: {teamEvents.filter((e) => e.event_date === selectedDate).map((e) => e.title).join(', ')} — ควรคุยกับผู้จัดการก่อนลา
+                      </p>
+                    )}
                     <div><label className="text-[10px] text-zinc-500 uppercase">ประเภท</label>
                       <select value={leaveType} onChange={e => setLeaveType(e.target.value as any)}
                         className="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200">

@@ -2,11 +2,11 @@ export type Tab =
   | 'dashboard'
   | 'stats'
   | 'facebook'
-  | 'tiktok'
   | 'scan'
   | 'lineLogs'
   | 'sites'
   | 'clips'
+  | 'calendar'
   | 'employees'
   | 'settings';
 
@@ -14,11 +14,11 @@ export const tabPaths: Record<Tab, string> = {
   dashboard: '/',
   stats: '/stats',
   facebook: '/facebook',
-  tiktok: '/tiktok',
   scan: '/scan',
   lineLogs: '/attendance',
   sites: '/attendance/sites',
   clips: '/clips',
+  calendar: '/calendar',
   employees: '/employees',
   settings: '/settings',
 };

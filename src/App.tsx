@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { DashboardPage } from './pages/DashboardPage';
-import { ComingSoonPage } from './pages/ComingSoonPage';
 import { ScanPage } from './pages/ScanPage';
 import { SitesPage } from './pages/SitesPage';
+import { CalendarPage } from './pages/CalendarPage';
+import { ClipsPage } from './pages/ClipsPage';
 import { type Tab, tabPaths, pathTabs } from './routes';
 import {
   Menu,
@@ -17,6 +18,7 @@ import {
   Clock,
   Video,
   ScanLine,
+  CalendarDays,
   MapPin,
   Settings,
   Flower2,
@@ -27,7 +29,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { FacebookPosts } from './components/FacebookPosts';
-import { TikTokPosts } from './components/TikTokPosts';
 import { AdminStats } from './components/AdminStats';
 import { EmployeeList } from './components/EmployeeList';
 import { LineLogs } from './components/LineLogs';
@@ -42,7 +43,7 @@ type NavSection = { title: string; items: NavItem[] };
 const navIcons = {
   dashboard: LayoutDashboard, leaderboard: Trophy,
   facebook: Facebook, music_note: Music2, groups: Users, schedule: Clock,
-  qr_scan: ScanLine, map_pin: MapPin, video_library: Video,
+  qr_scan: ScanLine, map_pin: MapPin, video_library: Video, calendar: CalendarDays,
   admin_panel_settings: Settings,
 };
 
@@ -50,9 +51,9 @@ const pageMeta: Record<Tab, { th: string; en: string }> = {
   scan: { th: 'สแกนลงเวลา', en: 'QR Check-in' },
   sites: { th: 'จุดลงเวลา & QR', en: 'Attendance Sites' },
   clips: { th: 'คลิปประจำเดือน', en: 'Monthly Clips' },
+  calendar: { th: 'ปฏิทินไลฟ์ / วันสำคัญ', en: 'Team Calendar' },
   dashboard: { th: 'หน้าแรก', en: 'Teamday Overview' },
   facebook: { th: 'โพสต์ Facebook', en: 'Facebook Activity' },
-  tiktok: { th: 'โพสต์ TikTok', en: 'TikTok Short-form Video' },
   stats: { th: 'อันดับคนขยัน', en: 'Team Ranking' },
   employees: { th: 'ทำเนียบพนักงาน', en: 'Employee Directory' },
   lineLogs: { th: 'ลงเวลาและ OT', en: 'Attendance Workload' },
@@ -65,6 +66,8 @@ const trendNavItems: NavItem[] = [
 ];
 
 const scanNavItem: NavItem = { tab: 'scan', label: 'สแกนลงเวลา', icon: 'qr_scan' };
+const calendarNavItem: NavItem = { tab: 'calendar', label: 'ปฏิทินไลฟ์ / วันสำคัญ', icon: 'calendar' };
+const clipsNavItem: NavItem = { tab: 'clips', label: 'คลิปประจำเดือน', icon: 'video_library' };
 
 const navSections: NavSection[] = [
   {
@@ -75,7 +78,6 @@ const navSections: NavSection[] = [
     title: 'บริษัท',
     items: [
       { tab: 'facebook', label: 'โพสต์ Facebook', icon: 'facebook' },
-      { tab: 'tiktok', label: 'โพสต์ TikTok', icon: 'music_note' },
     ],
   },
   {
@@ -87,10 +89,8 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: 'คอนเทนต์',
-    items: [
-      { tab: 'clips', label: 'คลิปประจำเดือน', icon: 'video_library' },
-    ],
+    title: 'ทีมคอนเทนต์',
+    items: [calendarNavItem, clipsNavItem],
   },
   {
     title: 'พนักงาน',
@@ -116,10 +116,11 @@ const publicNavSections: NavSection[] = [
 const employeeNavSections: NavSection[] = [
   ...publicNavSections,
   { title: 'ลงเวลา', items: [scanNavItem] },
+  { title: 'ทีมคอนเทนต์', items: [calendarNavItem, clipsNavItem] },
 ];
 
 const publicTabs = new Set<Tab>(trendNavItems.map((item) => item.tab));
-const employeeTabs = new Set<Tab>([...publicTabs, 'scan']);
+const employeeTabs = new Set<Tab>([...publicTabs, 'scan', 'calendar', 'clips']);
 function AdminGate({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="mx-auto flex min-h-[calc(100vh-220px)] max-w-3xl items-center">
@@ -178,10 +179,10 @@ export default function App() {
     switch (activeTab) {
       case 'scan': return <ScanPage />;
       case 'sites': return <SitesPage />;
-      case 'clips': return <ComingSoonPage title="คลิปประจำเดือน" phase="เฟส 2">เลือกเดือนแล้วดูรายการคลิป: วันที่ ชื่อคลิป ผู้ทำ (รอข้อมูลจาก Google Sheet)</ComingSoonPage>;
+      case 'calendar': return <CalendarPage />;
+      case 'clips': return <ClipsPage />;
       case 'dashboard': return <DashboardPage />;
       case 'facebook': return <FacebookPosts />;
-      case 'tiktok': return <TikTokPosts />;
       case 'stats': return <AdminStats />;
       case 'employees': return <EmployeeList />;
       case 'lineLogs': return <LineLogs />;

@@ -20,15 +20,19 @@ SQL หลักอยู่ที่ `sql/supabase_setup_step_by_step.sql` แ�
 12. รัน `supabase/migrations/202609060001_verified_auth_rls.sql` (สิทธิ์ตาม Supabase Auth)
 13. รัน `supabase/migrations/202611020001_leave_booking_today_board.sql` (จองวันลา + หน้าแรก)
 14. รัน `supabase/migrations/202611020002_qr_attendance.sql` (จุดลงเวลา + สแกน QR)
-15. ทดสอบ: `supabase/tests/verified_auth_rls.sql`, `leave_booking.sql`, `qr_attendance.sql` (rollback เองทุกครั้ง)
-16. เข้าเว็บด้วยบัญชีแอดมิน → เมนู "จุดลงเวลา & QR" → เพิ่มจุด → พิมพ์ QR ไปติด
+15. รัน `supabase/migrations/202611030001_calendar_and_clips.sql` (ปฏิทินไลฟ์ + ตารางคลิป)
+16. ทดสอบ: `supabase/tests/verified_auth_rls.sql`, `leave_booking.sql`, `qr_attendance.sql`, `calendar_clips.sql` (rollback เองทุกครั้ง)
+17. เข้าเว็บด้วยบัญชีแอดมิน → เมนู "จุดลงเวลา & QR" → เพิ่มจุด → พิมพ์ QR ไปติด
+18. เมนู "คลิปประจำเดือน" → "ตั้งค่าผู้ทำ" → เลือกพนักงานตัดต่อ (4 คน) เป็นหัวตาราง
 
 ## ตารางที่หน้าใหม่ต้องใช้
 
 - `employees`: ทำเนียบพนักงาน, login, role
 - `time_entries`: ลงเวลา, total hours, OT, dashboard workload
 - `leave_requests`: จองวันลาล่วงหน้า / ผู้จัดการบันทึกให้ (`source`), quota เดือนละ 2
-- `tracked_accounts`: ช่องทางของบริษัท (Facebook / TikTok / เว็บไซต์) ไม่เกิน 5 ช่อง
+- `tracked_accounts`: ช่องทางของบริษัท (Facebook / เว็บไซต์) ไม่เกิน 5 ช่อง
+- `calendar_events`: วันสำคัญทางศาสนา / วันไลฟ์ (ไฮไลท์สีเหลือง) พร้อมเวลา สถานที่ หมายเหตุ
+- `clips`: ตารางคลิปรายวัน × ผู้ทำ (คอลัมน์ = `employees.clip_column`) บันทึกเวลาลง/แก้ไข และผู้แก้ไขอัตโนมัติ
 - `videos`: คลังวิดีโอ/บอร์ดคอนเทนต์
 - `social_posts`: Facebook/TikTok posts
 - `leaderboard_views`, `leaderboard_likes_fb`, `leaderboard_likes_tt`, `leaderboard_hours`: leaderboard cards

@@ -12,7 +12,7 @@ export interface Amulet {
 
 export interface SocialPost {
   id: string;
-  platform: 'facebook' | 'tiktok';
+  platform: 'facebook';
   content: string;
   link: string;
   engagement: number;

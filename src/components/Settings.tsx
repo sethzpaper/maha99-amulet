@@ -6,7 +6,6 @@ import {
   Globe,
   History,
   Link,
-  Music2,
   Palette,
   Pencil,
   Plus,
@@ -241,7 +240,7 @@ export function Settings({
             </div>
             <div>
               <h3 className="text-xl font-serif italic font-bold text-zinc-100 gold-text-gradient">Super Admin: ช่องทางของบริษัท</h3>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">เว็บ / เพจ / ช่องที่แอคทีฟ ไม่เกิน 5 ช่อง แสดงบนหน้าแรก</p>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">เว็บไซต์ / เพจ Facebook ที่แอคทีฟ ไม่เกิน 5 ช่อง แสดงบนหน้าแรก</p>
             </div>
           </div>
           {accountMessage && (
@@ -253,7 +252,7 @@ export function Settings({
 
         <div className="grid grid-cols-1 xl:grid-cols-[0.9fr_1.1fr] gap-8">
           <div className="bg-zinc-950/50 rounded-2xl border border-zinc-900 p-5 space-y-4">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setAccountForm({ ...accountForm, platform: 'facebook' })}
                 disabled={!isSuperAdmin}
@@ -264,17 +263,6 @@ export function Settings({
                 }`}
               >
                 <Facebook className="w-4 h-4" /> Facebook
-              </button>
-              <button
-                onClick={() => setAccountForm({ ...accountForm, platform: 'tiktok' })}
-                disabled={!isSuperAdmin}
-                className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold transition ${
-                  accountForm.platform === 'tiktok'
-                    ? 'border-pink-500/40 bg-pink-500/10 text-pink-400'
-                    : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                <Music2 className="w-4 h-4" /> TikTok
               </button>
               <button
                 onClick={() => setAccountForm({ ...accountForm, platform: 'website' })}
@@ -297,7 +285,7 @@ export function Settings({
               className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 outline-none focus:border-gold/40"
             />
             <input
-              placeholder="ลิงก์ เช่น https://facebook.com/yourpage หรือ https://tiktok.com/@yourname"
+              placeholder="ลิงก์ เช่น https://facebook.com/yourpage หรือ https://เว็บของบริษัท.com"
               value={accountForm.account_url}
               onChange={(event) => setAccountForm({ ...accountForm, account_url: event.target.value })}
               disabled={!isSuperAdmin}
@@ -349,7 +337,7 @@ export function Settings({
         </div>
 
         <p className="mt-5 text-[10px] text-zinc-600 leading-5">
-          ช่องทางที่ตั้งค่านี้แสดงบนหน้าแรก และใช้ในหน้าโพสต์ Facebook / TikTok
+          ช่องทางที่ตั้งค่านี้แสดงบนหน้าแรก และใช้ในหน้าโพสต์ Facebook
         </p>
       </div>
       )}
@@ -474,8 +462,6 @@ function AccountGroup({
                   <div className="flex items-center gap-2">
                     {account.platform === 'facebook' ? (
                       <Facebook className="w-3.5 h-3.5 text-blue-400" />
-                    ) : account.platform === 'tiktok' ? (
-                      <Music2 className="w-3.5 h-3.5 text-pink-400" />
                     ) : (
                       <Globe className="w-3.5 h-3.5 text-gold" />
                     )}

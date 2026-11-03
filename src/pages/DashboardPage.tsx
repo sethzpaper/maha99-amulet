@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle, ArrowRight, CalendarPlus, Clock, Facebook, Globe, LogIn, LogOut,
-  Music2, QrCode, RefreshCw, UserCheck, UserMinus, Users, UserX, Video,
+  MapPin, QrCode, Radio, RefreshCw, UserCheck, UserMinus, Users, UserX, Video,
 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { TodayWork } from '../components/TodayWork';
@@ -17,6 +17,8 @@ import { todayBangkok } from '../lib/dates';
 import { buildTodayFeed, summarizeToday } from '../lib/todayBoard';
 import type { LeaderboardEntry } from '../types';
 import { SLOGAN } from '../lib/brand';
+import { upcomingEvents, type CalendarEvent } from '../lib/calendarApi';
+import { displayDate } from '../lib/dates';
 
 /** เปลี่ยนรูปหน้าแรกได้ที่นี่ (วางไฟล์ไว้ใน public/) */
 export const HERO_IMAGE = '/hero-temple.svg';
@@ -40,7 +42,7 @@ export function DashboardPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [now, setNow] = useState(() => new Date());
   const [accounts, setAccounts] = useState<TrackedAccount[]>([]);
-  const [leaderboards, setLeaderboards] = useState<Record<string, LeaderboardEntry[]>>({ views: [], likesFb: [], likesTt: [], hours: [] });
+  const [leaderboards, setLeaderboards] = useState<Record<string, LeaderboardEntry[]>>({ views: [], likesFb: [], hours: [] });
   const [monthEntries, setMonthEntries] = useState<TimeEntry[]>([]);
   const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([]);
   const [todayLeaves, setTodayLeaves] = useState<LeaveRequest[]>([]);
@@ -48,6 +50,7 @@ export function DashboardPage() {
   const [boardError, setBoardError] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [upcoming, setUpcoming] = useState<CalendarEvent[]>([]);
   const today = todayBangkok(now);
 
   useEffect(() => {
@@ -76,15 +79,15 @@ export function DashboardPage() {
     Promise.all([
       dataService.fetchLeaderboard('views'),
       dataService.fetchLeaderboard('likes-fb'),
-      dataService.fetchLeaderboard('likes-tt'),
       dataService.fetchLeaderboard('hours'),
-    ]).then(([views, likesFb, likesTt, hours]) => setLeaderboards({ views, likesFb, likesTt, hours }));
+    ]).then(([views, likesFb, hours]) => setLeaderboards({ views, likesFb, hours }));
   }, []);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     void loadToday();
     fetchEntries({ month: todayBangkok().slice(0, 7) }).then(setMonthEntries);
+    upcomingEvents(todayBangkok(), 3).then(setUpcoming).catch(() => setUpcoming([]));
     const unsubscribe = subscribeTimeEntries(() => { void loadToday(); });
     const poll = window.setInterval(() => { void loadToday(); }, 60000);
     return () => { unsubscribe(); window.clearInterval(poll); };
@@ -116,7 +119,6 @@ export function DashboardPage() {
     { key: 'hours', label: 'ชั่วโมงทำงาน', suffix: 'ชม.', icon: Clock, rows: leaderboards.hours },
     { key: 'views', label: 'ยอดวิวสูงสุด', suffix: 'views', icon: Video, rows: leaderboards.views },
     { key: 'likesFb', label: 'ยอดไลก์ Facebook', suffix: 'likes', icon: Facebook, rows: leaderboards.likesFb },
-    { key: 'likesTt', label: 'ยอดไลก์ TikTok', suffix: 'likes', icon: Music2, rows: leaderboards.likesTt },
   ];
 
   const kpis = [
@@ -176,7 +178,7 @@ export function DashboardPage() {
       {accounts.length > 0 && (
         <section aria-label="เว็บและเพจของบริษัท" className="channel-strip px-1">
           {accounts.map((account) => {
-            const Icon = account.platform === 'facebook' ? Facebook : account.platform === 'tiktok' ? Music2 : Globe;
+            const Icon = account.platform === 'facebook' ? Facebook : Globe;
             return (
               <a key={account.id} href={account.account_url} target="_blank" rel="noreferrer"
                 className="flex shrink-0 items-center gap-2 py-2 font-display text-lg font-semibold text-[var(--app-text-muted)] transition hover:text-[var(--app-text)]">
@@ -261,6 +263,28 @@ export function DashboardPage() {
             <Link to="/attendance" className="btn-pill btn-dark">ดูตารางลงเวลา<span className="btn-arrow"><ArrowRight className="h-4 w-4" /></span></Link>
             <Link to="/stats" className="text-sm font-semibold text-[var(--app-text)] hover:underline">อันดับทั้งหมด →</Link>
           </div>
+          {upcoming.length > 0 && (
+            <div className="rounded-2xl border border-yellow-300 bg-yellow-50 p-4 text-[#3f3300]">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="flex items-center gap-2 font-semibold"><Radio className="h-4 w-4" />ไลฟ์ / วันสำคัญที่จะถึง</p>
+                <Link to="/calendar" className="text-xs font-semibold underline">ดูปฏิทิน</Link>
+              </div>
+              <ul className="space-y-2">
+                {upcoming.map((event) => (
+                  <li key={event.id} className="flex items-start gap-3 text-sm">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-yellow-300 font-display font-semibold">{Number(event.event_date.slice(8))}</span>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{event.title}{event.needs_live ? ' · ต้องไลฟ์' : ''}</p>
+                      <p className="truncate text-xs opacity-80">
+                        {displayDate(event.event_date)}{event.start_time ? ` ${event.start_time.slice(0, 5)} น.` : ''}
+                        {event.location && <><MapPin className="ml-1 inline h-3 w-3" /> {event.location}</>}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <TodayWork />
         </div>
       </section>
@@ -274,7 +298,7 @@ export function DashboardPage() {
           </div>
           <Link to="/stats" className="btn-pill btn-outline-lime">ดูทั้งหมด<span className="btn-arrow"><ArrowRight className="h-4 w-4" /></span></Link>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {leaderboardSections.map(({ key, label, suffix, icon: Icon, rows }) => {
             const entries = (rows.length > 0 ? rows : fallbackLeaderboard).slice(0, 4);
             return (

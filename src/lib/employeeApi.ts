@@ -44,7 +44,7 @@ export interface TrackedAccount {
   created_at: string;
 }
 
-export type TrackedPlatform = 'facebook' | 'tiktok' | 'website';
+export type TrackedPlatform = 'facebook' | 'website';
 /** หน้าแรกแสดงเฉพาะช่องทางที่แอคทีฟของบริษัท ไม่เกินจำนวนนี้ */
 export const MAX_COMPANY_CHANNELS = 5;
 
@@ -59,16 +59,6 @@ const defaultTrackedAccounts: TrackedAccount[] = [
     account_handle: '@mahaniyom999',
     is_active: true,
     note: 'เพจหลักของบริษัท',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'local-tiktok-owned',
-    platform: 'tiktok',
-    account_name: 'มหานิยม999 TikTok',
-    account_url: 'https://www.tiktok.com/@mahaniyom999',
-    account_handle: '@mahaniyom999',
-    is_active: true,
-    note: 'ช่องหลักของบริษัท',
     created_at: new Date().toISOString(),
   },
 ];
@@ -100,6 +90,7 @@ function filterTrackedAccounts(
   return accounts.filter((account) => {
     // ข้อมูลเก่าใน localStorage อาจยังมีบัญชีคู่แข่งค้างอยู่ — ไม่แสดงแล้ว
     if ((account as { is_competitor?: boolean }).is_competitor) return false;
+    if ((account.platform as string) === 'tiktok') return false; // TikTok ถูกตัดออกจากเว็บแล้ว
     if (params.platform && account.platform !== params.platform) return false;
     return account.is_active;
   });

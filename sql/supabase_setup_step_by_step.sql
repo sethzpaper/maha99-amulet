@@ -129,11 +129,11 @@ create index if not exists idx_employee_badges_employee on public.employee_badge
 
 -- ============================================================
 -- STEP 04: tracked_accounts
--- Used by: home page company channels (max 5 active), Facebook/TikTok pages
+-- Used by: home page company channels (max 5 active), Facebook page
 -- ============================================================
 create table if not exists public.tracked_accounts (
   id uuid primary key default gen_random_uuid(),
-  platform text not null check (platform in ('facebook','tiktok','website')),
+  platform text not null check (platform in ('facebook','website')),
   account_name text not null,
   account_url text not null,
   account_handle text,
@@ -286,7 +286,7 @@ create trigger trg_videos_updated_at
 
 -- ============================================================
 -- STEP 10: social/content tables
--- Used by: Facebook/TikTok pages
+-- Used by: Facebook page
 -- ============================================================
 create table if not exists public.amulets (
   id uuid primary key default gen_random_uuid(),
@@ -303,7 +303,7 @@ create table if not exists public.amulets (
 
 create table if not exists public.social_posts (
   id uuid primary key default gen_random_uuid(),
-  platform text not null check (platform in ('facebook','tiktok')),
+  platform text not null check (platform in ('facebook')),
   content text,
   link text,
   engagement integer not null default 0,
@@ -326,13 +326,6 @@ create table if not exists public.leaderboard_views (
 );
 
 create table if not exists public.leaderboard_likes_fb (
-  rank integer,
-  creator text,
-  name text,
-  value numeric not null default 0
-);
-
-create table if not exists public.leaderboard_likes_tt (
   rank integer,
   creator text,
   name text,
@@ -524,7 +517,6 @@ alter table public.amulets enable row level security;
 alter table public.social_posts enable row level security;
 alter table public.leaderboard_views enable row level security;
 alter table public.leaderboard_likes_fb enable row level security;
-alter table public.leaderboard_likes_tt enable row level security;
 alter table public.leaderboard_hours enable row level security;
 alter table public.activity_logs enable row level security;
 alter table public.password_reset_requests enable row level security;
@@ -536,7 +528,7 @@ begin
   foreach t in array array[
     'employees','badges','employee_badges','tracked_accounts','time_entries','leave_requests',
     'videos','amulets','social_posts',
-    'leaderboard_views','leaderboard_likes_fb','leaderboard_likes_tt','leaderboard_hours',
+    'leaderboard_views','leaderboard_likes_fb','leaderboard_hours',
     'activity_logs','password_reset_requests'
   ] loop
     execute format('drop policy if exists "%s read" on public.%I', t, t);
@@ -563,8 +555,7 @@ on conflict (employee_code) do nothing;
 
 insert into public.tracked_accounts (platform, account_name, account_url, account_handle, note)
 values
-  ('facebook', 'Mahaniyom999 Fanpage', 'https://facebook.com/mahaniyom999', '@mahaniyom999', 'Main Facebook page'),
-  ('tiktok', 'Mahaniyom999 TikTok', 'https://www.tiktok.com/@mahaniyom999', '@mahaniyom999', 'Main TikTok channel')
+  ('facebook', 'Mahaniyom999 Fanpage', 'https://facebook.com/mahaniyom999', '@mahaniyom999', 'Main Facebook page')
 on conflict do nothing;
 
 -- ============================================================

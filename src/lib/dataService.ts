@@ -124,16 +124,7 @@ class DataService {
     return data;
   }
 
-  async fetchTikTokPosts(): Promise<SocialPost[]> {
-    const cacheKey = this.getCacheKey('tiktok-posts');
-    const cached = this.getFromCache<SocialPost[]>(cacheKey);
-    if (cached) return cached;
-    const data = await this.safeSelect<SocialPost>('social_posts', (q) => q.eq('platform', 'tiktok'));
-    this.setCache(cacheKey, data);
-    return data;
-  }
-
-  async fetchLeaderboard(metric: 'views' | 'likes-fb' | 'likes-tt' | 'hours'): Promise<LeaderboardEntry[]> {
+  async fetchLeaderboard(metric: 'views' | 'likes-fb' | 'hours'): Promise<LeaderboardEntry[]> {
     const cacheKey = this.getCacheKey(`leaderboard-${metric}`);
     const cached = this.getFromCache<LeaderboardEntry[]>(cacheKey);
     if (cached) return cached;

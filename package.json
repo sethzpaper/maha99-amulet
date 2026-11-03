@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "node --test tests/auth.test.cjs tests/leave.test.cjs tests/today-board.test.cjs tests/qr.test.cjs tests/monthly-report.test.cjs"
+    "test": "node --test tests/auth.test.cjs tests/leave.test.cjs tests/today-board.test.cjs tests/qr.test.cjs tests/monthly-report.test.cjs tests/calendar-clips.test.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",

@@ -141,10 +141,11 @@ do $$ begin
   alter publication supabase_realtime add table public.time_entries;
 exception when duplicate_object or undefined_object then null; end $$;
 
--- Company channels: website platform, no competitor flag.
+-- Company channels: Facebook + website only (TikTok removed), no competitor flag.
+delete from public.tracked_accounts where platform = 'tiktok';
 alter table public.tracked_accounts drop constraint if exists tracked_accounts_platform_check;
 alter table public.tracked_accounts add constraint tracked_accounts_platform_check
-  check (platform in ('facebook','tiktok','website'));
+  check (platform in ('facebook','website'));
 alter table public.tracked_accounts drop column if exists is_competitor;
 drop table if exists public.competitor_facebook, public.competitor_tiktok, public.competitor_analysis;
 
