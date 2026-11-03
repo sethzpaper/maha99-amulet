@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "mahaniyom999-teamday",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "node --test tests/auth.test.cjs tests/workflow.test.cjs tests/workflow-api.test.cjs"
+    "test": "node --test tests/auth.test.cjs tests/leave.test.cjs tests/today-board.test.cjs tests/qr.test.cjs tests/monthly-report.test.cjs tests/calendar-clips.test.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
@@ -17,8 +17,10 @@
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "jsqr": "1.4.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "qrcode": "1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.18.3",
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "@types/qrcode": "1.5.6",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "autoprefixer": "^10.4.21",

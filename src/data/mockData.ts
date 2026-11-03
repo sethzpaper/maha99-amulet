@@ -44,15 +44,6 @@ export const FACEBOOK_POSTS: SocialPost[] = Array.from({ length: 25 }).map((_, i
   timestamp: '2024-04-15 14:20'
 }));
 
-export const TIKTOK_POSTS: SocialPost[] = Array.from({ length: 25 }).map((_, i) => ({
-  id: `tt-${i}`,
-  platform: 'tiktok',
-  content: `วิดีโอ TikTok รีวิวพระเครื่องยอดนิยม ${i + 1}: เทคนิคการดูพระแท้และราคาตลาดล่าสุด`,
-  link: `https://tiktok.com/@amulet-expert/video/${i}`,
-  engagement: Math.floor(Math.random() * 20000) + 2000,
-  timestamp: '2024-04-15 16:45'
-}));
-
 export const ADMIN_STATS: AdminStats[] = [
   { id: 'a1', name: 'แอดมิน สมชาย', avatar: 'https://picsum.photos/seed/admin1/100/100', daily: 45, weekly: 280, monthly: 1150, performance: 95 },
   { id: 'a2', name: 'แอดมิน วิชัย', avatar: 'https://picsum.photos/seed/admin2/100/100', daily: 38, weekly: 245, monthly: 980, performance: 88 },

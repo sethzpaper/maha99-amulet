@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react';
 import {
   Activity,
-  Download,
   ExternalLink,
   Facebook,
-  FileText,
+  Globe,
   History,
   Link,
-  Music2,
   Palette,
   Pencil,
   Plus,
-  Printer,
   Save,
   Shield,
-  Table,
   Trash2,
   X,
   Lock,
@@ -24,7 +20,9 @@ import {
   createTrackedAccount,
   deleteTrackedAccount,
   listTrackedAccounts,
+  MAX_COMPANY_CHANNELS,
   TrackedAccount,
+  type TrackedPlatform,
   updateTrackedAccount,
 } from '../lib/employeeApi';
 
@@ -41,7 +39,6 @@ export function Settings({
   isAuthenticated = false,
   userName = '',
 }: SettingsProps) {
-  const [exportType, setExportType] = useState('daily');
   const [settingsTab, setSettingsTab] = useState('social');
   const [theme, setTheme] = useState(() => {
     if (typeof window === 'undefined') return 'classic';
@@ -49,11 +46,10 @@ export function Settings({
   });
   const [accounts, setAccounts] = useState<TrackedAccount[]>([]);
   const [accountForm, setAccountForm] = useState({
-    platform: 'facebook' as 'facebook' | 'tiktok',
+    platform: 'facebook' as TrackedPlatform,
     account_name: '',
     account_url: '',
     account_handle: '',
-    is_competitor: false,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [accountMessage, setAccountMessage] = useState<string | null>(null);
@@ -88,7 +84,6 @@ export function Settings({
       account_name: '',
       account_url: '',
       account_handle: '',
-      is_competitor: false,
     });
     setEditingId(null);
   };
@@ -104,7 +99,6 @@ export function Settings({
       account_name: account.account_name,
       account_url: account.account_url,
       account_handle: account.account_handle ?? '',
-      is_competitor: account.is_competitor,
     });
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -118,6 +112,10 @@ export function Settings({
     }
     if (!accountForm.account_name.trim() || !accountForm.account_url.trim()) {
       showAccountMessage('กรอกชื่อและลิงก์ก่อนบันทึก');
+      return;
+    }
+    if (!editingId && accounts.length >= MAX_COMPANY_CHANNELS) {
+      showAccountMessage(`ช่องทางบริษัทเต็มแล้ว (${MAX_COMPANY_CHANNELS} ช่อง) ลบหรือแก้ไขช่องเดิมก่อน`);
       return;
     }
 
@@ -152,10 +150,8 @@ export function Settings({
     showAccountMessage('ลบแหล่งข้อมูลแล้ว');
   };
 
-  const ownedAccounts = accounts.filter((account) => !account.is_competitor);
-  const competitorAccounts = accounts.filter((account) => account.is_competitor);
   const themes = [
-    { id: 'classic', label: 'Abyss', colors: ['#000c18', '#3794ff'] },
+    { id: 'classic', label: 'Forest & Lime (ค่าเริ่มต้น)', colors: ['#0c3a2b', '#c4f542'] },
     { id: 'jade', label: 'Jade', colors: ['#05130f', '#34d399'] },
     { id: 'ruby', label: 'Ruby', colors: ['#160607', '#f43f5e'] },
   ];
@@ -170,8 +166,8 @@ export function Settings({
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-serif text-zinc-100 italic">{isAuthenticated ? 'Settings & Export' : 'Settings'}</h2>
-          <p className="text-zinc-500 text-sm">จัดการระบบและส่งออกรายงานสถิติ</p>
+          <h2 className="text-2xl font-serif text-zinc-100 italic">ตั้งค่าระบบ</h2>
+          <p className="text-zinc-500 text-sm">ช่องทางบริษัท ระบบ และบันทึกการใช้งาน · ส่งออกรายงานอยู่ที่หน้าตารางลงเวลา → แท็บรายงาน</p>
         </div>
       </div>
 
@@ -222,7 +218,7 @@ export function Settings({
       {isAuthenticated && (
         <>
         <div className="flex gap-1 bg-zinc-950/60 border border-zinc-900 p-1 rounded-2xl mb-6 flex-wrap">
-          {(['social', 'export', 'system', 'log']).map((id) => {
+          {(['social', 'system', 'log']).map((id) => {
             const labels = { social: 'แหล่ง Social', export: 'Export', system: 'ระบบ', log: 'บันทึก', password: 'พาสเวิร์ด' };
             return (
               <button
@@ -243,8 +239,8 @@ export function Settings({
               <Link className="w-6 h-6 text-gold" />
             </div>
             <div>
-              <h3 className="text-xl font-serif italic font-bold text-zinc-100 gold-text-gradient">Super Admin: ตั้งค่าแหล่งข้อมูล Social</h3>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Fanpage, TikTok, Competitor links for graph and comparison</p>
+              <h3 className="text-xl font-serif italic font-bold text-zinc-100 gold-text-gradient">Super Admin: ช่องทางของบริษัท</h3>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">เว็บไซต์ / เพจ Facebook ที่แอคทีฟ ไม่เกิน 5 ช่อง แสดงบนหน้าแรก</p>
             </div>
           </div>
           {accountMessage && (
@@ -269,15 +265,15 @@ export function Settings({
                 <Facebook className="w-4 h-4" /> Facebook
               </button>
               <button
-                onClick={() => setAccountForm({ ...accountForm, platform: 'tiktok' })}
+                onClick={() => setAccountForm({ ...accountForm, platform: 'website' })}
                 disabled={!isSuperAdmin}
                 className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold transition ${
-                  accountForm.platform === 'tiktok'
-                    ? 'border-pink-500/40 bg-pink-500/10 text-pink-400'
+                  accountForm.platform === 'website'
+                    ? 'border-gold/50 bg-gold/10 text-gold'
                     : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                <Music2 className="w-4 h-4" /> TikTok
+                <Globe className="w-4 h-4" /> เว็บไซต์
               </button>
             </div>
 
@@ -289,7 +285,7 @@ export function Settings({
               className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 outline-none focus:border-gold/40"
             />
             <input
-              placeholder="ลิงก์ เช่น https://facebook.com/yourpage หรือ https://tiktok.com/@yourname"
+              placeholder="ลิงก์ เช่น https://facebook.com/yourpage หรือ https://เว็บของบริษัท.com"
               value={accountForm.account_url}
               onChange={(event) => setAccountForm({ ...accountForm, account_url: event.target.value })}
               disabled={!isSuperAdmin}
@@ -303,19 +299,6 @@ export function Settings({
               className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 outline-none focus:border-gold/40"
             />
 
-            <label className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
-              <span>
-                <span className="block text-xs font-bold text-zinc-300">ใช้เป็นบัญชีคู่แข่ง</span>
-                <span className="block text-[10px] text-zinc-600">ถ้าเปิด ระบบจะนำไปใช้ในหน้าเปรียบเทียบ</span>
-              </span>
-              <input
-                type="checkbox"
-                checked={accountForm.is_competitor}
-                onChange={(event) => setAccountForm({ ...accountForm, is_competitor: event.target.checked })}
-                disabled={!isSuperAdmin}
-                className="h-4 w-4 accent-[#3794ff]"
-              />
-            </label>
 
             <div className="flex gap-2">
               <button
@@ -347,59 +330,16 @@ export function Settings({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <AccountGroup title="ช่องของเรา" accounts={ownedAccounts} onDelete={handleDeleteAccount} onEdit={handleEditAccount} canEdit={isSuperAdmin} editingId={editingId} />
-            <AccountGroup title="บัญชีคู่แข่ง" accounts={competitorAccounts} onDelete={handleDeleteAccount} onEdit={handleEditAccount} canEdit={isSuperAdmin} editingId={editingId} />
+            <div className="lg:col-span-2">
+              <AccountGroup title={`ช่องทางของบริษัท (${accounts.length}/${MAX_COMPANY_CHANNELS})`} accounts={accounts} onDelete={handleDeleteAccount} onEdit={handleEditAccount} canEdit={isSuperAdmin} editingId={editingId} />
+            </div>
           </div>
         </div>
 
         <p className="mt-5 text-[10px] text-zinc-600 leading-5">
-          ลิงก์ที่ตั้งค่านี้จะถูกใช้ร่วมกันในหน้าโพส Facebook, โพส TikTok, กราฟ social summary และหน้าเปรียบเทียบคู่แข่ง หากไม่มี API backend ระบบจะเก็บค่าไว้ใน browser ด้วย localStorage ก่อน
+          ช่องทางที่ตั้งค่านี้แสดงบนหน้าแรก และใช้ในหน้าโพสต์ Facebook
         </p>
       </div>
-      )}
-      {settingsTab === 'export' && (
-        <div className="glass-card p-8 rounded-3xl gold-border-glow">
-          <div className="flex items-center gap-3 mb-8">
-             <div className="w-10 h-10 bg-gold/10 rounded-xl flex items-center justify-center border border-gold/20">
-                <Download className="w-6 h-6 text-gold" />
-             </div>
-             <div>
-                <h3 className="text-xl font-serif italic font-bold text-zinc-100 gold-text-gradient">Export รายงาน</h3>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Daily, Monthly, Yearly Analysis</p>
-             </div>
-          </div>
-
-          <div className="space-y-6">
-            <div>
-               <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-3 block">เลือกช่วงเวลา</label>
-               <div className="grid grid-cols-3 gap-3">
-                  {['daily', 'monthly', 'yearly'].map(type => (
-                    <button 
-                      key={type}
-                      onClick={() => setExportType(type)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                        exportType === type ? 'bg-gold text-black border-gold shadow-[0_0_15px_rgba(55,148,255,0.24)]' : 'bg-transparent text-zinc-500 border-zinc-800 hover:text-zinc-300'
-                      }`}
-                    >
-                      {type === 'daily' ? 'รายวัน' : type === 'monthly' ? 'รายเดือน' : 'รายปี'}
-                    </button>
-                  ))}
-               </div>
-            </div>
-
-            <div className="pt-6 border-t border-zinc-900 grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <button disabled={!isSuperAdmin} className="flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 py-3 rounded-2xl transition-all font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed">
-                  <FileText className="w-4 h-4" /> Export PDF
-               </button>
-               <button disabled={!isSuperAdmin} className="flex items-center justify-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 py-3 rounded-2xl transition-all font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed">
-                  <Table className="w-4 h-4" /> Export Excel
-               </button>
-               <button disabled={!isSuperAdmin} className="sm:col-span-2 flex items-center justify-center gap-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 py-3 rounded-2xl transition-all font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed">
-                  <Printer className="w-4 h-4" /> พิมพ์รายงาน (Print)
-               </button>
-            </div>
-          </div>
-        </div>
       )}
       {settingsTab === 'system' && (
       <div className="glass-card p-8 rounded-3xl gold-border-glow border-zinc-800/50">
@@ -523,7 +463,7 @@ function AccountGroup({
                     {account.platform === 'facebook' ? (
                       <Facebook className="w-3.5 h-3.5 text-blue-400" />
                     ) : (
-                      <Music2 className="w-3.5 h-3.5 text-pink-400" />
+                      <Globe className="w-3.5 h-3.5 text-gold" />
                     )}
                     <p className="truncate text-xs font-bold text-zinc-200">{account.account_name}</p>
                   </div>

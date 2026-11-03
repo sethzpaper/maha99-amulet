@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Award, Clock, Crown, Facebook, Music2, Trophy, Video } from 'lucide-react';
+import { Award, Clock, Crown, Facebook, Trophy, Video } from 'lucide-react';
 import { dataService } from '../lib/dataService';
 import { LeaderboardEntry } from '../types';
 
-type LeaderboardKey = 'views' | 'likesFb' | 'likesTt' | 'hours';
+type LeaderboardKey = 'views' | 'likesFb' | 'hours';
 
 type LeaderboardSection = {
   key: LeaderboardKey;
-  metric: 'views' | 'likes-fb' | 'likes-tt' | 'hours';
+  metric: 'views' | 'likes-fb' | 'hours';
   title: string;
   subtitle: string;
   suffix: string;
@@ -19,7 +19,7 @@ const sections: LeaderboardSection[] = [
     key: 'views',
     metric: 'views',
     title: 'ยอดวิวรวม',
-    subtitle: 'Facebook + TikTok ต่อ creator',
+    subtitle: 'ยอดวิว Facebook ต่อ creator',
     suffix: 'views',
     icon: Video,
   },
@@ -30,14 +30,6 @@ const sections: LeaderboardSection[] = [
     subtitle: 'ยอดไลค์จากโพสต์ Facebook',
     suffix: 'likes',
     icon: Facebook,
-  },
-  {
-    key: 'likesTt',
-    metric: 'likes-tt',
-    title: 'ไลค์ TikTok',
-    subtitle: 'ยอดไลค์จากโพสต์ TikTok',
-    suffix: 'likes',
-    icon: Music2,
   },
   {
     key: 'hours',
@@ -52,7 +44,6 @@ const sections: LeaderboardSection[] = [
 const emptyBoards: Record<LeaderboardKey, LeaderboardEntry[]> = {
   views: [],
   likesFb: [],
-  likesTt: [],
   hours: [],
 };
 
@@ -69,9 +60,9 @@ export function AdminStats() {
     let alive = true;
 
     Promise.all(sections.map((section) => dataService.fetchLeaderboard(section.metric)))
-      .then(([views, likesFb, likesTt, hours]) => {
+      .then(([views, likesFb, hours]) => {
         if (!alive) return;
-        setLeaderboards({ views, likesFb, likesTt, hours });
+        setLeaderboards({ views, likesFb, hours });
       })
       .catch((err) => {
         console.error('Failed to load leaderboard stats:', err);
@@ -86,7 +77,7 @@ export function AdminStats() {
   }, []);
 
   const topCreator = useMemo(() => {
-    return leaderboards.views[0] || leaderboards.likesFb[0] || leaderboards.likesTt[0] || leaderboards.hours[0];
+    return leaderboards.views[0] || leaderboards.likesFb[0] || leaderboards.hours[0];
   }, [leaderboards]);
 
   return (
@@ -96,7 +87,7 @@ export function AdminStats() {
           <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">Leaderboard</p>
           <h2 className="mt-1 text-2xl font-serif italic font-bold gold-text-gradient">สถิตินักปั้น</h2>
           <p className="mt-2 max-w-2xl text-sm text-zinc-500">
-            หน้านี้ใช้ข้อมูลชุดเดียวกับ leaderboard จาก API ใหม่ แยกอันดับตามยอดวิว, ไลค์ Facebook, ไลค์ TikTok และชั่วโมงทำงาน
+            หน้านี้ใช้ข้อมูลชุดเดียวกับ leaderboard จาก API ใหม่ แยกอันดับตามยอดวิว, ไลค์ Facebook และชั่วโมงทำงาน
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950/70 px-4 py-2 text-xs text-zinc-400">

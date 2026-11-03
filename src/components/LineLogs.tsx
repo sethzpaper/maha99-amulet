@@ -1,19 +1,26 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AlertCircle, Calendar, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Clock,
   Download, Edit2, Gift, LogIn, LogOut, Plus, Save, Shield,
-  Star, Timer, Upload, Users, X,
+  Printer, QrCode, Star, Timer, Users, X,
 } from 'lucide-react';
 import { useAuthStore } from '../lib/authStore';
 import { listEmployees, loginEmployee as apiLoginEmployee, Employee } from '../lib/employeeApi';
 import {
-  checkIn, checkOut,
   fetchEntries, fetchLeaveQuota, fetchLeaveRequests, submitLeaveRequest,
-  exportMonthlyReport, fetchRecentCheckins, adminUpdateEntry, adminCreateEntry,
+  fetchMonthlyReportData, fetchRecentCheckins, adminUpdateEntry, adminCreateEntry,
+  managerRecordLeave, LEAVE_MONTHLY_LIMIT,
   TimeEntry, LeaveRequest, LeaveQuota,
 } from '../lib/attendanceApi';
+import { todayBangkok } from '../lib/dates';
+import {
+  buildDetail, buildSummary, DETAIL_HEADERS, downloadText, monthLabel, reportHtml, SUMMARY_HEADERS, toCsv,
+  type DetailRow, type SummaryRow,
+} from '../lib/monthlyReport';
+import { BRAND_NAME, BRAND_SHORT } from '../lib/brand';
+import { listEvents, type CalendarEvent } from '../lib/calendarApi';
 
-const MANAGER_EMAIL = (import.meta.env.VITE_MANAGER_EMAIL as string) || '';
 
 // ── Thai national holidays 2026 ────────────────────────────────────────────
 const THAI_HOLIDAYS: { name: string; date: string }[] = [
@@ -57,6 +64,7 @@ const STATUS_TH: Record<string, string> = {
 export function LineLogs() {
   const authUser = useAuthStore((s) => s.user);
   const isSuperAdmin = authUser?.role === 'super_admin';
+  const isAdminUser = isSuperAdmin || authUser?.role === 'admin';
 
   // ── Live clock ────────────────────────────────────────────────────────────
   const [now, setNow] = useState(new Date());
@@ -90,11 +98,6 @@ export function LineLogs() {
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [quota, setQuota] = useState<LeaveQuota | null>(null);
 
-  // ── Photo upload (optional) ───────────────────────────────────────────────
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // ── Sub-tabs ──────────────────────────────────────────────────────────────
   const [activeSubTab, setActiveSubTab] = useState<'attendance' | 'leave' | 'report' | 'admin'>('attendance');
 
@@ -107,6 +110,12 @@ export function LineLogs() {
   const [calendarMonth, setCalendarMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [overviewEntries, setOverviewEntries] = useState<TimeEntry[]>([]);
   const [overviewLeaves, setOverviewLeaves] = useState<LeaveRequest[]>([]);
+  // วันสำคัญ / วันไลฟ์ของทีม (ไฮไลท์สีเหลืองในปฏิทินลา)
+  const [teamEvents, setTeamEvents] = useState<CalendarEvent[]>([]);
+  useEffect(() => {
+    const month = todayBangkok().slice(0, 7);
+    listEvents(`${month}-01`, `${month}-31`).then(setTeamEvents).catch(() => setTeamEvents([]));
+  }, []);
 
   // ── Report ────────────────────────────────────────────────────────────────
   const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -118,7 +127,8 @@ export function LineLogs() {
   const [newEntryForm, setNewEntryForm] = useState({
     userId: '', userName: '', workDate: '', checkInTime: '', checkOutTime: '', status: 'working', note: '',
   });
-  const [adminTab, setAdminTab] = useState<'edit' | 'create'>('edit');
+  const [adminTab, setAdminTab] = useState<'edit' | 'create' | 'leave'>('edit');
+  const [managerLeave, setManagerLeave] = useState({ employeeId: '', leaveDate: '', leaveType: 'sick' as LeaveRequest['leave_type'], reason: '' });
 
   // ── Loading / toast ───────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
@@ -129,7 +139,7 @@ export function LineLogs() {
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = todayBangkok(now);
   const todayEntry = entries.find((e) => e.work_date === todayStr);
   const effectiveUser = employees.find((employee) => employee.auth_user_id === authUser?.id) ?? verifiedEmp;
 
@@ -215,59 +225,13 @@ export function LineLogs() {
     setVerifyLoading(false);
   };
 
-  // ── Photo picker ──────────────────────────────────────────────────────────
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-  };
-
-  // ── Check In / Out ────────────────────────────────────────────────────────
-  const doCheckIn = async () => {
-    if (!effectiveUser) return;
-    setLoading(true);
-    try {
-      await checkIn({
-        userId: effectiveUser.id,
-        userName: effectiveUser.nickname || effectiveUser.id,
-        photo: photoFile ?? undefined,
-      });
-      showToast('success', 'เข้างานสำเร็จ');
-      setPhotoFile(null); setPhotoPreview(null);
-      await Promise.all([loadPersonal(effectiveUser), loadPublic()]);
-    } catch (err: any) { showToast('error', err.message); }
-    setLoading(false);
-  };
-
-  const doCheckOut = async () => {
-    if (!effectiveUser) return;
-    setLoading(true);
-    try {
-      await checkOut({
-        userId: effectiveUser.id,
-        userName: effectiveUser.nickname || effectiveUser.id,
-        photo: photoFile ?? undefined,
-      });
-      showToast('success', 'ออกงานสำเร็จ');
-      setPhotoFile(null); setPhotoPreview(null);
-      await Promise.all([loadPersonal(effectiveUser), loadPublic()]);
-    } catch (err: any) { showToast('error', err.message); }
-    setLoading(false);
-  };
-
   // ── Leave ─────────────────────────────────────────────────────────────────
   const handleSubmitLeave = async () => {
     if (!effectiveUser || !selectedDate) { showToast('error', 'เลือกวันที่ก่อน'); return; }
-    if (quota && !quota.allowed) { showToast('error', `โควต้าหมดแล้ว (${quota.used_count}/4)`); return; }
+    if (quota && !quota.allowed) { showToast('error', `โควต้าหมดแล้ว (${quota.used_count}/${LEAVE_MONTHLY_LIMIT})`); return; }
     setLoading(true);
     try {
-      await submitLeaveRequest({
-        userId: effectiveUser.id,
-        userName: effectiveUser.nickname || effectiveUser.id,
-        leaveDate: selectedDate, leaveType, reason: leaveReason,
-        managerEmail: MANAGER_EMAIL,
-      });
+      await submitLeaveRequest({ leaveDate: selectedDate, leaveType, reason: leaveReason });
       showToast('success', 'ส่งคำขอลาเรียบร้อย — รอหัวหน้าอนุมัติ');
       setSelectedDate(null); setLeaveReason('');
       await loadPersonal(effectiveUser);
@@ -276,14 +240,34 @@ export function LineLogs() {
   };
 
   // ── Export ────────────────────────────────────────────────────────────────
-  const handleExport = async () => {
+  const [report, setReport] = useState<{ month: string; summary: SummaryRow[]; detail: DetailRow[] } | null>(null);
+  const loadReport = async (): Promise<{ month: string; summary: SummaryRow[]; detail: DetailRow[] } | null> => {
+    if (report && report.month === reportMonth) return report;
     setLoading(true);
     try {
-      const res = await exportMonthlyReport(reportMonth);
-      showToast('success', 'สร้างรายงานสำเร็จ');
-      console.info('monthly attendance report', res);
-    } catch (err: any) { showToast('error', err.message); }
-    setLoading(false);
+      const data = await fetchMonthlyReportData(reportMonth);
+      const next = { month: reportMonth, summary: buildSummary(data.entries, data.leaves), detail: buildDetail(data.entries, data.siteNames) };
+      setReport(next);
+      return next;
+    } catch (err: any) { showToast('error', err.message); return null; }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { if (activeSubTab === 'report') void loadReport(); }, [activeSubTab, reportMonth]); // eslint-disable-line react-hooks/exhaustive-deps
+  const downloadSummary = async () => {
+    const r = await loadReport(); if (!r) return;
+    downloadText(`สรุปลงเวลา-${r.month}.csv`, toCsv(r.summary, SUMMARY_HEADERS));
+  };
+  const downloadDetail = async () => {
+    const r = await loadReport(); if (!r) return;
+    downloadText(`ลงเวลารายวัน-${r.month}.csv`, toCsv(r.detail, DETAIL_HEADERS));
+  };
+  const printReport = async () => {
+    const win = window.open('', '_blank');
+    if (!win) { showToast('error', 'เบราว์เซอร์บล็อกหน้าต่างใหม่ อนุญาต pop-up แล้วลองอีกครั้ง'); return; }
+    const r = await loadReport();
+    if (!r) { win.close(); return; }
+    win.document.write(reportHtml({ brand: `${BRAND_NAME} · ${BRAND_SHORT}`, month: r.month, summary: r.summary, detail: r.detail }));
+    win.document.close();
   };
 
   // ── Admin edit ────────────────────────────────────────────────────────────
@@ -309,6 +293,19 @@ export function LineLogs() {
       });
       showToast('success', 'แก้ไขข้อมูลสำเร็จ');
       setEditingEntry(null);
+      loadAdminEntries();
+    } catch (err: any) { showToast('error', err.message); }
+    setLoading(false);
+  };
+
+  // ── Manager records leave (incl. retroactive) ─────────────────────────────
+  const handleManagerLeave = async () => {
+    if (!managerLeave.employeeId || !managerLeave.leaveDate) { showToast('error', 'เลือกพนักงานและวันที่ก่อน'); return; }
+    setLoading(true);
+    try {
+      await managerRecordLeave(managerLeave);
+      showToast('success', 'บันทึกวันลาแล้ว (อนุมัติทันที)');
+      setManagerLeave({ employeeId: '', leaveDate: '', leaveType: 'sick', reason: '' });
       loadAdminEntries();
     } catch (err: any) { showToast('error', err.message); }
     setLoading(false);
@@ -487,42 +484,13 @@ export function LineLogs() {
             โหมดผู้ชมเปิดให้ดูเวลาและรายการลงเวลาล่าสุดเท่านั้น กรุณาเข้าสู่ระบบด้วยรายชื่อหรือเบอร์โทรเพื่อเข้างาน ออกงาน ขอวันลา หรือดูรายงานส่วนตัว
           </p>
         </div>
-      ) : !effectiveUser ? (
-        /* Not verified — show picker */
-        <div className="glass-card p-8 rounded-3xl gold-border-glow max-w-lg">
-          <h3 className="text-lg font-serif italic font-bold gold-text-gradient mb-5">ลงเวลางาน</h3>
-          <div className="space-y-4">
-            {/* Employee picker */}
-            <div>
-              <label className="text-[10px] text-zinc-500 uppercase block mb-1">เลือกชื่อพนักงาน</label>
-              <div className="relative">
-                <select
-                  value={verifyEmpId}
-                  onChange={(e) => { setVerifyEmpId(e.target.value); setVerifyError(''); }}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-3 text-sm text-zinc-200 appearance-none focus:outline-none focus:border-gold/50"
-                >
-                  <option value="">— เลือกชื่อ —</option>
-                  {employees.filter(e => e.is_active).map((emp) => (
-                    <option key={emp.id} value={emp.id}>{emp.nickname}{emp.full_name ? ` (${emp.full_name})` : ''}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none" />
-              </div>
-            </div>
-
-            {verifyError && (
-              <p className="text-xs text-red-400 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{verifyError}</p>
-            )}
-
-            <button
-              onClick={handleVerify}
-              disabled={verifyLoading || !verifyEmpId}
-              className="w-full bg-gold text-black font-bold py-3 rounded-xl text-sm uppercase disabled:opacity-40 hover:bg-gold/90 flex items-center justify-center gap-2"
-            >
-              <LogIn className="w-4 h-4" />
-              {verifyLoading ? 'กำลังตรวจสอบ…' : 'ยืนยันตัวตน'}
-            </button>
-          </div>
+      ) : !effectiveUser && !isAdminUser ? (
+        /* Logged in but the account is not linked to an employee record */
+        <div className="hr-card p-8 max-w-2xl">
+          <h3 className="text-lg font-semibold mb-3">บัญชีนี้ยังไม่ผูกกับข้อมูลพนักงาน</h3>
+          <p className="text-sm text-[var(--app-text-muted)] leading-6">
+            ให้แอดมินตรวจว่าอีเมลของบัญชีนี้ตรงกับอีเมลในทำเนียบพนักงาน แล้วลองออกจากระบบและเข้าใหม่ ระหว่างนี้ลงเวลาได้ที่หน้า "สแกนลงเวลา" ไม่ได้ จนกว่าจะผูกบัญชีเรียบร้อย
+          </p>
         </div>
       ) : (
         /* Verified — show action area */
@@ -590,42 +558,10 @@ export function LineLogs() {
                   <p className="text-xs text-zinc-500 italic">ยังไม่มีบันทึกวันนี้</p>
                 )}
 
-                {/* Photo upload (optional) */}
-                <div>
-                  <p className="text-[10px] text-zinc-500 uppercase mb-2">แนบรูป (ไม่บังคับ)</p>
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-                  {photoPreview ? (
-                    <div className="relative">
-                      <img src={photoPreview} alt="preview" className="w-full rounded-xl max-h-32 object-cover" />
-                      <button onClick={() => { setPhotoFile(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                        className="absolute top-1 right-1 bg-black/70 rounded-full p-1 text-white">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => fileInputRef.current?.click()}
-                      className="w-full border-2 border-dashed border-zinc-800 hover:border-zinc-600 rounded-xl py-3 text-xs text-zinc-500 flex items-center justify-center gap-2 transition">
-                      <Upload className="w-4 h-4" /> เลือกรูป
-                    </button>
-                  )}
-                </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={doCheckIn}
-                    disabled={loading || !!todayEntry?.check_in_time}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gold text-black font-bold py-3 rounded-xl text-xs uppercase disabled:opacity-30"
-                  >
-                    <LogIn className="w-4 h-4" /> เข้างาน
-                  </button>
-                  <button
-                    onClick={doCheckOut}
-                    disabled={loading || !!todayEntry?.check_out_time}
-                    className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 text-zinc-200 font-bold py-3 rounded-xl text-xs uppercase disabled:opacity-30"
-                  >
-                    <LogOut className="w-4 h-4" /> ออกงาน
-                  </button>
-                </div>
+                <Link to="/scan" className="btn-pill btn-lime w-full justify-center">
+                  <QrCode className="w-4 h-4" /> สแกน QR เข้า / ออกงาน
+                </Link>
               </div>
 
               {/* History table */}
@@ -639,12 +575,12 @@ export function LineLogs() {
                     <thead>
                       <tr className="text-[10px] text-zinc-500 uppercase tracking-widest border-b border-zinc-900">
                         <th className="pb-3">วันที่</th><th className="pb-3">เข้า</th><th className="pb-3">ออก</th>
-                        <th className="pb-3">ชม.</th><th className="pb-3">รูป</th><th className="pb-3 text-right">สถานะ</th>
+                        <th className="pb-3">ชม.</th><th className="pb-3 text-right">สถานะ</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-900/50">
                       {entries.length === 0 && (
-                        <tr><td colSpan={6} className="py-6 text-center text-xs text-zinc-500">{loading ? 'กำลังโหลด…' : 'ยังไม่มีข้อมูล'}</td></tr>
+                        <tr><td colSpan={5} className="py-6 text-center text-xs text-zinc-500">{loading ? 'กำลังโหลด…' : 'ยังไม่มีข้อมูล'}</td></tr>
                       )}
                       {entries.map((e) => (
                         <tr key={e.id}>
@@ -652,10 +588,6 @@ export function LineLogs() {
                           <td className="py-3 text-xs text-zinc-500 font-mono">{e.check_in_time ? new Date(e.check_in_time).toLocaleTimeString('th-TH') : '-'}</td>
                           <td className="py-3 text-xs text-zinc-500 font-mono">{e.check_out_time ? new Date(e.check_out_time).toLocaleTimeString('th-TH') : '-'}</td>
                           <td className="py-3 text-xs text-zinc-200 font-bold">{e.total_hours || 0}</td>
-                          <td className="py-3 flex gap-1">
-                            {e.check_in_photo_url && <a href={e.check_in_photo_url} target="_blank" rel="noreferrer" className="text-gold text-[10px] underline">เข้า</a>}
-                            {e.check_out_photo_url && <a href={e.check_out_photo_url} target="_blank" rel="noreferrer" className="text-gold text-[10px] underline">ออก</a>}
-                          </td>
                           <td className="py-3 text-right">
                             <span className={`text-[10px] px-2 py-1 rounded-full uppercase font-bold border ${STATUS_STYLE[e.status] || ''}`}>
                               {STATUS_TH[e.status] || e.status}
@@ -677,12 +609,12 @@ export function LineLogs() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-base font-serif italic font-bold gold-text-gradient">เลือกวันลา</h2>
-                    <p className="text-[10px] text-zinc-500 mt-1">ลาได้เดือนละ 4 ครั้ง • คลิกวันที่เพื่อขอลา</p>
+                    <p className="text-[10px] text-zinc-500 mt-1">ลาได้เดือนละ {LEAVE_MONTHLY_LIMIT} ครั้ง • จองล่วงหน้าอย่างน้อย 1 วัน • คลิกวันที่เพื่อจอง</p>
                   </div>
                   {quota && (
                     <div className="text-right">
                       <p className="text-[10px] text-zinc-500 uppercase">โควต้าคงเหลือ</p>
-                      <p className={`text-2xl font-bold ${quota.remaining > 0 ? 'gold-text-gradient' : 'text-red-500'}`}>{quota.remaining}/4</p>
+                      <p className={`text-2xl font-bold ${quota.remaining > 0 ? 'gold-text-gradient' : 'text-red-500'}`}>{quota.remaining}/{LEAVE_MONTHLY_LIMIT}</p>
                     </div>
                   )}
                 </div>
@@ -703,14 +635,18 @@ export function LineLogs() {
                   {['อา','จ','อ','พ','พฤ','ศ','ส'].map(d => <div key={d} className="text-center text-[10px] text-zinc-500 pb-1">{d}</div>)}
                   {calendarDays.map(({ date, day, hasLeave, leaveStatus }) => {
                     const isSelected = selectedDate === date;
-                    const isPast = date < todayStr;
+                    // จองได้ตั้งแต่พรุ่งนี้เท่านั้น (วันนี้/ย้อนหลัง ให้ผู้จัดการบันทึกให้)
+                    const isPast = date <= todayStr;
                     const sc = leaveStatus === 'approved' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
                       : leaveStatus === 'rejected' ? 'bg-red-500/10 border-red-500/30 text-red-400'
                       : leaveStatus === 'pending' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : '';
+                    const teamDay = teamEvents.filter((e) => e.event_date === date);
+                    const live = teamDay.length > 0 && !hasLeave && !isSelected;
                     return (
                       <button key={date} disabled={isPast || hasLeave} onClick={() => setSelectedDate(date)}
+                        title={teamDay.length ? teamDay.map((e) => e.title + (e.needs_live ? ' (ต้องไลฟ์)' : '')).join(', ') : undefined}
                         className={`p-2 rounded-xl border text-left transition-all text-xs font-bold
-                          ${isSelected ? 'bg-gold/20 border-gold text-gold' : hasLeave ? sc : isPast ? 'bg-zinc-950 border-zinc-900 text-zinc-700 cursor-not-allowed' : 'bg-zinc-950/50 border-zinc-900 text-zinc-300 hover:border-gold/40'}`}>
+                          ${isSelected ? 'bg-gold/20 border-gold text-gold' : hasLeave ? sc : live ? '!bg-yellow-200 !border-yellow-400 !text-[#3f3300]' : isPast ? 'bg-zinc-950 border-zinc-900 text-zinc-700 cursor-not-allowed' : 'bg-zinc-950/50 border-zinc-900 text-zinc-300 hover:border-gold/40'} ${live && isPast ? 'opacity-60 cursor-not-allowed' : ''}`}>
                         {day}
                         {hasLeave && <CheckCircle2 className="w-2.5 h-2.5 mt-0.5" />}
                       </button>
@@ -839,6 +775,11 @@ export function LineLogs() {
                   <>
                     <div><label className="text-[10px] text-zinc-500 uppercase">วันที่</label>
                       <p className="text-sm font-bold text-gold mt-1">{selectedDate}</p></div>
+                    {teamEvents.some((e) => e.event_date === selectedDate && e.needs_live) && (
+                      <p role="note" className="rounded-xl border border-yellow-400 bg-yellow-100 px-3 py-2 text-xs font-semibold text-[#3f3300]">
+                        วันนี้ทีมต้องไลฟ์: {teamEvents.filter((e) => e.event_date === selectedDate).map((e) => e.title).join(', ')} — ควรคุยกับผู้จัดการก่อนลา
+                      </p>
+                    )}
                     <div><label className="text-[10px] text-zinc-500 uppercase">ประเภท</label>
                       <select value={leaveType} onChange={e => setLeaveType(e.target.value as any)}
                         className="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200">
@@ -870,29 +811,44 @@ export function LineLogs() {
 
               <div className="lg:col-span-3 p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
-                <p className="text-xs text-zinc-400">ลาได้เดือนละ 4 ครั้ง • ระบบส่งอีเมลแจ้งผู้จัดการอัตโนมัติ • ต้องขอลาก่อน 12:00</p>
+                <p className="text-xs text-zinc-400">จองวันลาล่วงหน้าอย่างน้อย 1 วัน แล้วรอผู้จัดการอนุมัติ • ลาเดือนละไม่เกิน {LEAVE_MONTHLY_LIMIT} ครั้ง • ลาป่วยกะทันหันหรือลาย้อนหลัง ให้ผู้จัดการบันทึกให้ • วันที่ลาได้รับอนุมัติแล้ว จะสแกน QR เข้างานไม่ได้</p>
               </div>
             </div>
           )}
 
           {/* ── Report tab ── */}
           {activeSubTab === 'report' && (
-            <div className="glass-card p-8 rounded-3xl gold-border-glow">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-serif italic font-bold gold-text-gradient">ส่งออกรายงานรายเดือน</h2>
-                <Calendar className="w-5 h-5 text-gold/30" />
-              </div>
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <label className="text-[10px] text-zinc-500 uppercase">เดือน (YYYY-MM)</label>
-                  <input type="month" value={reportMonth} onChange={e => setReportMonth(e.target.value)}
-                    className="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200" />
+            <div className="hr-card p-6 sm:p-8 space-y-6">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <span className="pill-label">รายงานประจำเดือน</span>
+                  <h2 className="mt-3 text-2xl font-semibold">ส่งออกรายงานลงเวลา</h2>
+                  <p className="mt-1 text-sm text-[var(--app-text-muted)]">{isSuperAdmin || authUser?.role === 'admin' ? 'ข้อมูลพนักงานทุกคน' : 'ข้อมูลของคุณเท่านั้น'} · {monthLabel(reportMonth)}</p>
                 </div>
-                <button onClick={handleExport} disabled={loading}
-                  className="flex items-center gap-2 bg-gold text-black font-bold px-6 py-3 rounded-xl text-xs uppercase disabled:opacity-40">
-                  <Download className="w-4 h-4" /> ส่งออก
-                </button>
+                <label className="work-field w-48">เดือน
+                  <input type="month" value={reportMonth} onChange={e => e.target.value && setReportMonth(e.target.value)} />
+                </label>
               </div>
+              <div className="flex flex-wrap gap-3">
+                <button onClick={downloadSummary} disabled={loading} className="btn-pill btn-lime"><Download className="w-4 h-4" />สรุปรายคน (Excel)</button>
+                <button onClick={downloadDetail} disabled={loading} className="btn-pill btn-outline-lime"><Download className="w-4 h-4" />รายละเอียดรายวัน (Excel)</button>
+                <button onClick={printReport} disabled={loading} className="btn-pill btn-dark"><Printer className="w-4 h-4" />พิมพ์ / บันทึก PDF</button>
+              </div>
+              <div className="overflow-x-auto rounded-2xl border border-[var(--app-border-muted)]">
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead><tr className="bg-[var(--app-surface-strong)]">{SUMMARY_HEADERS.map(([key, label]) => <th key={key} className="px-3">{label}</th>)}</tr></thead>
+                  <tbody className="divide-y divide-[var(--app-border-muted)]">
+                    {loading && !report ? (
+                      <tr><td colSpan={SUMMARY_HEADERS.length} className="px-3 text-center text-[var(--app-text-muted)]">กำลังโหลด…</td></tr>
+                    ) : !report || report.summary.length === 0 ? (
+                      <tr><td colSpan={SUMMARY_HEADERS.length} className="px-3 text-center text-[var(--app-text-muted)]">ไม่มีข้อมูลเดือนนี้</td></tr>
+                    ) : report.summary.map((row) => (
+                      <tr key={row.user_id}>{SUMMARY_HEADERS.map(([key]) => <td key={key} className="px-3 tabular-nums">{row[key]}</td>)}</tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-[var(--app-text-muted)]">ไฟล์ .csv เปิดด้วย Excel / Google Sheets ได้ทันที · OT นับเมื่อเกิน 11 ชม./วัน · มาสาย = เข้างานหลัง 12:00 น.</p>
             </div>
           )}
 
@@ -906,7 +862,7 @@ export function LineLogs() {
 
               {/* Admin sub-tabs */}
               <div className="flex gap-2">
-                {[{k:'edit',label:'แก้ไขรายการ'},{k:'create',label:'สร้างรายการใหม่'}].map(t => (
+                {[{k:'edit',label:'แก้ไขรายการ'},{k:'create',label:'สร้างรายการใหม่'},{k:'leave',label:'บันทึกวันลาให้พนักงาน'}].map(t => (
                   <button key={t.k} onClick={() => setAdminTab(t.k as any)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${adminTab === t.k ? 'bg-gold/20 border-gold text-gold' : 'border-zinc-800 text-zinc-500'}`}>{t.label}</button>
                 ))}
@@ -1041,6 +997,36 @@ export function LineLogs() {
                   <button onClick={handleAdminCreate} disabled={loading || !newEntryForm.userId || !newEntryForm.workDate}
                     className="flex items-center gap-2 bg-gold text-black font-bold px-5 py-3 rounded-xl text-xs uppercase disabled:opacity-40">
                     <Plus className="w-4 h-4" /> สร้างรายการ
+                  </button>
+                </div>
+              )}
+
+              {/* Manager records leave (any date, incl. retroactive) */}
+              {adminTab === 'leave' && (
+                <div className="space-y-4 max-w-lg">
+                  <p className="text-xs text-zinc-500">บันทึกวันลาให้พนักงาน ใช้ได้ทั้งวันนี้และย้อนหลัง ระบบจะอนุมัติทันทีและลงสถานะ "ลา" ในตารางลงเวลา (ถ้าวันนั้นพนักงานสแกนเข้างานแล้ว จะบันทึกไม่ได้)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="work-field col-span-2 sm:col-span-1">พนักงาน
+                      <select value={managerLeave.employeeId} onChange={e => setManagerLeave({ ...managerLeave, employeeId: e.target.value })}>
+                        <option value="">— เลือก —</option>
+                        {employees.filter(e => e.is_active).map(emp => <option key={emp.id} value={emp.id}>{emp.nickname}</option>)}
+                      </select>
+                    </label>
+                    <label className="work-field col-span-2 sm:col-span-1">วันที่ลา
+                      <input type="date" value={managerLeave.leaveDate} onChange={e => setManagerLeave({ ...managerLeave, leaveDate: e.target.value })} />
+                    </label>
+                    <label className="work-field col-span-2 sm:col-span-1">ประเภท
+                      <select value={managerLeave.leaveType} onChange={e => setManagerLeave({ ...managerLeave, leaveType: e.target.value as LeaveRequest['leave_type'] })}>
+                        <option value="sick">ลาป่วย</option><option value="personal">ลากิจ</option>
+                        <option value="vacation">ลาพักร้อน</option><option value="other">อื่น ๆ</option>
+                      </select>
+                    </label>
+                    <label className="work-field col-span-2 sm:col-span-1">เหตุผล
+                      <input value={managerLeave.reason} onChange={e => setManagerLeave({ ...managerLeave, reason: e.target.value })} placeholder="เช่น ป่วย แจ้งทางโทรศัพท์" />
+                    </label>
+                  </div>
+                  <button onClick={handleManagerLeave} disabled={loading || !managerLeave.employeeId || !managerLeave.leaveDate} className="work-button work-primary">
+                    <Plus className="w-4 h-4" /> บันทึกวันลา
                   </button>
                 </div>
               )}

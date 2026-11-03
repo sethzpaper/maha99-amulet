@@ -35,15 +35,18 @@ export interface EmployeeBadge {
 
 export interface TrackedAccount {
   id: string;
-  platform: 'facebook' | 'tiktok';
+  platform: TrackedPlatform;
   account_name: string;
   account_url: string;
   account_handle?: string;
   is_active: boolean;
-  is_competitor: boolean;
   note?: string;
   created_at: string;
 }
+
+export type TrackedPlatform = 'facebook' | 'website';
+/** หน้าแรกแสดงเฉพาะช่องทางที่แอคทีฟของบริษัท ไม่เกินจำนวนนี้ */
+export const MAX_COMPANY_CHANNELS = 5;
 
 const TRACKED_ACCOUNTS_STORAGE_KEY = 'amulet_tracked_accounts';
 
@@ -55,41 +58,7 @@ const defaultTrackedAccounts: TrackedAccount[] = [
     account_url: 'https://facebook.com/mahaniyom999',
     account_handle: '@mahaniyom999',
     is_active: true,
-    is_competitor: false,
-    note: 'เพจหลักที่ใช้แสดงกราฟ',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'local-tiktok-owned',
-    platform: 'tiktok',
-    account_name: 'มหานิยม999 TikTok',
-    account_url: 'https://www.tiktok.com/@mahaniyom999',
-    account_handle: '@mahaniyom999',
-    is_active: true,
-    is_competitor: false,
-    note: 'ช่องหลักที่ใช้แสดงกราฟ',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'local-facebook-competitor',
-    platform: 'facebook',
-    account_name: 'คู่แข่ง Facebook ตัวอย่าง',
-    account_url: 'https://facebook.com/competitor-page',
-    account_handle: '@competitor',
-    is_active: true,
-    is_competitor: true,
-    note: 'ใช้เปรียบเทียบในหน้า Competitor',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'local-tiktok-competitor',
-    platform: 'tiktok',
-    account_name: 'คู่แข่ง TikTok ตัวอย่าง',
-    account_url: 'https://www.tiktok.com/@competitor',
-    account_handle: '@competitor',
-    is_active: true,
-    is_competitor: true,
-    note: 'ใช้เปรียบเทียบในหน้า Competitor',
+    note: 'เพจหลักของบริษัท',
     created_at: new Date().toISOString(),
   },
 ];
@@ -116,11 +85,13 @@ function writeLocalTrackedAccounts(accounts: TrackedAccount[]) {
 
 function filterTrackedAccounts(
   accounts: TrackedAccount[],
-  params: { platform?: 'facebook' | 'tiktok'; competitor?: boolean } = {},
+  params: { platform?: TrackedPlatform } = {},
 ) {
   return accounts.filter((account) => {
+    // ข้อมูลเก่าใน localStorage อาจยังมีบัญชีคู่แข่งค้างอยู่ — ไม่แสดงแล้ว
+    if ((account as { is_competitor?: boolean }).is_competitor) return false;
+    if ((account.platform as string) === 'tiktok') return false; // TikTok ถูกตัดออกจากเว็บแล้ว
     if (params.platform && account.platform !== params.platform) return false;
-    if (params.competitor !== undefined && account.is_competitor !== params.competitor) return false;
     return account.is_active;
   });
 }
@@ -280,14 +251,13 @@ export async function removeBadgeAward(_role: string, _employeeId: string, award
 }
 
 // ---- Tracked Accounts ----
-export async function listTrackedAccounts(params: { platform?: 'facebook' | 'tiktok'; competitor?: boolean } = {}): Promise<TrackedAccount[]> {
+export async function listTrackedAccounts(params: { platform?: TrackedPlatform } = {}): Promise<TrackedAccount[]> {
   if (!isSupabaseConfigured) {
     return filterTrackedAccounts(readLocalTrackedAccounts(), params);
   }
   try {
     let q = supabase.from('tracked_accounts').select('*').eq('is_active', true);
     if (params.platform) q = q.eq('platform', params.platform);
-    if (params.competitor !== undefined) q = q.eq('is_competitor', params.competitor);
     const { data, error } = await q;
     if (error) throw new Error(error.message);
     if (!data || data.length === 0) {
@@ -309,7 +279,6 @@ export async function createTrackedAccount(_role: string, body: Partial<TrackedA
       account_url: body.account_url || '#',
       account_handle: body.account_handle,
       is_active: body.is_active ?? true,
-      is_competitor: Boolean(body.is_competitor),
       note: body.note,
     };
     const { data, error } = await supabase.from('tracked_accounts').insert(insert).select().single();

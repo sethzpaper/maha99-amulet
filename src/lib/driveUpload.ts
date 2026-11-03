@@ -94,22 +94,6 @@ export async function uploadToDrive(params: DriveUploadParams): Promise<DriveUpl
 // ─────────────────────────────────────────────
 
 /** อัปโหลดรูปลงเวลา (check-in / check-out) */
-export async function uploadAttendancePhoto(
-  photo: Blob,
-  opts: { userId: string; userName: string; workDate: string; status: AttendanceStatus; kind: 'checkin' | 'checkout' }
-): Promise<DriveUploadResult> {
-  const ts = Date.now();
-  return uploadToDrive({
-    file:      photo,
-    fileName:  `${opts.kind}-${opts.userId}-${opts.workDate}-${ts}.jpg`,
-    fileType:  'photo',
-    status:    opts.status,
-    userId:    opts.userId,
-    userName:  opts.userName,
-    workDate:  opts.workDate,
-  });
-}
-
 /** อัปโหลด PDF รายงานประจำเดือน */
 export async function uploadMonthlyReport(
   pdfBlob: Blob,

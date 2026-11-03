@@ -129,21 +129,20 @@ create index if not exists idx_employee_badges_employee on public.employee_badge
 
 -- ============================================================
 -- STEP 04: tracked_accounts
--- Used by: dashboard social cards, competitor/company account tracking
+-- Used by: home page company channels (max 5 active), Facebook page
 -- ============================================================
 create table if not exists public.tracked_accounts (
   id uuid primary key default gen_random_uuid(),
-  platform text not null check (platform in ('facebook','tiktok')),
+  platform text not null check (platform in ('facebook','website')),
   account_name text not null,
   account_url text not null,
   account_handle text,
   is_active boolean not null default true,
-  is_competitor boolean not null default false,
   note text,
   created_at timestamptz not null default now()
 );
 
-create index if not exists idx_tracked_accounts_platform on public.tracked_accounts (platform, is_competitor, is_active);
+create index if not exists idx_tracked_accounts_platform on public.tracked_accounts (platform, is_active);
 
 -- ============================================================
 -- STEP 05: time_entries
@@ -157,8 +156,6 @@ create table if not exists public.time_entries (
   work_date date not null,
   check_in_time timestamptz,
   check_out_time timestamptz,
-  check_in_photo_url text,
-  check_out_photo_url text,
   total_hours numeric(8,2),
   overtime_hours numeric(8,2),
   status text not null default 'working'
@@ -216,6 +213,9 @@ create table if not exists public.leave_requests (
   manager_email text,
   manager_note text,
   approved_at timestamptz,
+  -- employee = ลาล่วงหน้า (รออนุมัติ) · manager = ผู้จัดการบันทึกให้/ย้อนหลัง (อนุมัติทันที)
+  source text not null default 'employee' check (source in ('employee','manager')),
+  recorded_by uuid,
   created_at timestamptz not null default now()
 );
 
@@ -251,25 +251,7 @@ select
 from public.time_entries
 group by date_trunc('month', work_date)::date, user_id;
 
--- ============================================================
--- STEP 08: attendance-photos storage bucket
--- Used by: check-in/out photo uploads
--- ============================================================
-insert into storage.buckets (id, name, public)
-values ('attendance-photos', 'attendance-photos', true)
-on conflict (id) do nothing;
-
-drop policy if exists "attendance photos read" on storage.objects;
-create policy "attendance photos read"
-  on storage.objects for select
-  to anon, authenticated
-  using (bucket_id = 'attendance-photos');
-
-drop policy if exists "attendance photos upload" on storage.objects;
-create policy "attendance photos upload"
-  on storage.objects for insert
-  to anon, authenticated
-  with check (bucket_id = 'attendance-photos');
+-- STEP 08: (removed) attendance-photos bucket — selfie check-in was dropped.
 
 -- ============================================================
 -- STEP 09: videos
@@ -304,7 +286,7 @@ create trigger trg_videos_updated_at
 
 -- ============================================================
 -- STEP 10: social/content tables
--- Used by: Facebook/TikTok pages, dashboard, competitor page
+-- Used by: Facebook page
 -- ============================================================
 create table if not exists public.amulets (
   id uuid primary key default gen_random_uuid(),
@@ -321,7 +303,7 @@ create table if not exists public.amulets (
 
 create table if not exists public.social_posts (
   id uuid primary key default gen_random_uuid(),
-  platform text not null check (platform in ('facebook','tiktok')),
+  platform text not null check (platform in ('facebook')),
   content text,
   link text,
   engagement integer not null default 0,
@@ -331,33 +313,6 @@ create table if not exists public.social_posts (
 
 create index if not exists idx_social_posts_platform_time on public.social_posts (platform, timestamp desc);
 
-create table if not exists public.competitor_facebook (
-  id uuid primary key default gen_random_uuid(),
-  platform text not null default 'facebook' check (platform in ('facebook','tiktok')),
-  content text,
-  link text,
-  engagement integer not null default 0,
-  timestamp timestamptz default now(),
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.competitor_tiktok (
-  id uuid primary key default gen_random_uuid(),
-  platform text not null default 'tiktok' check (platform in ('facebook','tiktok')),
-  content text,
-  link text,
-  engagement integer not null default 0,
-  timestamp timestamptz default now(),
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.competitor_analysis (
-  id uuid primary key default gen_random_uuid(),
-  facebook jsonb,
-  tiktok jsonb,
-  timestamp timestamptz default now(),
-  created_at timestamptz not null default now()
-);
 
 -- ============================================================
 -- STEP 11: leaderboard tables
@@ -371,13 +326,6 @@ create table if not exists public.leaderboard_views (
 );
 
 create table if not exists public.leaderboard_likes_fb (
-  rank integer,
-  creator text,
-  name text,
-  value numeric not null default 0
-);
-
-create table if not exists public.leaderboard_likes_tt (
   rank integer,
   creator text,
   name text,
@@ -567,12 +515,8 @@ alter table public.leave_requests enable row level security;
 alter table public.videos enable row level security;
 alter table public.amulets enable row level security;
 alter table public.social_posts enable row level security;
-alter table public.competitor_facebook enable row level security;
-alter table public.competitor_tiktok enable row level security;
-alter table public.competitor_analysis enable row level security;
 alter table public.leaderboard_views enable row level security;
 alter table public.leaderboard_likes_fb enable row level security;
-alter table public.leaderboard_likes_tt enable row level security;
 alter table public.leaderboard_hours enable row level security;
 alter table public.activity_logs enable row level security;
 alter table public.password_reset_requests enable row level security;
@@ -583,8 +527,8 @@ declare
 begin
   foreach t in array array[
     'employees','badges','employee_badges','tracked_accounts','time_entries','leave_requests',
-    'videos','amulets','social_posts','competitor_facebook','competitor_tiktok','competitor_analysis',
-    'leaderboard_views','leaderboard_likes_fb','leaderboard_likes_tt','leaderboard_hours',
+    'videos','amulets','social_posts',
+    'leaderboard_views','leaderboard_likes_fb','leaderboard_hours',
     'activity_logs','password_reset_requests'
   ] loop
     execute format('drop policy if exists "%s read" on public.%I', t, t);
@@ -609,12 +553,9 @@ insert into public.employees (employee_code, nickname, full_name, role, is_activ
 values ('SUPER001', 'Super Admin', 'System Super Admin', 'super_admin', true, extensions.crypt('11221122', extensions.gen_salt('bf', 10)))
 on conflict (employee_code) do nothing;
 
-insert into public.tracked_accounts (platform, account_name, account_url, account_handle, is_competitor, note)
+insert into public.tracked_accounts (platform, account_name, account_url, account_handle, note)
 values
-  ('facebook', 'Mahaniyom999 Fanpage', 'https://facebook.com/mahaniyom999', '@mahaniyom999', false, 'Main Facebook page'),
-  ('tiktok', 'Mahaniyom999 TikTok', 'https://www.tiktok.com/@mahaniyom999', '@mahaniyom999', false, 'Main TikTok channel'),
-  ('facebook', 'Competitor Facebook Example', 'https://facebook.com/competitor-page', '@competitor', true, 'Competitor tracking'),
-  ('tiktok', 'Competitor TikTok Example', 'https://www.tiktok.com/@competitor', '@competitor', true, 'Competitor tracking')
+  ('facebook', 'Mahaniyom999 Fanpage', 'https://facebook.com/mahaniyom999', '@mahaniyom999', 'Main Facebook page')
 on conflict do nothing;
 
 -- ============================================================

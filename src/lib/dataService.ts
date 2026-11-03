@@ -2,7 +2,6 @@ import {
   Amulet,
   SocialPost,
   VideoRecord,
-  CompetitorAnalysisResponse,
   LeaderboardEntry,
 } from '../types';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
@@ -125,56 +124,7 @@ class DataService {
     return data;
   }
 
-  async fetchTikTokPosts(): Promise<SocialPost[]> {
-    const cacheKey = this.getCacheKey('tiktok-posts');
-    const cached = this.getFromCache<SocialPost[]>(cacheKey);
-    if (cached) return cached;
-    const data = await this.safeSelect<SocialPost>('social_posts', (q) => q.eq('platform', 'tiktok'));
-    this.setCache(cacheKey, data);
-    return data;
-  }
-
-  async fetchCompetitorFacebook(): Promise<SocialPost[]> {
-    const cacheKey = this.getCacheKey('competitor-facebook');
-    const cached = this.getFromCache<SocialPost[]>(cacheKey);
-    if (cached) return cached;
-    const data = await this.safeSelect<SocialPost>('competitor_facebook');
-    this.setCache(cacheKey, data);
-    return data;
-  }
-
-  async fetchCompetitorTikTok(): Promise<SocialPost[]> {
-    const cacheKey = this.getCacheKey('competitor-tiktok');
-    const cached = this.getFromCache<SocialPost[]>(cacheKey);
-    if (cached) return cached;
-    const data = await this.safeSelect<SocialPost>('competitor_tiktok');
-    this.setCache(cacheKey, data);
-    return data;
-  }
-
-  async fetchCompetitorAnalysis(): Promise<CompetitorAnalysisResponse | null> {
-    const cacheKey = this.getCacheKey('competitor-analysis');
-    const cached = this.getFromCache<CompetitorAnalysisResponse>(cacheKey);
-    if (cached) return cached;
-    if (!isSupabaseConfigured) return null;
-    try {
-      const { data, error } = await supabase
-        .from('competitor_analysis')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      if (!data) return null;
-      this.setCache(cacheKey, data);
-      return data as unknown as CompetitorAnalysisResponse;
-    } catch (error) {
-      console.warn('Error fetching competitor analysis:', error);
-      return null;
-    }
-  }
-
-  async fetchLeaderboard(metric: 'views' | 'likes-fb' | 'likes-tt' | 'hours'): Promise<LeaderboardEntry[]> {
+  async fetchLeaderboard(metric: 'views' | 'likes-fb' | 'hours'): Promise<LeaderboardEntry[]> {
     const cacheKey = this.getCacheKey(`leaderboard-${metric}`);
     const cached = this.getFromCache<LeaderboardEntry[]>(cacheKey);
     if (cached) return cached;

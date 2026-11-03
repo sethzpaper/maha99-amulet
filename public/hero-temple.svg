@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 640" preserveAspectRatio="xMidYMid slice" role="img" aria-label="ภาพวัดไทยยามเช้า">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e2119"/>
+      <stop offset="0.45" stop-color="#2b5b48"/>
+      <stop offset="0.78" stop-color="#d9b07c"/>
+      <stop offset="1" stop-color="#f6d6a4"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff4d6"/>
+      <stop offset="0.45" stop-color="#ffe0a3" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffd38a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f6f5b"/>
+      <stop offset="1" stop-color="#0c1d16"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3cf7a"/>
+      <stop offset="1" stop-color="#b9862f"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d3b2f"/>
+      <stop offset="1" stop-color="#10241c"/>
+    </linearGradient>
+    <g id="tree">
+      <rect x="-4" y="0" width="8" height="40" fill="#0b1a13"/>
+      <circle cx="0" cy="-6" r="26" fill="#123326"/>
+      <circle cx="-18" cy="6" r="18" fill="#0f2b20"/>
+      <circle cx="18" cy="8" r="20" fill="#0f2b20"/>
+    </g>
+  </defs>
+
+  <rect width="1600" height="640" fill="url(#sky)"/>
+  <circle cx="1120" cy="400" r="190" fill="url(#sun)"/>
+  <circle cx="1120" cy="400" r="58" fill="#fff1cf" opacity="0.95"/>
+
+  <!-- distant hills -->
+  <path d="M0 430 C 180 380 320 400 460 385 C 640 365 760 410 920 392 C 1100 372 1260 405 1420 380 C 1500 368 1560 380 1600 386 L1600 470 L0 470 Z" fill="#46705c" opacity="0.55"/>
+  <path d="M0 452 C 220 420 380 440 560 425 C 760 410 900 445 1080 430 C 1260 415 1420 440 1600 425 L1600 480 L0 480 Z" fill="#2c5040" opacity="0.8"/>
+
+  <!-- chedi (left) -->
+  <g transform="translate(330 0)">
+    <rect x="-70" y="440" width="140" height="18" fill="#132a20"/>
+    <rect x="-55" y="424" width="110" height="18" fill="#17322a"/>
+    <rect x="-42" y="410" width="84" height="16" fill="#1b3a2f"/>
+    <path d="M-48 410 C -48 350 -20 322 0 316 C 20 322 48 350 48 410 Z" fill="url(#roof)"/>
+    <path d="M-48 410 C -48 350 -20 322 0 316 C 20 322 48 350 48 410" fill="none" stroke="url(#gold)" stroke-width="3"/>
+    <rect x="-14" y="300" width="28" height="16" fill="#1d3b2f" stroke="url(#gold)" stroke-width="2"/>
+    <path d="M-10 300 L0 170 L10 300 Z" fill="url(#gold)"/>
+    <circle cx="0" cy="168" r="4" fill="#ffe7a6"/>
+  </g>
+
+  <!-- main ubosot -->
+  <g transform="translate(800 0)">
+    <!-- base platform -->
+    <rect x="-300" y="452" width="600" height="22" fill="#10241c"/>
+    <rect x="-270" y="436" width="540" height="18" fill="#163026"/>
+    <!-- walls -->
+    <rect x="-230" y="350" width="460" height="88" fill="#e9e1cf"/>
+    <rect x="-230" y="350" width="460" height="88" fill="#0f2119" opacity="0.18"/>
+    <g fill="#2a4a3c">
+      <rect x="-190" y="372" width="34" height="66" rx="4"/>
+      <rect x="-110" y="372" width="34" height="66" rx="4"/>
+      <rect x="-26" y="362" width="52" height="76" rx="6" fill="#7a5a26"/>
+      <rect x="76" y="372" width="34" height="66" rx="4"/>
+      <rect x="156" y="372" width="34" height="66" rx="4"/>
+    </g>
+    <g stroke="url(#gold)" stroke-width="3">
+      <line x1="-236" y1="350" x2="-236" y2="438"/>
+      <line x1="236" y1="350" x2="236" y2="438"/>
+    </g>
+    <!-- lower roof tier -->
+    <path d="M-290 352 L-200 300 L200 300 L290 352 Z" fill="url(#roof)"/>
+    <path d="M-290 352 L-200 300 L200 300 L290 352" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linejoin="round"/>
+    <!-- middle roof tier -->
+    <path d="M-220 304 L-130 240 L130 240 L220 304 Z" fill="#183429"/>
+    <path d="M-220 304 L-130 240 L130 240 L220 304" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linejoin="round"/>
+    <!-- top gable -->
+    <path d="M-150 244 L0 120 L150 244 Z" fill="#1f4234"/>
+    <path d="M-150 244 L0 120 L150 244" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M-92 236 L0 160 L92 236 Z" fill="url(#gold)" opacity="0.85"/>
+    <circle cx="0" cy="206" r="16" fill="#1f4234" stroke="#ffe7a6" stroke-width="2"/>
+    <!-- chofa finials -->
+    <path d="M0 120 C 6 98 22 92 26 76 C 20 84 8 86 2 96" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M-150 244 C -164 230 -170 214 -184 206" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M150 244 C 164 230 170 214 184 206" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M-290 352 C -304 340 -312 326 -326 320" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M290 352 C 304 340 312 326 326 320" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- small chedi (right) -->
+  <g transform="translate(1330 0)">
+    <rect x="-44" y="444" width="88" height="14" fill="#132a20"/>
+    <rect x="-32" y="432" width="64" height="14" fill="#17322a"/>
+    <path d="M-30 432 C -30 392 -12 374 0 370 C 12 374 30 392 30 432 Z" fill="url(#roof)" stroke="url(#gold)" stroke-width="2"/>
+    <path d="M-6 370 L0 282 L6 370 Z" fill="url(#gold)"/>
+  </g>
+
+  <!-- trees -->
+  <use href="#tree" x="120" y="420"/>
+  <use href="#tree" x="190" y="430" transform="scale(1)"/>
+  <use href="#tree" x="480" y="428"/>
+  <use href="#tree" x="1170" y="430"/>
+  <use href="#tree" x="1480" y="420"/>
+  <use href="#tree" x="1545" y="432"/>
+
+  <!-- water + reflection -->
+  <rect x="0" y="474" width="1600" height="166" fill="url(#water)"/>
+  <g opacity="0.22">
+    <path d="M500 480 L1100 480 L1010 540 L590 540 Z" fill="#f3cf7a"/>
+    <ellipse cx="1120" cy="500" rx="120" ry="10" fill="#fff1cf"/>
+  </g>
+  <g stroke="#f6d6a4" stroke-linecap="round" opacity="0.35">
+    <line x1="980" y1="520" x2="1260" y2="520" stroke-width="3"/>
+    <line x1="1040" y1="548" x2="1200" y2="548" stroke-width="2"/>
+    <line x1="620" y1="566" x2="980" y2="566" stroke-width="2"/>
+    <line x1="200" y1="590" x2="420" y2="590" stroke-width="2"/>
+  </g>
+</svg>

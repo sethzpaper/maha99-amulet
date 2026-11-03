@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { todayBangkok } from './dates';
 
 export interface TimeEntry {
   id: string;
@@ -7,8 +8,6 @@ export interface TimeEntry {
   work_date: string;
   check_in_time?: string;
   check_out_time?: string;
-  check_in_photo_url?: string;
-  check_out_photo_url?: string;
   total_hours?: number;
   overtime_hours?: number;
   status: 'working' | 'out' | 'late' | 'leave' | 'auto-leave' | 'auto-out';
@@ -27,6 +26,8 @@ export interface LeaveRequest {
   manager_email?: string;
   manager_note?: string;
   approved_at?: string;
+  /** employee = ลาล่วงหน้า · manager = ผู้จัดการบันทึกให้ (รวมย้อนหลัง) */
+  source?: 'employee' | 'manager';
   created_at: string;
 }
 
@@ -36,28 +37,7 @@ export interface LeaveQuota {
   allowed: boolean;
 }
 
-const STORAGE_BUCKET = 'attendance-photos';
-const LEAVE_MONTHLY_LIMIT = 2;
-async function signEntryPhotos(rows: TimeEntry[]): Promise<TimeEntry[]> {
-  async function sign(value?: string) {
-    if (!value) return undefined;
-    let path = value;
-    if (value.startsWith('http')) {
-      const marker = '/attendance-photos/';
-      const url = new URL(value);
-      const index = url.pathname.indexOf(marker);
-      if (index < 0) return undefined;
-      path = decodeURIComponent(url.pathname.slice(index + marker.length));
-    }
-    const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, 3600);
-    return error ? undefined : data?.signedUrl;
-  }
-  return Promise.all(rows.map(async (row) => ({
-    ...row,
-    check_in_photo_url: await sign(row.check_in_photo_url),
-    check_out_photo_url: await sign(row.check_out_photo_url),
-  })));
-}
+export const LEAVE_MONTHLY_LIMIT = 2;
 export const OVERTIME_THRESHOLD_HOURS = 11;
 
 function ensureConfigured() {
@@ -70,118 +50,6 @@ function todayWorkDate(): string {
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
-}
-
-async function uploadPhoto(userId: string, kind: 'checkin' | 'checkout', photo: Blob): Promise<string | undefined> {
-  const ts = Date.now();
-  const path = `${userId}/${todayWorkDate()}/${kind}-${ts}.jpg`;
-  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, photo, {
-    contentType: 'image/jpeg',
-    upsert: true,
-  });
-  if (error) {
-    console.warn('photo upload error:', error.message);
-    return undefined;
-  }
-  return path;
-}
-
-export async function checkIn(params: {
-  userId: string;
-  userName: string;
-  userEmail?: string;
-  photo?: Blob;
-  note?: string;
-}) {
-  ensureConfigured();
-  const workDate = todayWorkDate();
-  let photoUrl: string | undefined;
-  if (params.photo) {
-    photoUrl = await uploadPhoto(params.userId, 'checkin', params.photo);
-  }
-
-  // If entry exists for today, update; else insert new
-  const { data: existing } = await supabase
-    .from('time_entries')
-    .select('*')
-    .eq('user_id', params.userId)
-    .eq('work_date', workDate)
-    .maybeSingle();
-
-  const nowIso = new Date().toISOString();
-  const payload: Partial<TimeEntry> = {
-    user_id: params.userId,
-    user_name: params.userName,
-    work_date: workDate,
-    check_in_time: nowIso,
-    check_in_photo_url: photoUrl,
-    status: 'working',
-    note: params.note,
-  };
-
-  if (existing) {
-    const { data, error } = await supabase
-      .from('time_entries')
-      .update(payload)
-      .eq('id', existing.id)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return data;
-  }
-  const { data, error } = await supabase
-    .from('time_entries')
-    .insert(payload)
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return data;
-}
-
-export async function checkOut(params: {
-  userId: string;
-  userName: string;
-  photo?: Blob;
-  note?: string;
-}) {
-  ensureConfigured();
-  const workDate = todayWorkDate();
-  let photoUrl: string | undefined;
-  if (params.photo) {
-    photoUrl = await uploadPhoto(params.userId, 'checkout', params.photo);
-  }
-
-  const { data: existing, error: existingErr } = await supabase
-    .from('time_entries')
-    .select('*')
-    .eq('user_id', params.userId)
-    .eq('work_date', workDate)
-    .maybeSingle();
-  if (existingErr) throw new Error(existingErr.message);
-  if (!existing) throw new Error('no check-in found for today');
-
-  const nowIso = new Date().toISOString();
-  const checkInMs = existing.check_in_time ? new Date(existing.check_in_time).getTime() : Date.now();
-  const totalHours = Math.max(0, (Date.now() - checkInMs) / (1000 * 60 * 60));
-  const overtimeHours = Math.max(0, totalHours - OVERTIME_THRESHOLD_HOURS);
-
-  const update: Partial<TimeEntry> = {
-    check_out_time: nowIso,
-    check_out_photo_url: photoUrl || existing.check_out_photo_url,
-    total_hours: Number(totalHours.toFixed(2)),
-    overtime_hours: Number(overtimeHours.toFixed(2)),
-    status: 'out',
-    note: params.note ?? existing.note,
-  };
-
-  const { data, error } = await supabase
-    .from('time_entries')
-    .update(update)
-    .eq('id', existing.id)
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return data;
 }
 
 export async function fetchEntries(params: { userId?: string; month?: string }): Promise<TimeEntry[]> {
@@ -198,43 +66,30 @@ export async function fetchEntries(params: { userId?: string; month?: string }):
     }
     const { data, error } = await q;
     if (error) throw new Error(error.message);
-    return await signEntryPhotos((data || []) as TimeEntry[]);
+    return (data || []) as TimeEntry[];
   } catch (err) {
     console.warn('fetchEntries error:', err);
     return [];
   }
 }
 
+/** พนักงานจองวันลาล่วงหน้า (อย่างน้อยพรุ่งนี้) → รออนุมัติ; ตรวจซ้ำที่ฐานข้อมูล (RPC request_leave) */
 export async function submitLeaveRequest(params: {
-  userId: string;
-  userName: string;
-  userEmail?: string;
   leaveDate: string;
-  leaveType?: 'personal' | 'sick' | 'vacation' | 'other';
+  leaveType?: LeaveRequest['leave_type'];
   reason?: string;
-  managerEmail?: string;
 }) {
   ensureConfigured();
-  const managerEmail =
-    params.managerEmail || (import.meta.env.VITE_MANAGER_EMAIL as string) || undefined;
-
-  const insert = {
-    user_id: params.userId,
-    user_name: params.userName,
-    user_email: params.userEmail,
-    leave_date: params.leaveDate,
-    leave_type: params.leaveType || 'personal',
-    reason: params.reason,
-    manager_email: managerEmail,
-    status: 'pending' as const,
-  };
-  const { data, error } = await supabase
-    .from('leave_requests')
-    .insert(insert)
-    .select()
-    .single();
+  if (params.leaveDate <= todayBangkok()) {
+    throw new Error('ต้องลาล่วงหน้าอย่างน้อย 1 วัน ถ้าลาวันนี้หรือย้อนหลัง ให้ผู้จัดการบันทึกให้');
+  }
+  const { data, error } = await supabase.rpc('request_leave', {
+    p_date: params.leaveDate,
+    p_type: params.leaveType || 'personal',
+    p_reason: params.reason?.trim() || null,
+  });
   if (error) throw new Error(error.message || 'submit leave failed');
-  return data;
+  return data as LeaveRequest;
 }
 
 export async function fetchLeaveQuota(userId: string, date?: string): Promise<LeaveQuota> {
@@ -288,7 +143,7 @@ export async function fetchRecentCheckins(limit = 6): Promise<TimeEntry[]> {
       .order('check_in_time', { ascending: false })
       .limit(limit);
     if (error) throw new Error(error.message);
-    return await signEntryPhotos((data || []) as TimeEntry[]);
+    return (data || []) as TimeEntry[];
   } catch {
     return [];
   }
@@ -341,59 +196,66 @@ export async function adminCreateEntry(
   return data;
 }
 
-export async function exportMonthlyReport(month: string) {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured');
-  // month format YYYY-MM
+/** ข้อมูลดิบของรายงานประจำเดือน (แอดมินเห็นทุกคน, พนักงานเห็นเฉพาะของตัวเองตาม RLS) */
+export async function fetchMonthlyReportData(month: string): Promise<{
+  entries: TimeEntry[];
+  leaves: LeaveRequest[];
+  siteNames: Record<string, string>;
+}> {
+  ensureConfigured();
   const start = `${month}-01`;
   const [y, m] = month.split('-').map(Number);
   const nextMonth = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+  const [entries, leaves, sites] = await Promise.all([
+    supabase.from('time_entries').select('*').gte('work_date', start).lt('work_date', nextMonth).order('work_date'),
+    supabase.from('leave_requests').select('*').eq('status', 'approved').gte('leave_date', start).lt('leave_date', nextMonth),
+    supabase.from('attendance_sites').select('id,name'),
+  ]);
+  if (entries.error) throw new Error(entries.error.message);
+  if (leaves.error) throw new Error(leaves.error.message);
+  const siteNames = Object.fromEntries(((sites.data || []) as { id: string; name: string }[]).map((site) => [site.id, site.name]));
+  return { entries: (entries.data || []) as TimeEntry[], leaves: (leaves.data || []) as LeaveRequest[], siteNames };
+}
 
-  const { data: entries, error } = await supabase
-    .from('time_entries')
-    .select('*')
-    .gte('work_date', start)
-    .lt('work_date', nextMonth)
-    .order('work_date', { ascending: true });
-  if (error) throw new Error(error.message || 'export failed');
+export interface TodayBoard {
+  entries: TimeEntry[];
+  leaves: LeaveRequest[];
+  employees: { id: string; nickname: string; is_active: boolean }[];
+}
 
-  const list = (entries || []) as TimeEntry[];
-  // client-side aggregation per user
-  const byUser = new Map<string, {
-    user_id: string;
-    user_name: string;
-    days: number;
-    total_hours: number;
-    overtime_hours: number;
-    overtime_days: number;
-    heavy_days: number;
-    late_days: number;
-    leave_days: number;
-  }>();
-  for (const e of list) {
-    const agg = byUser.get(e.user_id) || {
-      user_id: e.user_id,
-      user_name: e.user_name,
-      days: 0,
-      total_hours: 0,
-      overtime_hours: 0,
-      overtime_days: 0,
-      heavy_days: 0,
-      late_days: 0,
-      leave_days: 0,
-    };
-    agg.days += 1;
-    agg.total_hours += Number(e.total_hours || 0);
-    agg.overtime_hours += Math.max(0, Number(e.total_hours || 0) - OVERTIME_THRESHOLD_HOURS);
-    if (Number(e.total_hours || 0) > OVERTIME_THRESHOLD_HOURS) agg.overtime_days += 1;
-    if (Number(e.total_hours || 0) >= OVERTIME_THRESHOLD_HOURS) agg.heavy_days += 1;
-    if (e.status === 'late') agg.late_days += 1;
-    if (e.status === 'leave' || e.status === 'auto-leave') agg.leave_days += 1;
-    byUser.set(e.user_id, agg);
-  }
+/** ข้อมูลหน้าแรก (RPC today_board): ลงเวลาวันนี้ + ใบลาที่อนุมัติวันนี้ + รายชื่อพนักงาน — พนักงานทุกคนที่ login เรียกได้ */
+export async function fetchTodayBoard(): Promise<TodayBoard> {
+  if (!isSupabaseConfigured) return { entries: [], leaves: [], employees: [] };
+  const { data, error } = await supabase.rpc('today_board');
+  if (error) throw new Error(error.message);
+  const board = (data || {}) as Partial<TodayBoard>;
+  return { entries: board.entries || [], leaves: board.leaves || [], employees: board.employees || [] };
+}
 
-  return {
-    month,
-    entries: list,
-    summary: Array.from(byUser.values()),
-  };
+/** ผู้จัดการบันทึกวันลาให้พนักงาน ใช้ได้ทั้งวันนี้ ล่วงหน้า และย้อนหลัง (อนุมัติทันที) */
+export async function managerRecordLeave(params: {
+  employeeId: string;
+  leaveDate: string;
+  leaveType: LeaveRequest['leave_type'];
+  reason?: string;
+}) {
+  ensureConfigured();
+  const { data, error } = await supabase.rpc('manager_record_leave', {
+    p_employee_id: params.employeeId,
+    p_date: params.leaveDate,
+    p_type: params.leaveType,
+    p_reason: params.reason?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  return data as LeaveRequest;
+}
+
+/** ฟังการเปลี่ยนแปลง time_entries แบบเรียลไทม์ คืนฟังก์ชันยกเลิก */
+export function subscribeTimeEntries(onChange: () => void): () => void {
+  if (!isSupabaseConfigured) return () => {};
+  const channel = supabase
+    .channel('time-entries-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'time_entries' }, onChange)
+    .subscribe();
+  return () => { void supabase.removeChannel(channel); };
 }

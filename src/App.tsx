@@ -1,21 +1,25 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { DashboardPage } from './pages/DashboardPage';
-import { VideoWorkflowPage } from './pages/VideoWorkflowPage';
+import { ScanPage } from './pages/ScanPage';
+import { SitesPage } from './pages/SitesPage';
+import { CalendarPage } from './pages/CalendarPage';
+import { ClipsPage } from './pages/ClipsPage';
 import { type Tab, tabPaths, pathTabs } from './routes';
 import {
   Menu,
   X,
   BarChart3,
-  TrendingUp,
+  LayoutDashboard,
   Trophy,
   Facebook,
   Music2,
   Users,
   Clock,
   Video,
-  FolderArchive,
-  Receipt,
+  ScanLine,
+  CalendarDays,
+  MapPin,
   Settings,
   Flower2,
   Globe,
@@ -25,75 +29,73 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { FacebookPosts } from './components/FacebookPosts';
-import { TikTokPosts } from './components/TikTokPosts';
 import { AdminStats } from './components/AdminStats';
 import { EmployeeList } from './components/EmployeeList';
 import { LineLogs } from './components/LineLogs';
-import { CompetitorComparison } from './components/CompetitorComparison';
 import { Settings as SettingsPage } from './components/Settings';
 import { Login } from './components/Login';
 import { useAuthStore } from './lib/authStore';
 
+import { SLOGAN } from './lib/brand';
+
 type NavItem = { tab: Tab; label: string; icon: string };
 type NavSection = { title: string; items: NavItem[] };
 const navIcons = {
-  dashboard: BarChart3, query_stats: TrendingUp, leaderboard: Trophy,
+  dashboard: LayoutDashboard, leaderboard: Trophy,
   facebook: Facebook, music_note: Music2, groups: Users, schedule: Clock,
-  video_library: Video, inventory_2: FolderArchive, receipt_long: Receipt,
+  qr_scan: ScanLine, map_pin: MapPin, video_library: Video, calendar: CalendarDays,
   admin_panel_settings: Settings,
 };
 
 const pageMeta: Record<Tab, { th: string; en: string }> = {
-  aiVideoHome: { th: 'ศูนย์งานวิดีโอ', en: 'AI Video Home' },
-  videoIdeas: { th: 'ไอเดียวิดีโอ', en: 'Video Ideas' },
-  imageGen: { th: 'สร้างภาพ AI', en: 'Image Generation' },
-  storyboard: { th: 'สตอรี่บอร์ด', en: 'Storyboard' },
-  videoRender: { th: 'เรนเดอร์วิดีโอ', en: 'Video Render' },
-  videoReview: { th: 'ตรวจงานวิดีโอ', en: 'Video Review' },
-  approvedVideos: { th: 'วิดีโออนุมัติแล้ว', en: 'Approved Videos' },
-  assetLibrary: { th: 'คลังไฟล์คอนเทนต์', en: 'Asset Library' },
-  costTracker: { th: 'ต้นทุนคอนเทนต์', en: 'Cost Tracker' },
-  dashboard: { th: 'แดชบอร์ดองค์กร', en: 'Organization Dashboard' },
+  scan: { th: 'สแกนลงเวลา', en: 'QR Check-in' },
+  sites: { th: 'จุดลงเวลา & QR', en: 'Attendance Sites' },
+  clips: { th: 'คลิปประจำเดือน', en: 'Monthly Clips' },
+  calendar: { th: 'ปฏิทินไลฟ์ / วันสำคัญ', en: 'Team Calendar' },
+  dashboard: { th: 'หน้าแรก', en: 'Teamday Overview' },
   facebook: { th: 'โพสต์ Facebook', en: 'Facebook Activity' },
-  tiktok: { th: 'โพสต์ TikTok', en: 'TikTok Short-form Video' },
-  comparison: { th: 'เปรียบเทียบคู่แข่ง', en: 'Competitor Intelligence' },
-  stats: { th: 'สถิติพนักงาน', en: 'Admin Performance' },
+  stats: { th: 'อันดับคนขยัน', en: 'Team Ranking' },
   employees: { th: 'ทำเนียบพนักงาน', en: 'Employee Directory' },
   lineLogs: { th: 'ลงเวลาและ OT', en: 'Attendance Workload' },
   settings: { th: 'ตั้งค่า', en: 'System Settings' },
 };
 
 const trendNavItems: NavItem[] = [
-  { tab: 'dashboard', label: 'แดชบอร์ดองค์กร', icon: 'dashboard' },
-  { tab: 'comparison', label: 'เทียบคู่แข่ง', icon: 'query_stats' },
-  { tab: 'stats', label: 'อันดับผลงาน', icon: 'leaderboard' },
+  { tab: 'dashboard', label: 'หน้าแรก', icon: 'dashboard' },
+  { tab: 'stats', label: 'อันดับคนขยัน', icon: 'leaderboard' },
 ];
+
+const scanNavItem: NavItem = { tab: 'scan', label: 'สแกนลงเวลา', icon: 'qr_scan' };
+const calendarNavItem: NavItem = { tab: 'calendar', label: 'ปฏิทินไลฟ์ / วันสำคัญ', icon: 'calendar' };
+const clipsNavItem: NavItem = { tab: 'clips', label: 'คลิปประจำเดือน', icon: 'video_library' };
 
 const navSections: NavSection[] = [
   {
-    title: 'แนวโน้ม',
+    title: 'ภาพรวม',
     items: trendNavItems,
   },
   {
     title: 'บริษัท',
     items: [
       { tab: 'facebook', label: 'โพสต์ Facebook', icon: 'facebook' },
-      { tab: 'tiktok', label: 'โพสต์ TikTok', icon: 'music_note' },
     ],
+  },
+  {
+    title: 'ลงเวลา',
+    items: [
+      scanNavItem,
+      { tab: 'lineLogs', label: 'ตารางลงเวลา / OT', icon: 'schedule' },
+      { tab: 'sites', label: 'จุดลงเวลา & QR', icon: 'map_pin' },
+    ],
+  },
+  {
+    title: 'ทีมคอนเทนต์',
+    items: [calendarNavItem, clipsNavItem],
   },
   {
     title: 'พนักงาน',
     items: [
       { tab: 'employees', label: 'ทำเนียบพนักงาน', icon: 'groups' },
-      { tab: 'lineLogs', label: 'ลงเวลา / Workload', icon: 'schedule' },
-    ],
-  },
-  {
-    title: 'บอร์ด',
-    items: [
-      { tab: 'aiVideoHome', label: 'ศูนย์งานวิดีโอ', icon: 'video_library' },
-      { tab: 'assetLibrary', label: 'คลังคอนเทนต์', icon: 'inventory_2' },
-      { tab: 'costTracker', label: 'ต้นทุนคอนเทนต์', icon: 'receipt_long' },
     ],
   },
   {
@@ -106,12 +108,19 @@ const navSections: NavSection[] = [
 
 const publicNavSections: NavSection[] = [
   {
-    title: 'แนวโน้ม',
+    title: 'ภาพรวม',
     items: trendNavItems,
   },
 ];
 
+const employeeNavSections: NavSection[] = [
+  ...publicNavSections,
+  { title: 'ลงเวลา', items: [scanNavItem] },
+  { title: 'ทีมคอนเทนต์', items: [calendarNavItem, clipsNavItem] },
+];
+
 const publicTabs = new Set<Tab>(trendNavItems.map((item) => item.tab));
+const employeeTabs = new Set<Tab>([...publicTabs, 'scan', 'calendar', 'clips']);
 function AdminGate({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="mx-auto flex min-h-[calc(100vh-220px)] max-w-3xl items-center">
@@ -121,20 +130,20 @@ function AdminGate({ onLogin }: { onLogin: () => void }) {
             <Shield className="h-6 w-6" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a5018]">Admin only</p>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-[#6a5018]">Members only</p>
             <h2 className="mt-2 text-2xl font-serif italic font-bold gold-text-gradient">
               เมนูหลักถูกซ่อนไว้
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500">
-              ระบบจัดการคอนเทนต์และข้อมูล workflow เปิดให้เฉพาะบัญชีแอดมินเท่านั้น
-              กรุณาเข้าสู่ระบบด้วยบัญชี admin หรือ super admin เพื่อจัดการงานวิดีโอจาก Discord
+              หน้านี้เปิดให้เฉพาะผู้ที่เข้าสู่ระบบแล้ว ส่วนข้อมูลลงเวลา คลิปประจำเดือน และพนักงาน
+              ต้องใช้บัญชี admin หรือ super admin
             </p>
             <button
               onClick={onLogin}
               className="mt-6 inline-flex items-center gap-2 rounded-xl border border-gold/40 bg-[var(--app-surface)] px-4 py-3 text-sm font-bold text-gold transition-all hover:border-gold/70 hover:bg-gold/10"
             >
               <LogIn className="h-4 w-4" />
-              <span>เข้าสู่ระบบแอดมิน</span>
+              <span>เข้าสู่ระบบ</span>
             </button>
           </div>
         </div>
@@ -155,8 +164,8 @@ export default function App() {
 
   const isSuperAdmin = user?.role === 'super_admin';
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
-  const visibleNavSections = isAdmin ? navSections : publicNavSections;
-  const canViewActiveTab = isAdmin || publicTabs.has(activeTab);
+  const visibleNavSections = isAdmin ? navSections : isAuthenticated ? employeeNavSections : publicNavSections;
+  const canViewActiveTab = isAdmin || (isAuthenticated ? employeeTabs : publicTabs).has(activeTab);
   const meta = pageMeta[activeTab || 'dashboard'];
 
 
@@ -168,20 +177,12 @@ export default function App() {
     }
 
     switch (activeTab) {
-      case 'aiVideoHome':
-      case 'videoIdeas':
-      case 'imageGen':
-      case 'storyboard':
-      case 'videoRender':
-      case 'videoReview':
-      case 'approvedVideos':
-      case 'assetLibrary':
-      case 'costTracker':
-        return <VideoWorkflowPage tab={activeTab} />;
+      case 'scan': return <ScanPage />;
+      case 'sites': return <SitesPage />;
+      case 'calendar': return <CalendarPage />;
+      case 'clips': return <ClipsPage />;
       case 'dashboard': return <DashboardPage />;
       case 'facebook': return <FacebookPosts />;
-      case 'tiktok': return <TikTokPosts />;
-      case 'comparison': return <CompetitorComparison />;
       case 'stats': return <AdminStats />;
       case 'employees': return <EmployeeList />;
       case 'lineLogs': return <LineLogs />;
@@ -200,8 +201,8 @@ export default function App() {
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-bold text-gold">มหานิยม 999 หน่วยหลังบ้าน</p>
-            <p className="text-[10px] text-[#6a5018] uppercase tracking-widest">Amulet Stat Hub</p>
+            <p className="text-sm font-bold text-[var(--app-text)]">มหานิยม999ทีมพร้อม</p>
+            <p className="text-[11px] font-bold uppercase text-gold">Teamday</p>
           </div>
         </div>
 
@@ -214,6 +215,7 @@ export default function App() {
                   <NavLink
                     key={tab}
                     to={tabPaths[tab]}
+                    end
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold rounded-xl transition-all text-left ${
                       activeTab === tab
                         ? 'bg-gold/10 text-gold border border-gold/20'
@@ -235,7 +237,7 @@ export default function App() {
                 <Shield className="h-4 w-4" />
                 <span className="font-bold">เมนูอื่นสำหรับแอดมิน</span>
               </div>
-              <p>ดูหมวดแนวโน้มได้ทันที ส่วนบริษัท พนักงาน บอร์ด และจัดการระบบต้องเข้าสู่ระบบแอดมินก่อน</p>
+              <p>{isAuthenticated ? 'เมนูบริษัท ลงเวลา คอนเทนต์ พนักงาน และจัดการระบบ สำหรับแอดมิน' : 'ดูหมวดแนวโน้มได้ทันที เข้าสู่ระบบเพื่อสแกนลงเวลา'}</p>
             </div>
           )}
         </nav>
@@ -281,9 +283,7 @@ export default function App() {
             <Globe className="w-4 h-4" />
             <span>{lang === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}</span>
           </button>
-          <p className="px-1 text-sm font-extrabold leading-6 text-gold">
-            "คนศรัทธาพระ บุญช่วยนำพา ต้องทำอย่างเต็มที่ ต้องทำให้ดีที่สุด"
-          </p>
+          <p className="px-1 font-display text-lg font-bold leading-6 text-gold">{SLOGAN}</p>
         </div>
       </aside>
 
@@ -296,8 +296,8 @@ export default function App() {
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated && (
-              <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
-                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-emerald-500/20 text-sm font-bold text-emerald-200">
+              <div className="flex items-center gap-3 rounded-full bg-[var(--forest)] py-1.5 pl-1.5 pr-4 text-white">
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[var(--app-accent)] text-sm font-bold text-[var(--app-on-accent)]">
                   {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
@@ -305,8 +305,8 @@ export default function App() {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-emerald-100">{user?.nickname || user?.username}</p>
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-emerald-300">
+                  <p className="truncate text-sm font-bold text-white">{user?.nickname || user?.username}</p>
+                  <p className="text-[10px] uppercase text-[var(--app-accent)]">
                     {isSuperAdmin ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : 'Employee'}
                   </p>
                 </div>
@@ -314,7 +314,7 @@ export default function App() {
             )}
             <div className="flex items-center gap-2 text-[10px] text-[#4a3800]">
               <Flower2 className="h-3 w-3 text-gold/50" />
-              <span>มหานิยม 999 หน่วยหลังบ้าน</span>
+              <span>มหานิยม999ทีมพร้อม · Teamday</span>
             </div>
           </div>
         </header>
@@ -324,8 +324,8 @@ export default function App() {
         </main>
 
         <footer className="border-t border-[var(--app-border-muted)] px-8 py-5 flex items-center justify-between">
-          <p className="text-[10px] text-[#4a3800]">(c) 2026 เว็บ มหานิยม 999 หน่วยหลังบ้าน</p>
-          <p className="text-[10px] text-[#4a3800]">developed by Sasiskis84 • Amulet Stat Hub v2.0</p>
+          <p className="text-[10px] text-[#4a3800]">© 2026 มหานิยม999ทีมพร้อม</p>
+          <p className="text-[10px] text-[#4a3800]">developed by Sasiskis84 • Teamday v3.0</p>
         </footer>
       </div>
 
